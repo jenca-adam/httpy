@@ -18,11 +18,13 @@ import base64
 import email.utils
 import datetime
 import time
+
+
 HTTPY_DIR=pathlib.Path.home()/'.cache/httpy'
-os.makedirs(HTTPY_DIR,exist_ok=True)
+os.makedirs(HTTPY_DIR/'sites',exist_ok=True)
 version='0.0.dev0'
 urlpattern=re.compile('^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$')
-statuspattern=re.compile(br'HTTP/(?P<version>\d\.\d) (?P<status>\d+) (?P<reason>[^\r\n]*)')
+statuspattern=re.compile(br'(?P<version>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)')
 context=ssl.create_default_context()
 schemes={'http':80,'https':443}
 class HTTPyError(Exception):
@@ -46,6 +48,9 @@ class CaseInsensitiveDict(dict):
         return force_string(item).lower() in self.original
     def __getitem__(self,item):
         return self.original[force_string(item).lower()]
+    def __setitem__(self,item,val):
+        self.original[force_string(item).lower()]=val
+        super().__init__(self.original)#remake??
     def get(self,key,default=None):
         if key in self:
             return self[key]
@@ -63,12 +68,98 @@ def _binappendstr(s):
 def _binappendint(b):
     b=int(b)
     ba=int(b).to_bytes(math.ceil(b.bit_length()/8),'little')
-    bb=base64.b64encode(ba)
-    return bytes([len(bb)])+bb
+    return bytes([len(ba)])+ba
+class ETag:
+    def __init__(self,s):
+        self.weak=False
+        if s.startswith('W/')or s.startswith('w/'):
+            self.weak=True
+        self.etag=s.replace('"','')
+    def __eq__(self,e):
+        return self.etag==e.etag
+    def __str__(self):
+        if self.weak:
+            return f'W/"{self.etag}"'
+        return f'"{self.etag}"'
+
+    def add_header(self,headers):
+        if 'If-None-Match' in headers:
+            headers['If-None-Match']+=', '+str(self)
+        else:
+            headers['If-None-Match']=str(self)
+class CacheControl():
+    def __init__(self,directives):
+        d= [_mk2l(x.split('=')) for x in directives.split(',')]
+
+        self.directives=CaseInsensitiveDict(d)
+        if 'max-age' in self.directives:
+            self.max_age=int(self.directives['max-age'])
+            self.cache=True
+        elif 'no-cache' in self.directives:
+            self.cache=False
+            self.max_age=0
+        else:
+            self.max_age=0
+            self.cache=True
+class CacheFile():
+    def __init__(self,f):
+        self.src=f
+        file=gzip.GzipFile(f,'rb')
+        tml=ord(file.read(1))
+        self.time_cached=int.from_bytes(file.read(tml),'little')
+        srl=ord(file.read(1))
+        sl=file.read(srl)
+        self.status=Status(sl)
+        self.url=os.path.split(f)[-1].replace('\x01','://').replace('\x02','/')
+        self.content=file.read()
+        file.close()
+        self.headers,self.body=self.content.split(b'\x00')
+        self.headers=Headers(self.headers.split(b'\r'))
+        self.age=0
+        self.etag=None
+        self.last_modified=None
+        if 'ETag' in self.headers:
+            self.etag=ETag(self.headers['ETag'])
+        if 'last-modified' in self.headers:
+            self.last_modified=self.headers['Last-Modified']
+        if 'Age' in self.headers:
+            self.age=int(self.headers['Age'])
+        self.time_generated=self.time_cached-self.age
+        if 'Cache-Control' in self.headers:
+            self.cache_control=CacheControl(self.headers['Cache-Control'])
+        else:
+            self.cache_control=CacheControl('no-cache')
+    @property
+    def expired(self):
+        return time.time()-self.time_generated>self.cache_control.max_age
+    def __repr__(self):
+        return f'<CacheFile {self.url!r}>'
+    def add_header(self,headers):
+        if self.etag:
+            self.etag.add_header(headers)
+        if self.last_modified:
+            headers['if-modified-since']=self.last_modified
+
+
+class Cache():
+    def __init__(self,d=HTTPY_DIR/'sites'):
+        self.dir=d
+        self.files=[CacheFile(os.path.join(d,i)) for i in os.listdir(d)]
+    def updateCache(self):
+        for file in self.files:
+            if file.expired:
+                os.remove(os.path.join(self.dir,file.url.replace('://','\x01').replace('/','\x02')))
+        self.files=[CacheFile(os.path.join(self.dir,i)) for i in os.listdir(self.dir)]
+    def __getitem__(self,u):
+        for f in self.files:
+            if reslash(f.url)==reslash(u):
+                return f
+        return None
+    def __contains__(self,u):
+        return self[u] is not None
 
 class Cookie:
     def __init__(self,name,value,attributes,host):
-        
         self.name,self.value=name,value
         self.attributes=CaseInsensitiveDict(attributes)
         self.secure='Secure' in self.attributes
@@ -118,7 +209,7 @@ class Cookie:
     def from_binary(self,binary,host):
         buffer=io.BytesIO(binary)
         kvpl=ord(buffer.read(1))
-        k,v=buffer.read(kvpl).split(b'=')
+        k,v=buffer.read(kvpl).split(b'=',1)
         hostl=ord(buffer.read(1))
         data={}
         if hostl>0:
@@ -134,8 +225,7 @@ class Cookie:
             expires=None
         else:
             b64tstamp=buffer.read(ord(n))
-            expires=base64.b64decode(b64tstamp)
-            expires=int.from_bytes(expires,'little')
+            expires=int.from_bytes(b64tstamp,'little')
             data['Expires']=expires
         return Cookie(k.decode(),v.decode(),data,host)       
 
@@ -262,8 +352,6 @@ class File(io.IOBase):
     def open(self,file):
         reader=open(file,'rb')
         return File(reader.read(),file)
-class Cache:
-    def __init__(self):pass
 class Headers():
     def __init__(self,h):
         self.headers=([a.split(b': ',1)[0].lower().decode(),a.split(b': ',1)[1].decode().strip()] for a in h)
@@ -290,19 +378,35 @@ class Headers():
         raise NotImplementedError
 
 class Response:
-    def __init__(self,status,headers,body,history,url):
+    def __init__(self,status,headers,body,history,url,fromcache):
         self.status=status.status
         self.reason=status.reason
         self.headers=headers
         self.body=body
-        self.url=url
+        self.url=reslash(url)
+        self.fromcache=fromcache
+        if not self.fromcache:
+            cacheWrite(self)
+
         self.charset=determine_charset(headers)
         if self.charset is None:
             self.charset=chardet.detect(body)['encoding']
         self.history=history
         self.history.append(self)
+    @classmethod
+    def cacheload(self,cf):
+        return Response(cf.status,cf.headers,cf.content,[],cf.url,True) 
     def __repr__(self):
         return f'<Response [{self.status} {self.reason}] ({self.url})>'
+def cacheWrite(response):
+    data=b''
+    data+=_binappendint(round(time.time()))
+    data+=_binappendstr(f'{response.status} {response.reason}')
+    data+='\r'.join([mkHeader(i)for i in response.headers.headers.items()]).encode()
+    data+=b'\x00'
+    data+=response.body
+
+    open(HTTPY_DIR/'sites'/response.url.replace('://','\x01').replace('/','\x02'),'wb').write(gzip.compress(data))
 def mkdict(kvp):
     d={}
     for k,v in kvp:
@@ -418,6 +522,11 @@ def reslash(url):
     if url.endswith('/'):
         return url
     return url+'/'
+def deslash(url):
+    url=force_string(url)
+    if url.endswith('/'):
+        return url[:-1]
+    return url
 def mkHeader(i):
     if isinstance(i[1],list):
         d=''
@@ -427,6 +536,10 @@ def mkHeader(i):
     return ': '.join([str(h) for h in i])
 
 def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=None,headers={},auth={},history=[]):
+    cf=cache[deslash(url)]
+    print(cf)
+    if cf and not cf.expired:
+        return Response.cacheload(cf)
     defhdr={'Accept-Encoding':'gzip, deflate, identity','Host':makehost(host,port),'User-Agent':'httpy/'+version,'Connection':'keep-alive'}
     if data:
         data,cth=encode_form_data(data,content_type)
@@ -446,17 +559,22 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
             sock=context.wrap_socket(sock,server_hostname=host)
 
         defhdr.update(headers)
+        if cf:
+            cf.add_header(defhdr)
         headers='\r\n'.join([mkHeader(i)for i in defhdr.items()])
         request_data=f"{method} {path} HTTP/1.1"+'\r\n'
         request_data+=headers
         request_data+='\r\n\r\n'
-        request_data=request_data.encode()
-        
+        print(request_data)
+        request_data=request_data.encode() 
         sock.send(request_data)
         sock.send(data)
         file=sock.makefile('b')
         statusline=file.readline()
         status=Status(statusline)
+        print(status.status)
+        if status.status==304:
+            return Response.cacheload(cf)
         headers=[]
         while True:
             line=file.readline()
@@ -502,7 +620,7 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
                 body+=chunk
     content_encoding=headers.get('content-encoding','identity')
     body=decode_content(body,content_encoding)
-    return Response(status,headers,body,history,url)
+    return Response(status,headers,body,history,url,False)
         
 
 def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=20,content_type=None,history=None):
@@ -536,4 +654,5 @@ def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=
             return request(resp.headers['Location'],original=url,auth=auth,redirlimit=redirlimit,data=data,headers=headers,content_type=content_type,history=resp.history)
     return resp
 encodings={'identity':lambda x:x,'deflate':_zlib_decompress,'gzip':_gzip_decompress}
-jar=CookieJar()    
+jar=CookieJar()
+cache=Cache()
