@@ -18,7 +18,7 @@ import base64
 import email.utils
 import datetime
 import time
-
+import ctypes
 
 HTTPY_DIR=pathlib.Path.home()/'.cache/httpy'
 os.makedirs(HTTPY_DIR/'sites',exist_ok=True)
@@ -28,6 +28,8 @@ statuspattern=re.compile(br'(?P<version>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\
 context=ssl.create_default_context()
 schemes={'http':80,'https':443}
 class HTTPyError(Exception):
+    pass
+class ServerError(HTTPyError):
     pass
 class TooManyRedirectsError(HTTPyError):
     pass
@@ -535,9 +537,10 @@ def mkHeader(i):
         return d.strip()
     return ': '.join([str(h) for h in i])
 
-def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=None,headers={},auth={},history=[]):
+def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=None,timeout=32,headers={},auth={},history=[]):
     cf=cache[deslash(url)]
     print(cf)
+    socket.setdefaulttimeout(timeout)
     if cf and not cf.expired:
         return Response.cacheload(cf)
     defhdr={'Accept-Encoding':'gzip, deflate, identity','Host':makehost(host,port),'User-Agent':'httpy/'+version,'Connection':'keep-alive'}
@@ -554,10 +557,20 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
             defhdr['Cookie'].append(c.name+'='+c.value)
             
     defhdr.update(headers)
-    with socket.create_connection((host,port)) as sock:
+    try:
+        sock=socket.create_connection((host,port))
+    except socket.gaierror:
+        #Get errno using ctypes, check for  -2
+        errno=ctypes.c_int.in_dll(ctypes.pythonapi,"errno").value
+        if errno==2:
+            raise ServerError(
+            f"could not find server {host!r}"
+            )
+    
+    try:
         if scheme=='https':
             sock=context.wrap_socket(sock,server_hostname=host)
-
+        
         defhdr.update(headers)
         if cf:
             cf.add_header(defhdr)
@@ -618,12 +631,14 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
                 chunk=file.read(chunksize)
                 file.read(2)#discard CLRF
                 body+=chunk
+    finally:
+        sock.close()
     content_encoding=headers.get('content-encoding','identity')
     body=decode_content(body,content_encoding)
     return Response(status,headers,body,history,url,False)
         
 
-def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=20,content_type=None,history=None):
+def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=20,content_type=None,timeout=32,history=None):
     if history is None:
         history=[]
     if isinstance(url,bytes):
@@ -646,12 +661,12 @@ def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=
         port=schemes[scheme]
     if port is None:
         port=schemes[scheme]
-    resp=raw_request(host,port,'/'+path,scheme,url=url,history=history,auth=auth,data=data,method=method,headers=headers,content_type=content_type)
+    resp=raw_request(host,port,'/'+path,scheme,url=url,history=history,auth=auth,data=data,method=method,headers=headers,timeout=timeout,content_type=content_type)
     if 300<=resp.status<400:
         if len(history)==redirlimit:
             raise TooManyRedirectsError('too many redirects')
         if 'Location' in resp.headers:
-            return request(resp.headers['Location'],original=url,auth=auth,redirlimit=redirlimit,data=data,headers=headers,content_type=content_type,history=resp.history)
+            return request(resp.headers['Location'],original=url,auth=auth,redirlimit=redirlimit,timeout=timeout,data=data,headers=headers,content_type=content_type,history=resp.history)
     return resp
 encodings={'identity':lambda x:x,'deflate':_zlib_decompress,'gzip':_gzip_decompress}
 jar=CookieJar()
