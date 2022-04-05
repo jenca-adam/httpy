@@ -1,3 +1,12 @@
+#  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+#  APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+#  HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+#  OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+#  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+#  PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+#  IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+#  ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
 import socket
 import os
 import re
@@ -22,7 +31,7 @@ import ctypes
 
 HTTPY_DIR=pathlib.Path.home()/'.cache/httpy'
 os.makedirs(HTTPY_DIR/'sites',exist_ok=True)
-version='1.0.0'
+version='1.0.2'
 urlpattern=re.compile('^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$')
 statuspattern=re.compile(br'(?P<version>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)')
 context=ssl.create_default_context()
@@ -315,10 +324,14 @@ class CookieJar:
             return []
         data=[]
         for domain in self[host]:
+            print(domain)
             for cookie in domain.cookies:
+                print(cookie)
                 if not(cookie.secure and scheme=='http'):
                     if reslash(path).startswith(reslash(cookie.path)):
                         data.append(cookie)
+                        print('ok')
+                       
         return data
 
         
@@ -384,7 +397,7 @@ class Response:
         self.status=status.status
         self.reason=status.reason
         self.headers=headers
-        self.body=body
+        self.content=body
         self.url=reslash(url)
         self.fromcache=fromcache
         if not self.fromcache:
@@ -536,10 +549,11 @@ def mkHeader(i):
             d+=i[0]+': '+x+'\r\n'
         return d.strip()
     return ': '.join([str(h) for h in i])
-
-def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=None,timeout=32,headers={},auth={},history=[]):
+def _debugprint(debug,*args,**kwargs):
+    if debug:
+        print(*args,**kwargs)
+def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=None,timeout=32,headers={},auth={},history=[],debug=False):
     cf=cache[deslash(url)]
-    print(cf)
     socket.setdefaulttimeout(timeout)
     if cf and not cf.expired:
         return Response.cacheload(cf)
@@ -577,15 +591,16 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
         headers='\r\n'.join([mkHeader(i)for i in defhdr.items()])
         request_data=f"{method} {path} HTTP/1.1"+'\r\n'
         request_data+=headers
+        _debugprint(debug,"\nsend:\n"+request_data)
         request_data+='\r\n\r\n'
-        print(request_data)
         request_data=request_data.encode() 
         sock.send(request_data)
         sock.send(data)
         file=sock.makefile('b')
         statusline=file.readline()
         status=Status(statusline)
-        print(status.status)
+        _debugprint(debug,"\nresponse: ")
+        _debugprint(debug,statusline.decode())
         if status.status==304:
             return Response.cacheload(cf)
         headers=[]
@@ -593,6 +608,7 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
             line=file.readline()
             if line==b'\r\n':
                 break
+            _debugprint(debug,line.decode(),end='')
             headers.append(line)
         headers=Headers(headers)
         if 'set-cookie' in headers:
@@ -612,7 +628,7 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
             cl=int(headers.get('content-length',-1))
             if cl==-1:
                 warnings.warn('no content-length nor transfer-encoding, setting socket timeout')
-                sock.settimeout(1)
+                sock.settimeout(0.5)
                 while True:
                     try:
                         b=file.read(1)# recv 1 byte
@@ -638,7 +654,7 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
     return Response(status,headers,body,history,url,False)
         
 
-def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=20,content_type=None,timeout=32,history=None):
+def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=20,content_type=None,timeout=32,history=None,debug=False):
     if history is None:
         history=[]
     if isinstance(url,bytes):
@@ -661,13 +677,16 @@ def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=
         port=schemes[scheme]
     if port is None:
         port=schemes[scheme]
-    resp=raw_request(host,port,'/'+path,scheme,url=url,history=history,auth=auth,data=data,method=method,headers=headers,timeout=timeout,content_type=content_type)
+    resp=raw_request(host,port,'/'+path,scheme,url=url,history=history,auth=auth,data=data,method=method,headers=headers,timeout=timeout,content_type=content_type,debug=debug)
     if 300<=resp.status<400:
         if len(history)==redirlimit:
             raise TooManyRedirectsError('too many redirects')
         if 'Location' in resp.headers:
-            return request(resp.headers['Location'],original=url,auth=auth,redirlimit=redirlimit,timeout=timeout,data=data,headers=headers,content_type=content_type,history=resp.history)
+            return request(resp.headers['Location'],original=url,auth=auth,redirlimit=redirlimit,timeout=timeout,data=data,headers=headers,content_type=content_type,history=resp.history,debug=debug)
     return resp
 encodings={'identity':lambda x:x,'deflate':_zlib_decompress,'gzip':_gzip_decompress}
 jar=CookieJar()
 cache=Cache()
+__version__=version
+__author__='Adam Jenca'
+
