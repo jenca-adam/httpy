@@ -31,7 +31,7 @@ import ctypes
 
 HTTPY_DIR=pathlib.Path.home()/'.cache/httpy'
 os.makedirs(HTTPY_DIR/'sites',exist_ok=True)
-version='1.0.2'
+version='1.0.3'
 urlpattern=re.compile('^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$')
 statuspattern=re.compile(br'(?P<version>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)')
 context=ssl.create_default_context()
