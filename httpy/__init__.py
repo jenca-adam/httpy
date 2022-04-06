@@ -37,16 +37,21 @@ statuspattern=re.compile(br'(?P<version>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\
 context=ssl.create_default_context()
 schemes={'http':80,'https':443}
 class HTTPyError(Exception):
-    pass
+    '''A metaclass for all HTTPy Exceptions.'''
 class ServerError(HTTPyError):
-    pass
+    '''Raised if server is not found'''
 class TooManyRedirectsError(HTTPyError):
-    pass
+    '''Raised if server has responded with too many redirects (over redirection limit)'''
 def _mk2l(l):
     if len(l)==1:
         l.append(True)
     return l
 class Status:
+    '''
+    Creates HTTP status from string.
+
+    :param statstring: string to parse
+    '''
     def __init__(self,statstring):
         _,self.status,self.reason=statuspattern.search(statstring).groups()
         self.status=int(self.status)
@@ -81,6 +86,7 @@ def _binappendint(b):
     ba=int(b).to_bytes(math.ceil(b.bit_length()/8),'little')
     return bytes([len(ba)])+ba
 class ETag:
+    '''Class for HTTP ETags'''
     def __init__(self,s):
         self.weak=False
         if s.startswith('W/')or s.startswith('w/'):
@@ -94,11 +100,13 @@ class ETag:
         return f'"{self.etag}"'
 
     def add_header(self,headers):
+        '''Appends this ETag in If-None-Match header.'''
         if 'If-None-Match' in headers:
             headers['If-None-Match']+=', '+str(self)
         else:
             headers['If-None-Match']=str(self)
 class CacheControl():
+    '''Class for parsing Cache-Control HTTP Headers'''
     def __init__(self,directives):
         d= [_mk2l(x.split('=')) for x in directives.split(',')]
 
@@ -113,6 +121,7 @@ class CacheControl():
             self.max_age=0
             self.cache=True
 class CacheFile():
+    '''HTTPy cache file parser'''
     def __init__(self,f):
         self.src=f
         file=gzip.GzipFile(f,'rb')
@@ -146,6 +155,11 @@ class CacheFile():
     def __repr__(self):
         return f'<CacheFile {self.url!r}>'
     def add_header(self,headers):
+        '''
+        Adds If-None-Match and If-Modified-Since headers to request.
+
+        :param  headers: Headers to add into
+        '''
         if self.etag:
             self.etag.add_header(headers)
         if self.last_modified:
@@ -153,10 +167,14 @@ class CacheFile():
 
 
 class Cache():
+    '''
+    Cache Class
+    '''
     def __init__(self,d=HTTPY_DIR/'sites'):
         self.dir=d
         self.files=[CacheFile(os.path.join(d,i)) for i in os.listdir(d)]
     def updateCache(self):
+        '''Updates self.files according to /sites directory content and removes expired ones'''
         for file in self.files:
             if file.expired:
                 os.remove(os.path.join(self.dir,file.url.replace('://','\x01').replace('/','\x02')))
@@ -170,6 +188,9 @@ class Cache():
         return self[u] is not None
 
 class Cookie:
+    '''
+    Class for HTTP Cookies
+    '''
     def __init__(self,name,value,attributes,host):
         self.name,self.value=name,value
         self.attributes=CaseInsensitiveDict(attributes)
@@ -186,10 +207,12 @@ class Cookie:
         self.samesite=self.attributes.get('samesite','lax').lower()
     @property
     def expired(self):
+        '''Checks if Cookie expired'''
         if self.expires is None:
             return False
         return time.time()>=self.expires.timestamp()
     def to_binary(self):
+        '''Converts Cookie to binary representation'''
         data=_binappendstr(self.name+'='+self.value)
         if self.host==self._host:
             data+=b'\x00'
@@ -208,6 +231,7 @@ class Cookie:
         return data
     @classmethod
     def from_header(self,header,host):
+        '''Parses Cookie header'''
         n=header.split(';')
         f=n[0].split('=',1)
         if '' in n:
@@ -215,9 +239,11 @@ class Cookie:
         attrs=(_mk2l([a.strip() for a in i.split('=')]) for i in n[1:])
         return Cookie(*f,attrs,host)
     def as_header(self):
+        '''Returns Set-Cookie Header'''
         return self.name+'='+self.value
     @classmethod
     def from_binary(self,binary,host):
+        '''Makes Cookie from binary representation'''
         buffer=io.BytesIO(binary)
         kvpl=ord(buffer.read(1))
         k,v=buffer.read(kvpl).split(b'=',1)
@@ -243,6 +269,7 @@ class Cookie:
 
 
 class CookieDomain:
+    'Class for domain storing cookies'
     def __init__(self,content,jar):
         self.content=content
         bio=io.BytesIO(content)
@@ -255,6 +282,7 @@ class CookieDomain:
                 self.cookies.append( Cookie.from_binary(co,self.name))
 
     def as_binary(self):
+        '''Returns binary representation for domain'''
         self.check_expired()
         return _binappendstr(self.name)+b'\xfe'.join([cook.to_binary() for cook in self.cookies])
     def __delitem__(self,key):
@@ -264,15 +292,18 @@ class CookieDomain:
         
 
     def delete_cookie(self,key):
+        ''' Deletes cookie from domain '''
         del self[key]
         self.jar.update()
     def add_cookie(self,header):
+        '''Adds cookie from header to domain'''
         ck=Cookie.from_header(header,self.name)
         self.delete_cookie(ck.name)
         self.cookies.append(ck)
         self.check_expired()
         self.jar.update()
     def check_expired(self):
+        '''Checks for expired cookies and deletes them'''
         new_cookies=[]
         for c in self.cookies:
             if not c.expired:
@@ -287,6 +318,7 @@ class CookieDomain:
     def __repr__(self):
         return f'<CookieDomain {self.name!r}>'
 class CookieJar:
+    '''Class for cookie jar'''
     def __init__(self,jarfile=HTTPY_DIR/'CookieJar'):
         try:
             self.jarfile=open(jarfile,'rb')
@@ -313,13 +345,16 @@ class CookieJar:
                 doms.append(dom)
         return doms
     def add_domain(self,name):
+        '''Adds domain to jar'''
         self.domains.append(CookieDomain(_binappendstr(name),self))
     def update(self):
+        '''Updates jar file with domains'''
         with open(self.jarfile.name,'wb') as f:
             f.write(b'\xff'.join(dom.as_binary() for dom in self.domains))
             f.close()
 
     def get_cookies(self,host,scheme,path):
+        '''Gets cookies for request'''
         if host not in self:
             return []
         data=[]
@@ -336,6 +371,7 @@ class CookieJar:
 
         
 class File(io.IOBase):
+    '''Class for file used to upload files'''
     def __init__(self,buffer,filename,content_type=None):
         if content_type is None:
             content_type=force_string(mimetypes.guess_type(os.path.split(filename)[1])[0])
@@ -368,6 +404,7 @@ class File(io.IOBase):
         reader=open(file,'rb')
         return File(reader.read(),file)
 class Headers():
+    '''Class for Headers'''
     def __init__(self,h):
         self.headers=([a.split(b': ',1)[0].lower().decode(),a.split(b': ',1)[1].decode().strip()] for a in h)
         self.headers=mkdict(self.headers)
@@ -393,11 +430,31 @@ class Headers():
         raise NotImplementedError
 
 class Response:
-    def __init__(self,status,headers,body,history,url,fromcache):
+    '''
+    Class for HTTP Response.
+
+    :param status: status returned by server
+    :type status: Status
+    :ivar status: status returned by server
+    :param headers: headers attached to the document
+    :type headers: Headers
+    :ivar headers: headers attached to the document
+    :param content: Document content
+    :type content: bytes
+    :ivar content: Document content
+    :param history: response history
+    :type history: list
+    :ivar history: response history
+    :param fromcache: Indicates if response was loaded from cache
+    :type fromcache: bool
+    :ivar fromcache: Indicates if response was loaded from cache
+    :ivar charset: Document charset
+    '''
+    def __init__(self,status,headers,content,history,url,fromcache):
         self.status=status.status
         self.reason=status.reason
         self.headers=headers
-        self.content=body
+        self.content=content
         self.url=reslash(url)
         self.fromcache=fromcache
         if not self.fromcache:
@@ -405,15 +462,21 @@ class Response:
 
         self.charset=determine_charset(headers)
         if self.charset is None:
-            self.charset=chardet.detect(body)['encoding']
+            self.charset=chardet.detect(content)['encoding']
         self.history=history
         self.history.append(self)
     @classmethod
     def cacheload(self,cf):
+        '''Loads Response from cache'''
         return Response(cf.status,cf.headers,cf.content,[],cf.url,True) 
     def __repr__(self):
         return f'<Response [{self.status} {self.reason}] ({self.url})>'
 def cacheWrite(response):
+    '''
+    Writes response to cache
+
+    :param response: response to save
+    :type response: Response'''
     data=b''
     data+=_binappendint(round(time.time()))
     data+=_binappendstr(f'{response.status} {response.reason}')
@@ -423,6 +486,7 @@ def cacheWrite(response):
 
     open(HTTPY_DIR/'sites'/response.url.replace('://','\x01').replace('/','\x02'),'wb').write(gzip.compress(data))
 def mkdict(kvp):
+    '''Makes dict from key/value pairs'''
     d={}
     for k,v in kvp:
         k=k.lower()
@@ -435,6 +499,7 @@ def mkdict(kvp):
             d[k]=v
     return d
 def urlencode(data):
+    '''As urllib.parse.urlencode'''
     return b'&'.join(b'='.join(force_bytes(i) for i in x) for x in data.items())
 def _gzip_decompress(data):
     return gzip.GzipFile(fileobj=io.BytesIO(data)).read()
@@ -443,6 +508,7 @@ def _zlib_decompress(data):
 def _generate_boundary():
     return b'--'+''.join(random.choices(string.ascii_letters+string.digits,k=10)).encode()+b'\r\n'
 def force_string(anything):
+    '''Converts string or bytes to string'''
     if isinstance(anything,str):
         return anything
     elif isinstance(anything,bytes):
@@ -450,6 +516,7 @@ def force_string(anything):
     else:
         return str(anything)
 def force_bytes(anything):
+    '''Converts bytes or string to bytes'''
     if isinstance(anything,bytes):
         return anything
     elif isinstance(anything,str):
@@ -460,6 +527,7 @@ def force_bytes(anything):
         return bytes(anything)
 
 def get_content_type(data):
+    '''Used to automatically get request content type'''
     if isinstance(data,bytes):
         return 'application/octet-stream'
     elif isinstance(data,str):
@@ -471,6 +539,7 @@ def get_content_type(data):
         return 'application/x-www-form-urlencoded'
     raise TypeError("could not get content type(can encode only bytes,str and dict). Please specify raw data and set content_type argument")
 def multipart(form,boundary=_generate_boundary()):
+    '''Builds multipart/form-data from form'''
     built=b''
     for i in form.items():
         built+=boundary
@@ -499,11 +568,16 @@ def _encode_form_data(data,content_type=None):
         return urlencode(data),content_type
     elif content_type == 'multipart/form-data':
         return multipart(data)
+    elif content_type == 'application/json':
+        return json.dumps(data).encode(),content_type
+    return force_bytes(data)
 def encode_form_data(data,content_type=None):
+    '''Encodes form data according to content type'''
     encoded,content_type=_encode_form_data(data,content_type)
     return force_bytes(encoded),{'Content-Type':content_type,'Content-Length':len(encoded)}
 
 def determine_charset(headers):
+    '''Gets charset from headers'''
     if 'Content-Type' in headers:
         charset=headers['Content-Type'].split(';')[-1].strip()
         if not charset.startswith('charset'):
@@ -511,38 +585,45 @@ def determine_charset(headers):
         return charset.split('=')[-1].strip()
     return None
 def chain_functions(funs):
+    '''Chains functions . Called by get_encoding_chain()'''
     def chained(r):
         for fun in funs:
             r=fun(r)
         return r
     return chained
 def get_encoding_chain(encoding):
+    '''Gets decoding chain from Content-Encoding'''
     encds=encoding.split(',')
     return chain_functions(
             encodings[enc.strip()] for enc in encds
             )
 
 def decode_content(content,encoding):
+    '''Decodes content with get_encoding_chain()'''
     try:
         return get_encoding_chain(encoding)(content)
     except:
         return content
 def makehost(host,port):
+    '''Creates hostname from host and port'''
 
     if int(port) in [443,80]:
         return host
     return host+':'+str(port)
 def reslash(url):
+    '''Adds trailing slash to the end of URL'''
     url=force_string(url)
     if url.endswith('/'):
         return url
     return url+'/'
 def deslash(url):
+    '''Removes trailing slash from the end of URL'''
     url=force_string(url)
     if url.endswith('/'):
         return url[:-1]
     return url
 def mkHeader(i):
+    '''Makes header from key/value pair'''
     if isinstance(i[1],list):
         d=''
         for x in i[1]:
@@ -552,7 +633,7 @@ def mkHeader(i):
 def _debugprint(debug,*args,**kwargs):
     if debug:
         print(*args,**kwargs)
-def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=None,timeout=32,headers={},auth={},history=[],debug=False):
+def _raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=None,timeout=32,headers={},auth={},history=[],debug=False):
     cf=cache[deslash(url)]
     socket.setdefaulttimeout(timeout)
     if cf and not cf.expired:
@@ -654,7 +735,28 @@ def raw_request(host,port,path,scheme,url='',method='GET',data=b'',content_type=
     return Response(status,headers,body,history,url,False)
         
 
-def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=20,content_type=None,timeout=32,history=None,debug=False):
+def request(url,method='GET',headers={},body=b'',auth={},redirlimit=20,content_type=None,timeout=30,history=None,debug=False):
+    '''
+    Performs request.
+
+    :param url: url to request
+    :type url: ``str``
+    :param method: method to use, defaults to ``"GET"``
+    :type method: ``str``
+    :param headers: headers to add to the request, defaults to ``{}``
+    :type headers: ``dict``
+    :param body: request body, can be ``bytes`` , ``str`` or  ``dict``, defaults to ``b''``
+    :param auth: credentials to use (``{"username":"password"}``), defaults to ``{}``
+    :type auth: ``dict``
+    :param redirlimit: redirect limit . If number of redirects has reached ``redirlimit``, ``TooManyRedirectsError`` will be raised. Defaults to ``20``.
+    :type redirlimit: ``int``
+    :param content_type: Content type of request body, defaults to ``None``
+    :param timeout: Request timeout, defaults to ``30``
+    :type timeout: ``int``
+    :param history: Request history, defaults to ``None``
+    :param debug: Use debug mode, defaults to ``False``
+    :type debug: ``bool``
+    '''
     if history is None:
         history=[]
     if isinstance(url,bytes):
@@ -677,12 +779,12 @@ def request(url,method='GET',original='',headers={},data=b'',auth={},redirlimit=
         port=schemes[scheme]
     if port is None:
         port=schemes[scheme]
-    resp=raw_request(host,port,'/'+path,scheme,url=url,history=history,auth=auth,data=data,method=method,headers=headers,timeout=timeout,content_type=content_type,debug=debug)
+    resp=_raw_request(host,port,'/'+path,scheme,url=url,history=history,auth=auth,data=body,method=method,headers=headers,timeout=timeout,content_type=content_type,debug=debug)
     if 300<=resp.status<400:
         if len(history)==redirlimit:
             raise TooManyRedirectsError('too many redirects')
         if 'Location' in resp.headers:
-            return request(resp.headers['Location'],original=url,auth=auth,redirlimit=redirlimit,timeout=timeout,data=data,headers=headers,content_type=content_type,history=resp.history,debug=debug)
+            return request(resp.headers['Location'],auth=auth,redirlimit=redirlimit,timeout=timeout,body=body,headers=headers,content_type=content_type,history=resp.history,debug=debug)
     return resp
 encodings={'identity':lambda x:x,'deflate':_zlib_decompress,'gzip':_gzip_decompress}
 jar=CookieJar()
