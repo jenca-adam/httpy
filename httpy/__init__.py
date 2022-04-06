@@ -419,7 +419,7 @@ def cacheWrite(response):
     data+=_binappendstr(f'{response.status} {response.reason}')
     data+='\r'.join([mkHeader(i)for i in response.headers.headers.items()]).encode()
     data+=b'\x00'
-    data+=response.body
+    data+=response.content
 
     open(HTTPY_DIR/'sites'/response.url.replace('://','\x01').replace('/','\x02'),'wb').write(gzip.compress(data))
 def mkdict(kvp):
