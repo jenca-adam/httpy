@@ -1,9 +1,9 @@
-import setuptools
+'''setup.py module'''
 import sys
-
+import setuptools
 
 class VersionError(Exception):
-    pass
+    '''Raised if vrong wersion'''
 
 
 if sys.hexversion < 0x3060000:
@@ -28,7 +28,7 @@ A lightweight socket-based library to create HTTP(s) connections.
 ## License
     GPLv3
 Docs at <https://httpy.readthedocs.io/>""",
-    version="1.0.3",
+    version="1.0.4",
     long_description_content_type="text/markdown",
     packages=["httpy"],
     author_email="jenca.a@gjh.sk",
