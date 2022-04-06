@@ -36,7 +36,7 @@ import ctypes
 
 HTTPY_DIR = pathlib.Path.home() / ".cache/httpy"
 os.makedirs(HTTPY_DIR / "sites", exist_ok=True)
-VERSION = "1.0.3"
+VERSION = "1.0.6"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -578,7 +578,7 @@ class Response:
         :param cache_file: CacheFile to load from
         :type cache_file: CacheFile
         """
-        return Response(cache_file.status, cache_file.headers, cache_file.content, [], cache_file.url, True)
+        return Response(cache_file.status, cache_file.headers, cache_file.body, [], cache_file.url, True)
 
     def __repr__(self):
         return f"<Response [{self.status} {self.reason}] ({self.url})>"
