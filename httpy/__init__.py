@@ -948,7 +948,6 @@ def request(
     :type debug: ``bool``
     """
     history = [] if history is None else history
-    url = force_bytes(url)
     result = URLPATTERN.search(url)
     if result is None:
         raise ValueError("Invalid URL")
