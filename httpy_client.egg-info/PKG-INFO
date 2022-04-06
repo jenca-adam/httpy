@@ -1,0 +1,37 @@
+Metadata-Version: 2.1
+Name: httpy-client
+Version: 1.0.3
+Summary: Lightweight socket-based HTTP(s) client.
+Home-page: https://github.com/jenca-adam/httpy
+Author: Adam Jenca
+Author-email: jenca.a@gjh.sk
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Environment :: Web Environment
+Requires-Python: >=3.6.0
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+
+A lightweight socket-based library to create HTTP(s) connections.
+## Features
+   * Cookies support
+   * Caching support
+   * Easy debugging
+   * HTTP authentication
+   * Form support
+   * No requirements
+## License
+    GPLv3
+Docs at <https://httpy.readthedocs.io/>
+
