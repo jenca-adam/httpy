@@ -4,7 +4,7 @@ A Python lightweight socket-based library to create HTTP(s) connections.
    * Cookies support
    * Caching support
    * Easy debugging
-   * HTTP authentication
+   * HTTP Basic and Digest authentication
    * Form support
 ## Requirements
    * Python>=3.6

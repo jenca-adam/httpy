@@ -6,9 +6,9 @@
 #  PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
 #  IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
 #  ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
-'''
+"""
 HTTPy is a lightweight socket-based HTTP client.
-'''
+"""
 import socket
 import os
 import re
@@ -17,11 +17,7 @@ import io
 import warnings
 import gzip
 import zlib
-
-try:
-    import chardet
-except ImportError:
-    chardet = None
+import functools
 import json
 import random
 import string
@@ -33,10 +29,18 @@ import email.utils
 import datetime
 import time
 import ctypes
+import hashlib
+import builtins
+import inspect
+import sys
+try:
+    import chardet
+except ImportError:
+    chardet = None
 
 HTTPY_DIR = pathlib.Path.home() / ".cache/httpy"
 os.makedirs(HTTPY_DIR / "sites", exist_ok=True)
-VERSION = "1.0.6"
+VERSION = "1.1.0"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -49,6 +53,10 @@ schemes = {"http": 80, "https": 443}
 
 class HTTPyError(Exception):
     """A metaclass for all HTTPy Exceptions."""
+
+
+class AuthError(Exception):
+    """Error in authentication"""
 
 
 class ServerError(HTTPyError):
@@ -77,7 +85,41 @@ class Status:
         self.status = int(self.status)
         self.reason = self.reason.decode()
 
+class _Debugger:
+    def __init__(self,do_debug):
+        self.debug=do_debug
+    def frame_class_name(self,fr):
+        args, _, _, value_dict = inspect.getargvalues(fr)
+        if len(args) and args[0] == 'self':
+            instance = value_dict.get('self', None)
+            if instance:
+              return getattr(getattr(instance, '__class__', None),'__name__',None)
+        return None
+    def debugging_method(prefix,suffix):
+        def decorated(self,data):
+            if self.debug:
+                fr=inspect.currentframe().f_back
+                class_name=self.frame_class_name(fr)
 
+                sys.stdout.write(prefix)
+                if class_name:
+                    sys.stdout.write(class_name)
+                sys.stdout.write('[')
+                sys.stdout.write(fr.f_code.co_name)
+                sys.stdout.write(']')
+                sys.stdout.write('(')
+                sys.stdout.write(str(inspect.getframeinfo(fr).lineno))
+                sys.stdout.write(')')
+                sys.stdout.write(': ')
+                sys.stdout.write(data)
+                sys.stdout.write(suffix)
+                sys.stdout.write('\r\n')
+        return decorated
+    info=debugging_method('\033[94m[INFO]','\033[0m')
+    ok=debugging_method('\033[92m[OK]','\033[0m')
+    warn=debugging_method('\033[93m[WARN]','\033[0m')
+            
+                    
 class CaseInsensitiveDict(dict):
     def __init__(self, data):
         self.original = {force_string(k).lower(): v for k, v in dict(data).items()}
@@ -436,13 +478,10 @@ class CookieJar:
             return []
         data = []
         for domain in self[host]:
-            print(domain)
             for cookie in domain.cookies:
-                print(cookie)
                 if not (cookie.secure and scheme == "http"):
                     if reslash(path).startswith(reslash(cookie.path)):
                         data.append(cookie)
-                        print("ok")
 
         return data
 
@@ -451,7 +490,7 @@ class File(io.IOBase):
     """Class  used to upload files"""
 
     def __init__(self, buffer, filename, content_type=None):
-        self.parent=super().__init__()
+        self.parent = super().__init__()
         if content_type is None:
             content_type = force_string(
                 mimetypes.guess_type(os.path.split(filename)[1])[0]
@@ -493,7 +532,7 @@ class File(io.IOBase):
         return File(reader.read(), file)
 
 
-class Headers:
+class Headers(CaseInsensitiveDict):
     """Class for HTTP headers"""
 
     def __init__(self, h):
@@ -505,28 +544,7 @@ class Headers:
             for a in h
         )
         self.headers = mkdict(self.headers)
-
-    def __getitem__(self, item):
-        if isinstance(item, bytes):
-            item = item.decode()
-        return self.headers[item.lower()]
-
-    def __contains__(self, item):
-        if isinstance(item, bytes):
-            item = item.decode()
-        item = item.lower()
-        return item in self.headers
-
-    def get(self, key, default=None):
-        if isinstance(key, bytes):
-            key = key.decode()
-        key = key.lower()
-        if key in self:
-            return self[key]
-        return default
-
-    def __iter__(self):
-        return iter(self.headers)
+        super().__init__(self.headers)
 
     def __setitem__(self, item, value):
         raise NotImplementedError
@@ -552,13 +570,17 @@ class Response:
     :type fromcache: bool
     :ivar fromcache: Indicates whether or not was response loaded from cache
     :ivar charset: Document charset
+    :param original_content: Document content before any Content-Encoding was applied.
+    :type original_content: bytes
     """
 
-    def __init__(self, status, headers, content, history, url, fromcache):
+    def __init__(self, status, headers, content, history, url, fromcache, original_content):
         self.status = status.status
         self.reason = status.reason
         self.headers = headers
         self.content = content
+        self._original=original_content
+
         self.url = reslash(url)
         self.fromcache = fromcache
         if not self.fromcache:
@@ -578,12 +600,149 @@ class Response:
         :param cache_file: CacheFile to load from
         :type cache_file: CacheFile
         """
-        return Response(cache_file.status, cache_file.headers, cache_file.body, [], cache_file.url, True)
+        return Response(
+            cache_file.status,
+            cache_file.headers,
+            cache_file.body,
+            [],
+            cache_file.url,
+            True,
+        )
 
     def __repr__(self):
         return f"<Response [{self.status} {self.reason}] ({self.url})>"
 
 
+class WWW_Authenticate:
+    """Class for parsing WWW-Authenticate headers"""
+
+    def __init__(self, header):
+        self.header = header
+        debugger.info("parsing headers")
+        self.scheme, self.raw_params = header.split(" ", 1)
+        dbls = self.raw_params.split("=")
+        real = []
+        o = []
+        for i in dbls:
+            c = i.rsplit(",", 1)
+            if len(c) == 1:
+                o.append(i.strip().replace('"',''))
+                if len(o) == 2:
+                    real.append(o)
+            else:
+                if len(o) == 1:
+                    o.append(c[0].strip().replace('"',''))
+                    real.append(o)
+                    o = [c[1].strip()]
+                else:
+                    o.append(c[1].strip().replace('"',''))
+        self.params = CaseInsensitiveDict(real)
+
+    def encode_password(self, user, password, path='/', method='GET',original=b'',decoded=b''):
+        if self.scheme == "Basic":
+            return self.basic_auth(user, password)
+        if self.scheme == "Digest":
+            return self.digest_auth(user, password,path,method,original)
+        raise AuthError(f"unknown authentication scheme : {self.scheme}")
+    def digest_auth(self, user, password, path, method, original):
+        debugger.info("digest auth")
+        alg_name=self.params.get('algorithm','md5').lower()# .lower() is important here!
+        debugger.info(f"algorithm is {alg_name}")
+        alg_t=alg_name.split('-')
+        if len(alg_t)==1:
+            sess=''
+            alg_name=alg_t[0]
+        else:
+            sess=alg_t[1]
+            alg_name=alg_t[0]
+        sess= sess == 'sess'
+
+        if alg_name not in ALGORITHMS:
+            raise DigestAuthError(f"Unknown algorithm :{alg_name!r}")
+        alg=ALGORITHMS[alg_name]
+        realm= self.params.get('realm',None)
+        if realm is None:
+            raise DigestAuthError('no realm specified')
+        debugger.info(f"realm is {realm}")
+        nonce = self.params.get('nonce',None)
+        if nonce is None:
+            raise DigestAuthError('no nonce specified')
+        debugger.info(f"nonce is {nonce}")
+        opaque = self.params.get('opaque',None)
+        if opaque is None:
+            raise DigestAuthError('no opaque specified')
+        debugger.info(f"opaque is {opaque}")
+
+        nc=nonce_counter[nonce]
+        debugger.info(f"nc is {nc}")
+        cnonce=generate_cnonce()
+        debugger.info(f"cnonce is {cnonce}")
+        qop= self.params.get('qop',None)
+        
+        if qop is not None:
+            qop=[i.replace(' ','') for i in qop.split(',')][0]
+        debugger.info(f"qop is {qop}")
+        debugger.ok("All necessary information got")
+        debugger.info(f"creating HA1")
+        ha1_data=f'{user}:{realm}:{password}'
+        if sess:
+            ha1_data=f'{alg(h1_data)}:{nonce}:{cnonce}'
+        debugger.info(f"HA1 data  is {ha1_data}")
+        debugger.info(f"Hashing HA1 data using {alg_name}")
+        ha1=alg(ha1_data)
+        debugger.ok(f"HA1 is {ha1}")
+        debugger.info(f"Creating HA2")
+        ha2_data=f'{method}:{path}'
+        if qop=='auth-int':
+            ha2_data=f'{ha2_data}:{alg(original)}'
+        debugger.info(f"HA2 data is {ha2_data}")
+        debugger.info(f"Hashing HA2 data using {alg_name}")
+
+        ha2=alg(ha2_data)
+        debugger.ok(f"HA2 is {ha2}")
+        debugger.info("Building response")
+        if qop is None:
+            debugger.info("No qop ")
+            response_data=f'{ha1}:{cnonce}:{ha2}'
+        else:
+            response_data=f'{ha1}:{nonce}:{nc}:{cnonce}:{qop}:{ha2}'
+        debugger.info(f"Response data is {response_data}")
+        debugger.info(f"Hashing response data using {alg_name}")
+        response = alg(response_data)
+        debugger.ok(f"Response built, response is {response}")
+        debugger.info("Building headers")
+        auth_headers=f'Digest username="{user}", realm="{realm}", nonce="{nonce}", uri="{path}", '
+        if qop is not None:
+            auth_headers=f'{auth_headers}qop="{qop}", '
+        auth_headers=f'{auth_headers}nc={nc}, cnonce="{cnonce}", response="{response}", opaque="{opaque}"'
+        debugger.ok("Headers built")
+        return auth_headers
+    def basic_auth(self, user, password):
+        debugger.info("basic auth")
+        string = force_bytes(user) + b":" + force_bytes(password)
+        return b"Basic " + base64.b64encode(string)
+class NonceCounter:
+    def __init__(self):
+        self.nonces={}
+    def __getitem__(self,item):
+        
+        if item not in self.nonces:
+            debugger.info("Adding new nonce to nonce_counter")
+            self.nonces[item]=0
+        debugger.info("Incrementing nonce_counter")
+        self.nonces[item]+=1
+        return format(self.nonces[item],'08x')
+def hashing_function(function_name):
+    hashlib_function=getattr(hashlib,function_name)
+    
+    @functools.wraps(function_name)
+    def decorated(string):
+        to_hash=force_bytes(string)
+        return hashlib_function(to_hash).hexdigest()
+    decorated.__qualname__=function_name
+    return decorated
+md5,sha256,sha512 = (hashing_function(i) for i in ('md5','sha256','sha512'))
+ALGORITHMS = {'md5':md5,'sha256':sha256,'sha512':sha512}
 def cacheWrite(response):
     """
     Writes response to cache
@@ -696,20 +855,27 @@ def multipart(form, boundary=_generate_boundary()):
 
 def _encode_form_data(data, content_type=None):
     if content_type is None:
+        debugger.info("no content_type specified, getting automatically")
         content_type = get_content_type(data)
     if content_type in ("text/plain", "application/octet-stream"):
+        debugger.info("content_type text/plain or application/octet-stream")
         return force_bytes(data), content_type
     elif content_type == "application/x-www-form-urlencoded":
+        debugger.info("content_type urlencoded")
         return urlencode(data), content_type
     elif content_type == "multipart/form-data":
+        debugger.info("content_type multipart")
         return multipart(data)
     elif content_type == "application/json":
+        debugger.info("content_type json")
         return json.dumps(data).encode(), content_type
-    return force_bytes(data)
+    debugger.warn("unknown content_type")
+    return force_bytes(data),content_type
 
 
 def encode_form_data(data, content_type=None):
     """Encodes form data according to content type"""
+    
     encoded, content_type = _encode_form_data(data, content_type)
     return force_bytes(encoded), {
         "Content-Type": content_type,
@@ -775,7 +941,9 @@ def deslash(url):
         return url[:-1]
     return url
 
-
+def generate_cnonce(length=16):
+    debugger.info("generating cnonce")
+    return hex(random.randrange(16**length))[2:]
 def mk_header(key_value_pair):
     """Makes header from key/value pair"""
     if isinstance(key_value_pair[1], list):
@@ -783,7 +951,7 @@ def mk_header(key_value_pair):
         for key_value in key_value_pair[1]:
             header += key_value_pair[0] + ": " + key_value + "\r\n"
         return header.strip()
-    return ": ".join([str(key_value) for key_value in key_value_pair])
+    return ": ".join([force_string(key_value) for key_value in key_value_pair])
 
 
 def _debugprint(debug, *args, **kwargs):
@@ -805,11 +973,17 @@ def _raw_request(
     auth={},
     history=[],
     debug=False,
+    last_status=-1,
 ):
+    debugger.info("_raw_request() called.")
+    debugger.info("Accessing cache.")
     cf = cache[deslash(url)]
     socket.setdefaulttimeout(timeout)
     if cf and not cf.expired:
+        debugger.info("Not expired data in cache, loading from cache")
         return Response.cacheload(cf)
+    else:
+        debugger.info("No data in cache.")
     defhdr = {
         "Accept-Encoding": "gzip, deflate, identity",
         "Host": makehost(host, port),
@@ -817,13 +991,19 @@ def _raw_request(
         "Connection": "keep-alive",
     }
     if data:
+        debugger.info("Adding form data")
         data, cth = encode_form_data(data, content_type)
         defhdr.update(cth)
-    if auth:
-        new_auth = next(iter(auth.items()))
-        defhdr["Authorization"] = b"Basic " + base64.b64encode(
-            ":".join(new_auth).encode()
-        )
+    if auth and last_status == 401:
+        debugger.info("adding authentication")
+        last_response = history[-1]
+        if "www-authenticate" not in last_response.headers:
+            raise AuthError(
+                "Server responded with 401 Unauthorized without WWW-Authenticate header."
+            )
+        wau = WWW_Authenticate(last_response.headers["www-authenticate"])
+
+        defhdr["Authorization"] = wau.encode_password(*auth, path,method ,last_response._original,last_response.content)
     cookies = jar.get_cookies(makehost(host, port), scheme, path)
     if cookies:
         defhdr["Cookie"] = []
@@ -910,8 +1090,9 @@ def _raw_request(
     finally:
         sock.close()
     content_encoding = headers.get("content-encoding", "identity")
-    body = decode_content(body, content_encoding)
-    return Response(status, headers, body, history, url, False)
+    decoded_body = decode_content(body, content_encoding)
+
+    return Response(status, headers, decoded_body, history, url, body,False)
 
 
 def request(
@@ -919,7 +1100,7 @@ def request(
     method="GET",
     headers={},
     body=b"",
-    auth={},
+    auth=(),
     redirlimit=20,
     content_type=None,
     timeout=30,
@@ -937,7 +1118,7 @@ def request(
     :type headers: ``dict``
     :param body: request body, can be ``bytes`` , ``str`` or  ``dict``, defaults to ``b''``
     :param auth: credentials to use (``{"username":"password"}``), defaults to ``{}``
-    :type auth: ``dict``
+    :type auth: ``tuple``
     :param redirlimit: redirect limit . If number of redirects has reached ``redirlimit``, ``TooManyRedirectsError`` will be raised. Defaults to ``20``.
     :type redirlimit: ``int``
     :param content_type: content type of request body, defaults to ``None``
@@ -947,6 +1128,10 @@ def request(
     :param debug: whether or not shall debug mode be used , defaults to ``False``
     :type debug: ``bool``
     """
+    global debugger
+    debugger=_Debugger(debug)
+    builtins.debugger=_Debugger(debug)
+    debugger.info("request() called.")
     history = [] if history is None else history
     result = URLPATTERN.search(url)
     if result is None:
@@ -966,6 +1151,11 @@ def request(
         port = schemes[scheme]
     if port is None:
         port = schemes[scheme]
+
+    if history:
+        last_status = history[-1].status
+    else:
+        last_status = -1
     resp = _raw_request(
         host,
         port,
@@ -980,6 +1170,7 @@ def request(
         timeout=timeout,
         content_type=content_type,
         debug=debug,
+        last_status=last_status,
     )
     if 300 <= resp.status < 400:
         if len(history) == redirlimit:
@@ -996,6 +1187,21 @@ def request(
                 history=resp.history,
                 debug=debug,
             )
+    if resp.status == 401:
+        if last_status == 401:
+            return resp
+        return request(
+            url,
+            auth=auth,
+            redirlimit=redirlimit,
+            timeout=timeout,
+            body=body,
+            headers=headers,
+            content_type=content_type,
+            history=resp.history,
+            debug=debug,
+        )
+
     return resp
 
 
@@ -1006,5 +1212,7 @@ encodings = {
 }
 jar = CookieJar()
 cache = Cache()
+nonce_counter = NonceCounter()
+debugger=_Debugger(False)
 __version__ = VERSION
 __author__ = "Adam Jenca"
