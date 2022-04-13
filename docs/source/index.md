@@ -6,6 +6,7 @@ A Python lightweight socket-based library to create HTTP(s) connections.
    * Easy debugging
    * HTTP Basic and Digest authentication
    * Form support
+   * Keep-Alive and connection pooling support
 ## Requirements
    * Python>=3.6
 ## Usage
@@ -69,28 +70,34 @@ Just set `debug` to `True` :
 ```{code-block} python
 >>> import httpy
 >>> httpy.request("https://example.com/",debug=True)
+[INFO][request](1266): request() called.
+[INFO][_raw_request](1112): _raw_request() called.
+[INFO][_raw_request](1113): Accessing cache.
+[INFO][_raw_request](1120): No data in cache.
+[INFO][_raw_request](1151): Establishing connection
+[INFO]Connection[__init__](778): Created new Connection upon <socket.socket fd=3, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('192.168.100.88', 58998), raddr=('93.184.216.34', 443)>
 
 send:
 GET / HTTP/1.1
 Accept-Encoding: gzip, deflate, identity
-Host: example.com
-User-Agent: httpy/1.0.2
+Host: www.example.com
+User-Agent: httpy/1.1.0
 Connection: keep-alive
 
 response: 
 HTTP/1.1 200 OK
 
 Content-Encoding: gzip
-Age: 587058
+Age: 438765
 Cache-Control: max-age=604800
 Content-Type: text/html; charset=UTF-8
-Date: Wed, 06 Apr 2022 11:01:09 GMT
-Etag: "3147526947+ident+gzip"
-Expires: Wed, 13 Apr 2022 11:01:09 GMT
+Date: Wed, 13 Apr 2022 12:59:07 GMT
+Etag: "3147526947+gzip"
+Expires: Wed, 20 Apr 2022 12:59:07 GMT
 Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT
-Server: ECS (dcb/7F18)
+Server: ECS (dcb/7F37)
 Vary: Accept-Encoding
 X-Cache: HIT
 Content-Length: 648
-<Response [200 OK] (https://example.com/)>
+<Response [200 OK] (https://www.example.com/)>
 ```

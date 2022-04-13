@@ -33,6 +33,7 @@ import hashlib
 import builtins
 import inspect
 import sys
+
 try:
     import chardet
 except ImportError:
@@ -40,13 +41,11 @@ except ImportError:
 
 HTTPY_DIR = pathlib.Path.home() / ".cache/httpy"
 os.makedirs(HTTPY_DIR / "sites", exist_ok=True)
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
-STATUSPATTERN = re.compile(
-    rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
-)
+STATUSPATTERN = re.compile(rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)")
 context = ssl.create_default_context()
 schemes = {"http": 80, "https": 443}
 
@@ -55,8 +54,20 @@ class HTTPyError(Exception):
     """A metaclass for all HTTPy Exceptions."""
 
 
-class AuthError(Exception):
+class AuthError(HTTPyError):
     """Error in authentication"""
+
+
+class ConnectionClosedError(HTTPyError, ConnectionError):
+    """Connection Closed"""
+
+
+class ConnectionLimitError(HTTPyError, ConnectionError):
+    """Connection Limit reached"""
+
+
+class ConnectionExpiredError(HTTPyError, ConnectionError, TimeoutError):
+    """Connection Expired"""
 
 
 class ServerError(HTTPyError):
@@ -85,42 +96,51 @@ class Status:
         self.status = int(self.status)
         self.reason = self.reason.decode()
 
-class _Debugger:
-    def __init__(self,do_debug):
-        self.debug=do_debug
-    def frame_class_name(self,fr):
-        args, _, _, value_dict = inspect.getargvalues(fr)
-        if len(args) and args[0] == 'self':
-            instance = value_dict.get('self', None)
-            if instance:
-              return getattr(getattr(instance, '__class__', None),'__name__',None)
-        return None
-    def debugging_method(prefix,suffix):
-        def decorated(self,data):
-            if self.debug:
-                fr=inspect.currentframe().f_back
-                class_name=self.frame_class_name(fr)
 
-                sys.stdout.write(prefix)
+class _Debugger:
+    """
+    Debugger
+    """
+    def __init__(self, do_debug):
+        self.debug = do_debug
+
+    def frame_class_name(self, fr):
+        args, _, _, value_dict = inspect.getargvalues(fr)
+        if len(args) and args[0] == "self":
+            instance = value_dict.get("self", None)
+            if instance:
+                return getattr(getattr(instance, "__class__", None), "__name__", None)
+        return None
+
+    def debugging_method(self, suffix):
+        def decorated(a, data):
+            if a.debug:
+                fr = inspect.currentframe().f_back
+                class_name = a.frame_class_name(fr)
+
+                sys.stdout.write(self)
                 if class_name:
                     sys.stdout.write(class_name)
-                sys.stdout.write('[')
+                sys.stdout.write("[")
                 sys.stdout.write(fr.f_code.co_name)
-                sys.stdout.write(']')
-                sys.stdout.write('(')
+                sys.stdout.write("]")
+                sys.stdout.write("(")
                 sys.stdout.write(str(inspect.getframeinfo(fr).lineno))
-                sys.stdout.write(')')
-                sys.stdout.write(': ')
+                sys.stdout.write(")")
+                sys.stdout.write(": ")
                 sys.stdout.write(data)
                 sys.stdout.write(suffix)
-                sys.stdout.write('\r\n')
+                sys.stdout.write("\r\n")
+
         return decorated
-    info=debugging_method('\033[94m[INFO]','\033[0m')
-    ok=debugging_method('\033[92m[OK]','\033[0m')
-    warn=debugging_method('\033[93m[WARN]','\033[0m')
-            
-                    
+
+    info = debugging_method("\033[94m[INFO]", "\033[0m")
+    ok = debugging_method("\033[92m[OK]", "\033[0m")
+    warn = debugging_method("\033[93m[WARN]", "\033[0m")
+
+
 class CaseInsensitiveDict(dict):
+    """Case insensitive subclass of dictionary"""
     def __init__(self, data):
         self.original = {force_string(k).lower(): v for k, v in dict(data).items()}
         super().__init__(self.original)
@@ -536,6 +556,7 @@ class Headers(CaseInsensitiveDict):
     """Class for HTTP headers"""
 
     def __init__(self, h):
+        h = filter(lambda x:x,h) 
         self.headers = (
             [
                 a.split(b": ", 1)[0].lower().decode(),
@@ -574,12 +595,14 @@ class Response:
     :type original_content: bytes
     """
 
-    def __init__(self, status, headers, content, history, url, fromcache, original_content):
+    def __init__(
+        self, status, headers, content, history, url, fromcache, original_content
+    ):
         self.status = status.status
         self.reason = status.reason
         self.headers = headers
         self.content = content
-        self._original=original_content
+        self._original = original_content
 
         self.url = reslash(url)
         self.fromcache = fromcache
@@ -607,7 +630,12 @@ class Response:
             [],
             cache_file.url,
             True,
+            cache_file.content,
         )
+
+    @classmethod
+    def plain(self):
+        return Response(Status(b"000"), Headers({}), b"", [], "", False, b"")
 
     def __repr__(self):
         return f"<Response [{self.status} {self.reason}] ({self.url})>"
@@ -626,123 +654,206 @@ class WWW_Authenticate:
         for i in dbls:
             c = i.rsplit(",", 1)
             if len(c) == 1:
-                o.append(i.strip().replace('"',''))
+                o.append(i.strip().replace('"', ""))
                 if len(o) == 2:
                     real.append(o)
             else:
                 if len(o) == 1:
-                    o.append(c[0].strip().replace('"',''))
+                    o.append(c[0].strip().replace('"', ""))
                     real.append(o)
                     o = [c[1].strip()]
                 else:
-                    o.append(c[1].strip().replace('"',''))
+                    o.append(c[1].strip().replace('"', ""))
         self.params = CaseInsensitiveDict(real)
 
-    def encode_password(self, user, password, path='/', method='GET',original=b'',decoded=b''):
+    def encode_password(
+        self, user, password, path="/", method="GET", original=b"", decoded=b""
+    ):
         if self.scheme == "Basic":
             return self.basic_auth(user, password)
         if self.scheme == "Digest":
-            return self.digest_auth(user, password,path,method,original)
+            return self.digest_auth(user, password, path, method, original)
         raise AuthError(f"unknown authentication scheme : {self.scheme}")
+
     def digest_auth(self, user, password, path, method, original):
         debugger.info("digest auth")
-        alg_name=self.params.get('algorithm','md5').lower()# .lower() is important here!
+        alg_name = self.params.get(
+            "algorithm", "md5"
+        ).lower()  # .lower() is important here!
         debugger.info(f"algorithm is {alg_name}")
-        alg_t=alg_name.split('-')
-        if len(alg_t)==1:
-            sess=''
-            alg_name=alg_t[0]
+        alg_t = alg_name.split("-")
+        if len(alg_t) == 1:
+            sess = ""
+            alg_name = alg_t[0]
         else:
-            sess=alg_t[1]
-            alg_name=alg_t[0]
-        sess= sess == 'sess'
+            sess = alg_t[1]
+            alg_name = alg_t[0]
+        sess = sess == "sess"
 
         if alg_name not in ALGORITHMS:
             raise DigestAuthError(f"Unknown algorithm :{alg_name!r}")
-        alg=ALGORITHMS[alg_name]
-        realm= self.params.get('realm',None)
+        alg = ALGORITHMS[alg_name]
+        realm = self.params.get("realm", None)
         if realm is None:
-            raise DigestAuthError('no realm specified')
+            raise DigestAuthError("no realm specified")
         debugger.info(f"realm is {realm}")
-        nonce = self.params.get('nonce',None)
+        nonce = self.params.get("nonce", None)
         if nonce is None:
-            raise DigestAuthError('no nonce specified')
+            raise DigestAuthError("no nonce specified")
         debugger.info(f"nonce is {nonce}")
-        opaque = self.params.get('opaque',None)
+        opaque = self.params.get("opaque", None)
         if opaque is None:
-            raise DigestAuthError('no opaque specified')
+            raise DigestAuthError("no opaque specified")
         debugger.info(f"opaque is {opaque}")
 
-        nc=nonce_counter[nonce]
+        nc = nonce_counter[nonce]
         debugger.info(f"nc is {nc}")
-        cnonce=generate_cnonce()
+        cnonce = generate_cnonce()
         debugger.info(f"cnonce is {cnonce}")
-        qop= self.params.get('qop',None)
-        
+        qop = self.params.get("qop", None)
+
         if qop is not None:
-            qop=[i.replace(' ','') for i in qop.split(',')][0]
+            qop = [i.replace(" ", "") for i in qop.split(",")][0]
         debugger.info(f"qop is {qop}")
         debugger.ok("All necessary information got")
         debugger.info(f"creating HA1")
-        ha1_data=f'{user}:{realm}:{password}'
+        ha1_data = f"{user}:{realm}:{password}"
         if sess:
-            ha1_data=f'{alg(h1_data)}:{nonce}:{cnonce}'
+            ha1_data = f"{alg(h1_data)}:{nonce}:{cnonce}"
         debugger.info(f"HA1 data  is {ha1_data}")
         debugger.info(f"Hashing HA1 data using {alg_name}")
-        ha1=alg(ha1_data)
+        ha1 = alg(ha1_data)
         debugger.ok(f"HA1 is {ha1}")
         debugger.info(f"Creating HA2")
-        ha2_data=f'{method}:{path}'
-        if qop=='auth-int':
-            ha2_data=f'{ha2_data}:{alg(original)}'
+        ha2_data = f"{method}:{path}"
+        if qop == "auth-int":
+            ha2_data = f"{ha2_data}:{alg(original)}"
         debugger.info(f"HA2 data is {ha2_data}")
         debugger.info(f"Hashing HA2 data using {alg_name}")
 
-        ha2=alg(ha2_data)
+        ha2 = alg(ha2_data)
         debugger.ok(f"HA2 is {ha2}")
         debugger.info("Building response")
         if qop is None:
             debugger.info("No qop ")
-            response_data=f'{ha1}:{cnonce}:{ha2}'
+            response_data = f"{ha1}:{cnonce}:{ha2}"
         else:
-            response_data=f'{ha1}:{nonce}:{nc}:{cnonce}:{qop}:{ha2}'
+            response_data = f"{ha1}:{nonce}:{nc}:{cnonce}:{qop}:{ha2}"
         debugger.info(f"Response data is {response_data}")
         debugger.info(f"Hashing response data using {alg_name}")
         response = alg(response_data)
         debugger.ok(f"Response built, response is {response}")
         debugger.info("Building headers")
-        auth_headers=f'Digest username="{user}", realm="{realm}", nonce="{nonce}", uri="{path}", '
+        auth_headers = f'Digest username="{user}", realm="{realm}", nonce="{nonce}", uri="{path}", '
         if qop is not None:
-            auth_headers=f'{auth_headers}qop="{qop}", '
-        auth_headers=f'{auth_headers}nc={nc}, cnonce="{cnonce}", response="{response}", opaque="{opaque}"'
+            auth_headers = f'{auth_headers}qop="{qop}", '
+        auth_headers = f'{auth_headers}nc={nc}, cnonce="{cnonce}", response="{response}", opaque="{opaque}"'
         debugger.ok("Headers built")
         return auth_headers
+
     def basic_auth(self, user, password):
         debugger.info("basic auth")
         string = force_bytes(user) + b":" + force_bytes(password)
         return b"Basic " + base64.b64encode(string)
+
+
 class NonceCounter:
+    """nonce use counter, used to get nc parameter in digest auth"""
     def __init__(self):
-        self.nonces={}
-    def __getitem__(self,item):
-        
+        self.nonces = {}
+
+    def __getitem__(self, item):
+
         if item not in self.nonces:
             debugger.info("Adding new nonce to nonce_counter")
-            self.nonces[item]=0
+            self.nonces[item] = 0
         debugger.info("Incrementing nonce_counter")
-        self.nonces[item]+=1
-        return format(self.nonces[item],'08x')
+        self.nonces[item] += 1
+        return format(self.nonces[item], "08x")
+
+
+class Connection:
+    """Class for connnections"""
+    def __init__(self, sock, timeout=math.inf, max=math.inf):
+        debugger.info(f"Created new Connection upon {sock}")
+        self._sock = sock
+        self.timeout = timeout
+        self.max = math.inf
+        self.requests = 0
+        self.time_started = time.time()
+
+    @property
+    def sock(self):
+        self.requests += 1
+        if self.time_started + self.timeout < time.time():
+            debugger.warn(f"Connection expired")
+            raise ConnectionExpiredError("Connection expired")
+        if self.requests > self.max:
+            debugger.warn(f"Connection limit reached")
+            raise ConnectionLimitError("connection limit reached")
+        return self._sock
+    def close(self):
+        self._sock.close()
+
+class ConnectionPool:
+    """Class for connection pools"""
+    def __init__(self):
+        self.connections = {}
+
+    def __setitem__(self, host, connection):
+        host, port = host
+        if connection._sock.fileno() == -1:
+            raise ConnectionClosedError("Connection closed by host")
+        self.connections[host, port] = connection
+
+    def __getitem__(self, host):
+        try:
+
+            sock = self.connections[host].sock
+        except ConnectionError:
+            del self.connection[host]
+
+            raise ConnectionClosedError("Connection closed by host")
+        if sock.fileno() == -1:
+            del self.connections[host]
+            raise ConnectionClosedError("Connection closed by host")
+        return sock
+
+    def __contains__(self, host):
+        return host in self.connections
+
+    def __del__(self):
+        for conn in self.connections.values():
+            conn.close()
+
+
+class KeepAlive:
+    """Class for parsing keep-alive headers"""
+    def __init__(self, header):
+        self.params=CaseInsensitiveDict({})
+        if header:
+            params = header.split(",")
+            self.params = CaseInsensitiveDict(j.strip().split("=") for j in params)
+        self.timeout = float(self.params.get("timeout", math.inf))
+        self.max = float(self.params.get("max", math.inf))
+
+
 def hashing_function(function_name):
-    hashlib_function=getattr(hashlib,function_name)
-    
+    hashlib_function = getattr(hashlib, function_name)
+
     @functools.wraps(function_name)
-    def decorated(string):
-        to_hash=force_bytes(string)
+    def decorated(to_hash):
+        to_hash = force_bytes(to_hash)
         return hashlib_function(to_hash).hexdigest()
-    decorated.__qualname__=function_name
+
+    decorated.__qualname__ = function_name
     return decorated
-md5,sha256,sha512 = (hashing_function(i) for i in ('md5','sha256','sha512'))
-ALGORITHMS = {'md5':md5,'sha256':sha256,'sha512':sha512}
+
+
+md5, sha256, sha512 = (hashing_function(i) for i in ("md5", "sha256", "sha512"))
+ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512}
+
+
 def cacheWrite(response):
     """
     Writes response to cache
@@ -751,7 +862,7 @@ def cacheWrite(response):
     :type response: Response"""
     data = b""
     data += _binappendint(round(time.time()))
-    data += _binappendstr(f"{response.status} {response.reason}")
+    data += _binappendstr(f"{response.status:03} {response.reason}")
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
     data += response.content
@@ -870,12 +981,12 @@ def _encode_form_data(data, content_type=None):
         debugger.info("content_type json")
         return json.dumps(data).encode(), content_type
     debugger.warn("unknown content_type")
-    return force_bytes(data),content_type
+    return force_bytes(data), content_type
 
 
 def encode_form_data(data, content_type=None):
     """Encodes form data according to content type"""
-    
+
     encoded, content_type = _encode_form_data(data, content_type)
     return force_bytes(encoded), {
         "Content-Type": content_type,
@@ -941,9 +1052,12 @@ def deslash(url):
         return url[:-1]
     return url
 
+
 def generate_cnonce(length=16):
     debugger.info("generating cnonce")
     return hex(random.randrange(16**length))[2:]
+
+
 def mk_header(key_value_pair):
     """Makes header from key/value pair"""
     if isinstance(key_value_pair[1], list):
@@ -957,6 +1071,26 @@ def mk_header(key_value_pair):
 def _debugprint(debug, *args, **kwargs):
     if debug:
         print(*args, **kwargs)
+
+
+def create_connection(host, port, last_response):
+    keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
+    if (host, port) in pool:
+        debugger.info("Connection already in pool")
+        try:
+            return pool[host, port], True
+        except ConnectionClosedError:
+            debugger.warn("Connection already expired.")
+    try:
+        conn = socket.create_connection((host, port))
+    except socket.gaierror:
+        # Get errno using ctypes, check for  -2
+        errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
+        if errno == 2:
+            raise ServerError(f"could not find server {host!r}")
+        raise  # Added in 1.1.1
+    pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max)
+    return conn, False
 
 
 def _raw_request(
@@ -990,6 +1124,7 @@ def _raw_request(
         "User-Agent": "httpy/" + VERSION,
         "Connection": "keep-alive",
     }
+
     if data:
         debugger.info("Adding form data")
         data, cth = encode_form_data(data, content_type)
@@ -1003,7 +1138,9 @@ def _raw_request(
             )
         wau = WWW_Authenticate(last_response.headers["www-authenticate"])
 
-        defhdr["Authorization"] = wau.encode_password(*auth, path,method ,last_response._original,last_response.content)
+        defhdr["Authorization"] = wau.encode_password(
+            *auth, path, method, last_response._original, last_response.content
+        )
     cookies = jar.get_cookies(makehost(host, port), scheme, path)
     if cookies:
         defhdr["Cookie"] = []
@@ -1011,88 +1148,83 @@ def _raw_request(
             defhdr["Cookie"].append(c.name + "=" + c.value)
 
     defhdr.update(headers)
-    try:
-        sock = socket.create_connection((host, port))
-    except socket.gaierror:
-        # Get errno using ctypes, check for  -2
-        errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
-        if errno == 2:
-            raise ServerError(f"could not find server {host!r}")
+    debugger.info("Establishing connection")
+    if history:
+        last_response = history[-1]
+    else:
+        last_response = Response.plain()
+    sock, from_pool = create_connection(host, port, last_response)
+    if scheme == "https" and not from_pool:
+        sock = context.wrap_socket(sock, server_hostname=host)
 
-    try:
-        if scheme == "https":
-            sock = context.wrap_socket(sock, server_hostname=host)
-
-        defhdr.update(headers)
-        if cf:
-            cf.add_header(defhdr)
-        headers = "\r\n".join([mk_header(i) for i in defhdr.items()])
-        request_data = f"{method} {path} HTTP/1.1" + "\r\n"
-        request_data += headers
-        _debugprint(debug, "\nsend:\n" + request_data)
-        request_data += "\r\n\r\n"
-        request_data = request_data.encode()
-        sock.send(request_data)
-        sock.send(data)
-        file = sock.makefile("b")
-        statusline = file.readline()
-        status = Status(statusline)
-        _debugprint(debug, "\nresponse: ")
-        _debugprint(debug, statusline.decode())
-        if status.status == 304:
-            return Response.cacheload(cf)
-        headers = []
-        while True:
-            line = file.readline()
-            if line == b"\r\n":
-                break
-            _debugprint(debug, line.decode(), end="")
-            headers.append(line)
-        headers = Headers(headers)
-        if "set-cookie" in headers:
-            cookie = headers["set-cookie"]
-            h = makehost(host, port)
-            if h not in jar:
-                jar.add_domain(h)
-            domain = jar[h][0]
-            if isinstance(cookie, list):
-                for c in cookie:
-                    domain.add_cookie(c)
-            else:
-                domain.add_cookie(cookie)
-        body = b""
-        chunked = headers.get("transfer-encoding", "").strip() == "chunked"
-        if not chunked:
-            cl = int(headers.get("content-length", -1))
-            if cl == -1:
-                warnings.warn(
-                    "no content-length nor transfer-encoding, setting socket timeout"
-                )
-                sock.settimeout(0.5)
-                while True:
-                    try:
-                        b = file.read(1)  # recv 1 byte
-                        if not b:
-                            break
-                    except socket.timeout:  # end of response??
-                        break
-                    body += b
-            else:
-                body = file.read(cl)  # recv <content-length> bytes
-        else:  # chunked read
+    defhdr.update(headers)
+    if cf:
+        cf.add_header(defhdr)
+    headers = "\r\n".join([mk_header(i) for i in defhdr.items()])
+    request_data = f"{method} {path} HTTP/1.1" + "\r\n"
+    request_data += headers
+    _debugprint(debug, "\nsend:\n" + request_data)
+    request_data += "\r\n\r\n"
+    request_data = request_data.encode()
+    sock.send(request_data)
+    sock.send(data)
+    file = sock.makefile("b")
+    statusline = file.readline()
+    _debugprint(debug, "\nresponse: ")
+    _debugprint(debug, statusline.decode())
+    status=Status(statusline)
+    if status.status == 304:
+        return Response.cacheload(cf)
+    headers = []
+    while True:
+        line = file.readline()
+        if line == b"\r\n":
+            break
+        _debugprint(debug, line.decode(), end="")
+        headers.append(line)
+    headers = Headers(headers)
+    if "set-cookie" in headers:
+        cookie = headers["set-cookie"]
+        h = makehost(host, port)
+        if h not in jar:
+            jar.add_domain(h)
+        domain = jar[h][0]
+        if isinstance(cookie, list):
+            for c in cookie:
+                domain.add_cookie(c)
+        else:
+            domain.add_cookie(cookie)
+    body = b""
+    chunked = headers.get("transfer-encoding", "").strip() == "chunked"
+    if not chunked:
+        cl = int(headers.get("content-length", -1))
+        if cl == -1:
+            warnings.warn(
+                "no content-length nor transfer-encoding, setting socket timeout"
+            )
+            sock.settimeout(0.5)
             while True:
-                chunksize = int(file.readline().strip(), base=16)  # get chunk size
-                if chunksize == 0:  # final byte
+                try:
+                    b = file.read(1)  # recv 1 byte
+                    if not b:
+                        break
+                except socket.timeout:  # end of response??
                     break
-                chunk = file.read(chunksize)
-                file.read(2)  # discard CLRF
-                body += chunk
-    finally:
-        sock.close()
+                body += b
+        else:
+            body = file.read(cl)  # recv <content-length> bytes
+    else:  # chunked read
+        while True:
+            chunksize = int(file.readline().strip(), base=16)  # get chunk size
+            if chunksize == 0:  # final byte
+                break
+            chunk = file.read(chunksize)
+            file.read(2)  # discard CLRF
+            body += chunk
     content_encoding = headers.get("content-encoding", "identity")
     decoded_body = decode_content(body, content_encoding)
 
-    return Response(status, headers, decoded_body, history, url, body,False)
+    return Response(status, headers, decoded_body, history, url, body, False)
 
 
 def request(
@@ -1129,8 +1261,8 @@ def request(
     :type debug: ``bool``
     """
     global debugger
-    debugger=_Debugger(debug)
-    builtins.debugger=_Debugger(debug)
+    debugger = _Debugger(debug)
+    builtins.debugger = _Debugger(debug)
     debugger.info("request() called.")
     history = [] if history is None else history
     result = URLPATTERN.search(url)
@@ -1213,6 +1345,7 @@ encodings = {
 jar = CookieJar()
 cache = Cache()
 nonce_counter = NonceCounter()
-debugger=_Debugger(False)
+debugger = _Debugger(False)
+pool = ConnectionPool()
 __version__ = VERSION
 __author__ = "Adam Jenca"
