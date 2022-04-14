@@ -9,43 +9,328 @@
 """
 HTTPy is a lightweight socket-based HTTP client.
 """
-import socket
-import os
-import re
-import ssl
-import io
-import warnings
-import gzip
-import zlib
-import functools
-import json
-import random
-import string
-import mimetypes
-import pathlib
-import math
-import base64
-import email.utils
-import datetime
-import time
-import ctypes
-import hashlib
-import builtins
-import inspect
-import sys
+import socket  # of course
+import os  # for file manipulation
+import re  # for parsing urls and statuses
+import ssl  # for TLS encryption in HTTPS
+import io  # for metaclass of File
+import warnings  # to warn
+import gzip  # to unpack
+import zlib  # to unpack
+import functools  # to decorate
+import json  # to encode
+import random  # to generate cnonces and boundaries
+import string  # to generate cnonces and boundaries
+import mimetypes  # to guess type of uploaded file
+import pathlib  # to manipulate files
+import math  # to encode ints
+import base64  # for Basic auth
+import email.utils  # to parse date strings
+import datetime  # to parse date strings
+import time  # to measure time
+import ctypes  # to get errno
+import struct  # to pack floats
+import hashlib  # for Digest auth
+import builtins  # for debugging
+import inspect  # for debugging
+import sys  # for debugging
 
 try:
-    import chardet
+    import chardet  # to detect charsets
 except ImportError:
     chardet = None
 
 HTTPY_DIR = pathlib.Path.home() / ".cache/httpy"
 os.makedirs(HTTPY_DIR / "sites", exist_ok=True)
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
-STATUSPATTERN = re.compile(rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)")
+STATUSPATTERN = re.compile(
+    rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
+)
+STATUS_CODES = {
+    "100": {
+        "code": "100",
+        "message": "Continue",
+        "description": "indicates that the initial part of a request has been received and has not yet been rejected by the server.",
+    },
+    "101": {
+        "code": "101",
+        "message": "Switching Protocols",
+        "description": "indicates that the server understands and is willing to comply with the client's request, via the Upgrade header field, for a change in the application protocol being used on this connection.",
+    },
+    "200": {
+        "code": "200",
+        "message": "OK",
+        "description": "indicates that the request has succeeded.",
+    },
+    "201": {
+        "code": "201",
+        "message": "Created",
+        "description": "indicates that the request has been fulfilled and has resulted in one or more new resources being created.",
+    },
+    "202": {
+        "code": "202",
+        "message": "Accepted",
+        "description": "indicates that the request has been accepted for processing, but the processing has not been completed.",
+    },
+    "203": {
+        "code": "203",
+        "message": "Non-Authoritative Information",
+        "description": "indicates that the request was successful but the enclosed payload has been modified from that of the origin server's 200 (OK) response by a transforming proxy.",
+    },
+    "204": {
+        "code": "204",
+        "message": "No Content",
+        "description": "indicates that the server has successfully fulfilled the request and that there is no additional content to send in the response payload body.",
+    },
+    "205": {
+        "code": "205",
+        "message": "Reset Content",
+        "description": "indicates that the server has fulfilled the request and desires that the user agent reset the document view, which caused the request to be sent, to its original state as received from the origin server.",
+    },
+    "206": {
+        "code": "206",
+        "message": "Partial Content",
+        "description": "indicates that the server is successfully fulfilling a range request for the target resource by transferring one or more parts of the selected representation that correspond to the satisfiable ranges found in the requests's Range header field.",
+    },
+    "300": {
+        "code": "300",
+        "message": "Multiple Choices",
+        "description": "indicates that the target resource has more than one representation, each with its own more specific identifier, and information about the alternatives is being provided so that the user (or user agent) can select a preferred representation by redirecting its request to one or more of those identifiers.",
+    },
+    "301": {
+        "code": "301",
+        "message": "Moved Permanently",
+        "description": "indicates that the target resource has been assigned a new permanent URI and any future references to this resource ought to use one of the enclosed URIs.",
+    },
+    "302": {
+        "code": "302",
+        "message": "Found",
+        "description": "indicates that the target resource resides temporarily under a different URI.",
+    },
+    "303": {
+        "code": "303",
+        "message": "See Other",
+        "description": "indicates that the server is redirecting the user agent to a different resource, as indicated by a URI in the Location header field, that is intended to provide an indirect response to the original request.",
+    },
+    "304": {
+        "code": "304",
+        "message": "Not Modified",
+        "description": "indicates that a conditional GET request has been received and would have resulted in a 200 (OK) response if it were not for the fact that the condition has evaluated to false.",
+    },
+    "305": {
+        "code": "305",
+        "message": "Use Proxy",
+        "description": "*deprecated*",
+    },
+    "307": {
+        "code": "307",
+        "message": "Temporary Redirect",
+        "description": "indicates that the target resource resides temporarily under a different URI and the user agent MUST NOT change the request method if it performs an automatic redirection to that URI.",
+    },
+    "400": {
+        "code": "400",
+        "message": "Bad Request",
+        "description": "indicates that the server cannot or will not process the request because the received syntax is invalid, nonsensical, or exceeds some limitation on what the server is willing to process.",
+    },
+    "401": {
+        "code": "401",
+        "message": "Unauthorized",
+        "description": "indicates that the request has not been applied because it lacks valid authentication credentials for the target resource.",
+    },
+    "402": {
+        "code": "402",
+        "message": "Payment Required",
+        "description": "*reserved*",
+    },
+    "403": {
+        "code": "403",
+        "message": "Forbidden",
+        "description": "indicates that the server understood the request but refuses to authorize it.",
+    },
+    "404": {
+        "code": "404",
+        "message": "Not Found",
+        "description": "indicates that the origin server did not find a current representation for the target resource or is not willing to disclose that one exists.",
+    },
+    "405": {
+        "code": "405",
+        "message": "Method Not Allowed",
+        "description": "indicates that the method specified in the request-line is known by the origin server but not supported by the target resource.",
+    },
+    "406": {
+        "code": "406",
+        "message": "Not Acceptable",
+        "description": "indicates that the target resource does not have a current representation that would be acceptable to the user agent, according to the proactive negotiation header fields received in the request, and the server is unwilling to supply a default representation.",
+    },
+    "407": {
+        "code": "407",
+        "message": "Proxy Authentication Required",
+        "description": "is similar to 401 (Unauthorized), but indicates that the client needs to authenticate itself in order to use a proxy.",
+    },
+    "408": {
+        "code": "408",
+        "message": "Request Timeout",
+        "description": "indicates that the server did not receive a complete request message within the time that it was prepared to wait.",
+    },
+    "409": {
+        "code": "409",
+        "message": "Conflict",
+        "description": "indicates that the request could not be completed due to a conflict with the current state of the resource.",
+    },
+    "410": {
+        "code": "410",
+        "message": "Gone",
+        "description": "indicates that access to the target resource is no longer available at the origin server and that this condition is likely to be permanent.",
+    },
+    "411": {
+        "code": "411",
+        "message": "Length Required",
+        "description": "indicates that the server refuses to accept the request without a defined Content-Length.",
+    },
+    "412": {
+        "code": "412",
+        "message": "Precondition Failed",
+        "description": "indicates that one or more preconditions given in the request header fields evaluated to false when tested on the server.",
+    },
+    "413": {
+        "code": "413",
+        "message": "Payload Too Large",
+        "description": "indicates that the server is refusing to process a request because the request payload is larger than the server is willing or able to process.",
+    },
+    "414": {
+        "code": "414",
+        "message": "URI Too Long",
+        "description": "indicates that the server is refusing to service the request because the request-target is longer than the server is willing to interpret.",
+    },
+    "415": {
+        "code": "415",
+        "message": "Unsupported Media Type",
+        "description": "indicates that the origin server is refusing to service the request because the payload is in a format not supported by the target resource for this method.",
+    },
+    "416": {
+        "code": "416",
+        "message": "Range Not Satisfiable",
+        "description": "indicates that none of the ranges in the request's Range header field overlap the current extent of the selected resource or that the set of ranges requested has been rejected due to invalid ranges or an excessive request of small or overlapping ranges.",
+    },
+    "417": {
+        "code": "417",
+        "message": "Expectation Failed",
+        "description": "indicates that the expectation given in the request's Expect header field could not be met by at least one of the inbound servers.",
+    },
+    "418": {
+        "code": "418",
+        "message": "I'm a teapot",
+        "description": "Any attempt to brew coffee with a teapot should result in the error code 418 I'm a teapot.",
+    },
+    "426": {
+        "code": "426",
+        "message": "Upgrade Required",
+        "description": "indicates that the server refuses to perform the request using the current protocol but might be willing to do so after the client upgrades to a different protocol.",
+    },
+    "500": {
+        "code": "500",
+        "message": "Internal Server Error",
+        "description": "indicates that the server encountered an unexpected condition that prevented it from fulfilling the request.",
+    },
+    "501": {
+        "code": "501",
+        "message": "Not Implemented",
+        "description": "indicates that the server does not support the functionality required to fulfill the request.",
+    },
+    "502": {
+        "code": "502",
+        "message": "Bad Gateway",
+        "description": "indicates that the server, while acting as a gateway or proxy, received an invalid response from an inbound server it accessed while attempting to fulfill the request.",
+    },
+    "503": {
+        "code": "503",
+        "message": "Service Unavailable",
+        "description": "indicates that the server is currently unable to handle the request due to a temporary overload or scheduled maintenance, which will likely be alleviated after some delay.",
+    },
+    "504": {
+        "code": "504",
+        "message": "Gateway Time-out",
+        "description": "indicates that the server, while acting as a gateway or proxy, did not receive a timely response from an upstream server it needed to access in order to complete the request.",
+    },
+    "505": {
+        "code": "505",
+        "message": "HTTP Version Not Supported",
+        "description": "indicates that the server does not support, or refuses to support, the protocol version that was used in the request message.",
+    },
+    "102": {
+        "code": "102",
+        "message": "Processing",
+        "description": "is an interim response used to inform the client that the server has accepted the complete request, but has not yet completed it.",
+    },
+    "207": {
+        "code": "207",
+        "message": "Multi-Status",
+        "description": "provides status for multiple independent operations.",
+    },
+    "226": {
+        "code": "226",
+        "message": "IM Used",
+        "description": "The server has fulfilled a GET request for the resource, and the response is a representation of the result of one or more instance-manipulations applied to the current instance.",
+    },
+    "308": {
+        "code": "308",
+        "message": "Permanent Redirect",
+        "description": "The target resource has been assigned a new permanent URI and any future references to this resource outght to use one of the enclosed URIs. [...] This status code is similar to 301 Moved Permanently (Section 7.3.2 of rfc7231), except that it does not allow rewriting the request method from POST to GET.",
+    },
+    "422": {
+        "code": "422",
+        "message": "Unprocessable Entity",
+        "description": "means the server understands the content type of the request entity (hence a 415(Unsupported Media Type) status code is inappropriate), and the syntax of the request entity is correct (thus a 400 (Bad Request) status code is inappropriate) but was unable to process the contained instructions.",
+    },
+    "423": {
+        "code": "423",
+        "message": "Locked",
+        "description": "means the source or destination resource of a method is locked.",
+    },
+    "424": {
+        "code": "424",
+        "message": "Failed Dependency",
+        "description": "means that the method could not be performed on the resource because the requested action depended on another action and that action failed.",
+    },
+    "428": {
+        "code": "428",
+        "message": "Precondition Required",
+        "description": "indicates that the origin server requires the request to be conditional.",
+    },
+    "429": {
+        "code": "429",
+        "message": "Too Many Requests",
+        "description": "indicates that the user has sent too many requests in a given amount of time (rate limiting).",
+    },
+    "431": {
+        "code": "431",
+        "message": "Request Header Fields Too Large",
+        "description": "indicates that the server is unwilling to process the request because its header fields are too large.",
+    },
+    "451": {
+        "code": "451",
+        "message": "Unavailable For Legal Reasons",
+        "description": "This status code indicates that the server is denying access to the resource in response to a legal demand.",
+    },
+    "506": {
+        "code": "506",
+        "message": "Variant Also Negotiates",
+        "description": "indicates that the server has an internal configuration error: the chosen variant resource is configured to engage in transparent content negotiation itself, and is therefore not a proper end point in the negotiation process.",
+    },
+    "507": {
+        "code": "507",
+        "message": "Insufficient Storage",
+        "description": "means the method could not be performed on the resource because the server is unable to store the representation needed to successfully complete the request.",
+    },
+    "511": {
+        "code": "511",
+        "message": "Network Authentication Required",
+        "description": "indicates that the client needs to authenticate to gain network access.",
+    },
+}
 context = ssl.create_default_context()
 schemes = {"http": 80, "https": 443}
 
@@ -84,7 +369,7 @@ def _mk2l(original):
     return original
 
 
-class Status:
+class Status(int):
     """
     Creates HTTP status from string.
 
@@ -94,15 +379,30 @@ class Status:
     def __init__(self, statstring):
         _, self.status, self.reason = STATUSPATTERN.search(statstring).groups()
         self.status = int(self.status)
+        try:
+            self.codes_entry = STATUS_CODES[str(self.status)]
+        except KeyError:
+            self.codes_entry = {
+                "code": str(self.status),
+                "message": "Unknown",
+                "description": "Unknown",
+            }
+        self.__dict__.update(self.codes_entry)
+
         self.reason = self.reason.decode()
+
+    def __new__(cls, statstring):
+        _, status, reason = STATUSPATTERN.search(statstring).groups()
+        return super(Status, cls).__new__(cls, status)
 
 
 class _Debugger:
     """
     Debugger
     """
-    def __init__(self, do_debug):
-        self.debug = do_debug
+
+    def __init__(self, do_debug=None):
+        self._debug = do_debug
 
     def frame_class_name(self, fr):
         args, _, _, value_dict = inspect.getargvalues(fr)
@@ -111,6 +411,10 @@ class _Debugger:
             if instance:
                 return getattr(getattr(instance, "__class__", None), "__name__", None)
         return None
+
+    @property
+    def debug(self):
+        return self._debug or getattr(builtins, "debug", False)
 
     def debugging_method(self, suffix):
         def decorated(a, data):
@@ -141,6 +445,7 @@ class _Debugger:
 
 class CaseInsensitiveDict(dict):
     """Case insensitive subclass of dictionary"""
+
     def __init__(self, data):
         self.original = {force_string(k).lower(): v for k, v in dict(data).items()}
         super().__init__(self.original)
@@ -177,9 +482,9 @@ def _binappendstr(s):
     return bytes([len(s)]) + force_bytes(s)
 
 
-def _binappendint(b):
-    b = int(b)
-    ba = int(b).to_bytes(math.ceil(b.bit_length() / 8), "little")
+def _binappendfloat(b):
+    b = float(b)
+    ba = struct.pack("f", b)
     return bytes([len(ba)]) + ba
 
 
@@ -233,14 +538,17 @@ class CacheFile:
         self.src = f
         file = gzip.GzipFile(f, "rb")
         tml = ord(file.read(1))
-        self.time_cached = int.from_bytes(file.read(tml), "little")
+        self.time_cached = _unpk_float(file.read(tml))
+        etl = ord(file.read(1))
+        self.time_elapsed = _unpk_float(file.read(etl))
         srl = ord(file.read(1))
         sl = file.read(srl)
         self.status = Status(sl)
         self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
         self.content = file.read()
+        file.seek(0)
         file.close()
-        self.headers, self.body = self.content.split(b"\x00")
+        self.headers, self.body = self.content.split(b"\x00", 1)
         self.headers = Headers(self.headers.split(b"\r"))
         self.age = 0
         self.etag = None
@@ -299,6 +607,7 @@ class Cache:
         ]
 
     def __getitem__(self, u):
+        self.updateCache()  # ...
         for f in self.files:
             if reslash(f.url) == reslash(u):
                 return f
@@ -348,7 +657,7 @@ class Cookie:
             data += b"\x01"
         if self.expires:
             b = self.expires.timestamp()
-            data += _binappendint(b)
+            data += _binappendfloat(b)
         else:
             data += b"\x00"
         return data
@@ -387,8 +696,8 @@ class Cookie:
         if n == b"\x00":
             expires = None
         else:
-            b64tstamp = buffer.read(ord(n))
-            expires = int.from_bytes(b64tstamp, "little")
+            tstamp = buffer.read(ord(n))
+            expires = _unpk_float(tstamp)
             data["Expires"] = expires
         return Cookie(k.decode(), v.decode(), data, host)
 
@@ -556,7 +865,7 @@ class Headers(CaseInsensitiveDict):
     """Class for HTTP headers"""
 
     def __init__(self, h):
-        h = filter(lambda x:x,h) 
+        h = filter(lambda x: x, h)
         self.headers = (
             [
                 a.split(b": ", 1)[0].lower().decode(),
@@ -591,27 +900,41 @@ class Response:
     :type fromcache: bool
     :ivar fromcache: Indicates whether or not was response loaded from cache
     :ivar charset: Document charset
+    :ivar speed: Average download speed in bytes per second
+    :type speed: float
     :param original_content: Document content before any Content-Encoding was applied.
     :type original_content: bytes
+    :param time_elapsed: Total request time
+    :type time_elapsed: float
+    :ivar ok: `self.status==200`
     """
 
     def __init__(
-        self, status, headers, content, history, url, fromcache, original_content
+        self,
+        status,
+        headers,
+        content,
+        history,
+        url,
+        fromcache,
+        original_content,
+        time_elapsed=math.inf,
     ):
-        self.status = status.status
-        self.reason = status.reason
+        self.status = status
         self.headers = headers
         self.content = content
+        self.ok = self.status == 200
+        self.reason=self.status.reason
         self._original = original_content
-
+        self.speed = len(self._original) / time_elapsed
         self.url = reslash(url)
         self.fromcache = fromcache
-        if not self.fromcache:
+        self._time_elapsed = time_elapsed
+
+        if not self.fromcache and (self.content or self.headers or self.status):
             cacheWrite(self)
 
-        self.charset = determine_charset(headers)
-        if self.charset is None and chardet is not None:
-            self.charset = chardet.detect(content)["encoding"]
+        self._charset = determine_charset(headers)
         self.history = history
         self.history.append(self)
 
@@ -631,11 +954,18 @@ class Response:
             cache_file.url,
             True,
             cache_file.content,
+            cache_file.time_elapsed,
         )
 
     @classmethod
     def plain(self):
         return Response(Status(b"000"), Headers({}), b"", [], "", False, b"")
+
+    @property
+    def charset(self):
+        if self._charset is None and chardet is not None:
+            self._charset = chardet.detect(self.content)["encoding"]
+        return self._charset
 
     def __repr__(self):
         return f"<Response [{self.status} {self.reason}] ({self.url})>"
@@ -759,6 +1089,7 @@ class WWW_Authenticate:
 
 class NonceCounter:
     """nonce use counter, used to get nc parameter in digest auth"""
+
     def __init__(self):
         self.nonces = {}
 
@@ -774,6 +1105,7 @@ class NonceCounter:
 
 class Connection:
     """Class for connnections"""
+
     def __init__(self, sock, timeout=math.inf, max=math.inf):
         debugger.info(f"Created new Connection upon {sock}")
         self._sock = sock
@@ -792,11 +1124,14 @@ class Connection:
             debugger.warn(f"Connection limit reached")
             raise ConnectionLimitError("connection limit reached")
         return self._sock
+
     def close(self):
         self._sock.close()
 
+
 class ConnectionPool:
     """Class for connection pools"""
+
     def __init__(self):
         self.connections = {}
 
@@ -822,6 +1157,9 @@ class ConnectionPool:
     def __contains__(self, host):
         return host in self.connections
 
+    def __delitem__(self, host):
+        del self.connections[host]
+
     def __del__(self):
         for conn in self.connections.values():
             conn.close()
@@ -829,8 +1167,9 @@ class ConnectionPool:
 
 class KeepAlive:
     """Class for parsing keep-alive headers"""
+
     def __init__(self, header):
-        self.params=CaseInsensitiveDict({})
+        self.params = CaseInsensitiveDict({})
         if header:
             params = header.split(",")
             self.params = CaseInsensitiveDict(j.strip().split("=") for j in params)
@@ -861,16 +1200,20 @@ def cacheWrite(response):
     :param response: response to save
     :type response: Response"""
     data = b""
-    data += _binappendint(round(time.time()))
+    data += _binappendfloat(time.time())
+    data += _binappendfloat(response._time_elapsed)
     data += _binappendstr(f"{response.status:03} {response.reason}")
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
     data += response.content
 
-    open(
-        HTTPY_DIR / "sites" / response.url.replace("://", "\x01").replace("/", "\x02"),
+    with open(
+        HTTPY_DIR
+        / "sites"
+        / (response.url.replace("://", "\x01").replace("/", "\x02")),
         "wb",
-    ).write(gzip.compress(data))
+    ) as f:
+        f.write(gzip.compress(data))
 
 
 def mkdict(kvp):
@@ -911,10 +1254,13 @@ def _generate_boundary():
 
 def force_string(anything):
     """Converts string or bytes to string"""
-    if isinstance(anything, str):
-        return anything
-    if isinstance(anything, bytes):
-        return anything.decode()
+    try:
+        if isinstance(anything, str):
+            return anything
+        if isinstance(anything, bytes):
+            return anything.decode()
+    except Exception as err:
+        debugger.warn(f"Could not decode {anything}")
     return str(anything)
 
 
@@ -943,6 +1289,10 @@ def get_content_type(data):
     raise TypeError(
         "could not get content type(can encode only bytes,str and dict). Please specify raw data and set content_type argument"
     )
+
+
+def _unpk_float(bs):
+    return struct.unpack("f", bs)[0]
 
 
 def multipart(form, boundary=_generate_boundary()):
@@ -1031,7 +1381,6 @@ def decode_content(content, encoding):
 
 def makehost(host, port):
     """Creates hostname from host and port"""
-
     if int(port) in [443, 80]:
         return host
     return host + ":" + str(port)
@@ -1068,9 +1417,9 @@ def mk_header(key_value_pair):
     return ": ".join([force_string(key_value) for key_value in key_value_pair])
 
 
-def _debugprint(debug, *args, **kwargs):
+def _debugprint(debug, what, *args, **kwargs):
     if debug:
-        print(*args, **kwargs)
+        print(force_string(what), *args, **kwargs)
 
 
 def create_connection(host, port, last_response):
@@ -1082,12 +1431,15 @@ def create_connection(host, port, last_response):
         except ConnectionClosedError:
             debugger.warn("Connection already expired.")
     try:
+        debugger.info("calling socket.create_connection")
         conn = socket.create_connection((host, port))
     except socket.gaierror:
-        # Get errno using ctypes, check for  -2
+        debugger.warn("gaierror raised, getting errno")
+        # Get errno using ctypes, check for  -2(-3)
         errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
-        if errno == 2:
+        if errno in [2, 3]:
             raise ServerError(f"could not find server {host!r}")
+        debugger.warn(f"unknown errno {errno!r}")
         raise  # Added in 1.1.1
     pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max)
     return conn, False
@@ -1109,6 +1461,7 @@ def _raw_request(
     debug=False,
     last_status=-1,
 ):
+    debug = debug or getattr(builtins,'debug',False)
     debugger.info("_raw_request() called.")
     debugger.info("Accessing cache.")
     cf = cache[deslash(url)]
@@ -1148,83 +1501,112 @@ def _raw_request(
             defhdr["Cookie"].append(c.name + "=" + c.value)
 
     defhdr.update(headers)
-    debugger.info("Establishing connection")
+    debugger.info("Establishing connection ")
     if history:
         last_response = history[-1]
     else:
         last_response = Response.plain()
     sock, from_pool = create_connection(host, port, last_response)
-    if scheme == "https" and not from_pool:
-        sock = context.wrap_socket(sock, server_hostname=host)
+    start_time = time.time()
 
-    defhdr.update(headers)
-    if cf:
-        cf.add_header(defhdr)
-    headers = "\r\n".join([mk_header(i) for i in defhdr.items()])
-    request_data = f"{method} {path} HTTP/1.1" + "\r\n"
-    request_data += headers
-    _debugprint(debug, "\nsend:\n" + request_data)
-    request_data += "\r\n\r\n"
-    request_data = request_data.encode()
-    sock.send(request_data)
-    sock.send(data)
-    file = sock.makefile("b")
-    statusline = file.readline()
-    _debugprint(debug, "\nresponse: ")
-    _debugprint(debug, statusline.decode())
-    status=Status(statusline)
-    if status.status == 304:
-        return Response.cacheload(cf)
-    headers = []
-    while True:
-        line = file.readline()
-        if line == b"\r\n":
-            break
-        _debugprint(debug, line.decode(), end="")
-        headers.append(line)
-    headers = Headers(headers)
-    if "set-cookie" in headers:
-        cookie = headers["set-cookie"]
-        h = makehost(host, port)
-        if h not in jar:
-            jar.add_domain(h)
-        domain = jar[h][0]
-        if isinstance(cookie, list):
-            for c in cookie:
-                domain.add_cookie(c)
-        else:
-            domain.add_cookie(cookie)
-    body = b""
-    chunked = headers.get("transfer-encoding", "").strip() == "chunked"
-    if not chunked:
-        cl = int(headers.get("content-length", -1))
-        if cl == -1:
-            warnings.warn(
-                "no content-length nor transfer-encoding, setting socket timeout"
-            )
-            sock.settimeout(0.5)
-            while True:
-                try:
-                    b = file.read(1)  # recv 1 byte
-                    if not b:
-                        break
-                except socket.timeout:  # end of response??
-                    break
-                body += b
-        else:
-            body = file.read(cl)  # recv <content-length> bytes
-    else:  # chunked read
+    try:
+        if scheme == "https" and not from_pool:
+            sock = context.wrap_socket(sock, server_hostname=host)
+
+        defhdr.update(headers)
+        if cf:
+            cf.add_header(defhdr)
+        headers = "\r\n".join([mk_header(i) for i in defhdr.items()])
+        request_data = f"{method} {path} HTTP/1.1" + "\r\n"
+        request_data += headers
+        _debugprint(debug, "\nsend:\n" + request_data)
+        request_data += "\r\n\r\n"
+        request_data = request_data.encode()
+        sock.send(request_data)
+        sock.send(data)
+        file = sock.makefile("b")
+        statusline = file.readline()
+        _debugprint(debug, "\nresponse: ")
+        _debugprint(debug, statusline)
+        status = Status(statusline)
+        if status.status == 304:
+            return Response.cacheload(cf)
+        headers = []
         while True:
-            chunksize = int(file.readline().strip(), base=16)  # get chunk size
-            if chunksize == 0:  # final byte
+            line = file.readline()
+            if line == b"\r\n":
                 break
-            chunk = file.read(chunksize)
-            file.read(2)  # discard CLRF
-            body += chunk
+            _debugprint(debug, line.decode(), end="")
+            headers.append(line)
+        headers = Headers(headers)
+        if "set-cookie" in headers:
+            cookie = headers["set-cookie"]
+            h = makehost(host, port)
+            if h not in jar:
+                jar.add_domain(h)
+            domain = jar[h][0]
+            if isinstance(cookie, list):
+                for c in cookie:
+                    domain.add_cookie(c)
+            else:
+                domain.add_cookie(cookie)
+        body = b""
+        chunked = headers.get("transfer-encoding", "").strip() == "chunked"
+        if not chunked:
+            cl = int(headers.get("content-length", -1))
+            if cl == -1:
+                warnings.warn(
+                    "no content-length nor transfer-encoding, setting socket timeout"
+                )
+                sock.settimeout(0.5)
+                while True:
+                    try:
+                        b = file.read(1)  # recv 1 byte
+                        if not b:
+                            break
+                    except socket.timeout:  # end of response??
+                        break
+                    body += b
+            else:
+                body = file.read(cl)  # recv <content-length> bytes
+        else:  # chunked read
+            while True:
+                chunksize = int(file.readline().strip(), base=16)  # get chunk size
+                if chunksize == 0:  # final byte
+                    break
+                chunk = file.read(chunksize)
+                file.read(2)  # discard CLRF
+                body += chunk
+    except:
+        del pool[host, port]
+        raise
+    end_time = time.time()
+    elapsed_time = end_time - start_time
     content_encoding = headers.get("content-encoding", "identity")
     decoded_body = decode_content(body, content_encoding)
 
-    return Response(status, headers, decoded_body, history, url, body, False)
+    return Response(
+        status, headers, decoded_body, history, url, False, body, elapsed_time
+    )
+
+
+def set_debug(d=True):
+    builtins.debug = d
+
+
+def absolute_path(url, last_url, scheme, host):
+    if URLPATTERN.search(url) is not None:
+        debugger.info("Absolute url")
+        return url
+    if url.startswith("/"):
+        debugger.info("Site root redirect")
+        res = f"{scheme}://{host}{url}"
+    else:
+        debugger.info(f"Relative redirect to {url}")
+
+        res = f"{scheme}://{reslash(last_url)}{url}"
+    debugger.info(f"Redirecting to {res}")
+    return res
 
 
 def request(
@@ -1264,9 +1646,12 @@ def request(
     debugger = _Debugger(debug)
     builtins.debugger = _Debugger(debug)
     debugger.info("request() called.")
+    debugger.info(f"Requesting {url}")
     history = [] if history is None else history
+    debugger.info(f"Parsing url")
     result = URLPATTERN.search(url)
     if result is None:
+        debugger.warn(f"Invalid url {url} ")
         raise ValueError("Invalid URL")
     groups = result.groupdict()
     if "path" not in groups:
@@ -1288,6 +1673,7 @@ def request(
         last_status = history[-1].status
     else:
         last_status = -1
+    debugger.info(f"Sending request to {host} port {port} via {scheme}")
     resp = _raw_request(
         host,
         port,
@@ -1305,11 +1691,16 @@ def request(
         last_status=last_status,
     )
     if 300 <= resp.status < 400:
+
         if len(history) == redirlimit:
+            debugger.warn("too many redirects!")
             raise TooManyRedirectsError("too many redirects")
         if "Location" in resp.headers:
+
             return request(
-                resp.headers["Location"],
+                absolute_path(
+                    resp.headers["Location"], url, scheme, makehost(host, port)
+                ),
                 auth=auth,
                 redirlimit=redirlimit,
                 timeout=timeout,
@@ -1321,6 +1712,7 @@ def request(
             )
     if resp.status == 401:
         if last_status == 401:
+            debugger.warn("Invalid credentials!")
             return resp
         return request(
             url,
@@ -1333,7 +1725,12 @@ def request(
             history=resp.history,
             debug=debug,
         )
-
+    if 399 < resp.status < 500:
+        debugger.warn(f"Client error : {resp.status} {resp.reason}")
+    if 499 < resp.status < 600:
+        debugger.warn(f"Server error : {resp.status} {resp.reason}")
+    if resp.ok:
+        debugger.ok(f"Response OK")
     return resp
 
 

@@ -13,7 +13,7 @@ if sys.hexversion < 0x3060000:
     )
 
 setuptools.setup(
-    name="httpy",
+    name="httpy-client",
     author="Adam Jenca",
     description="Lightweight socket-based HTTP(s) client.",
     long_description="""
@@ -29,7 +29,7 @@ A lightweight socket-based library to create HTTP(s) connections.
 ## License
     GPLv3
 Docs at <https://httpy.readthedocs.io/>""",
-    version="1.1.1",
+    version="1.1.2",
     long_description_content_type="text/markdown",
     packages=["httpy"],
     author_email="jenca.a@gjh.sk",

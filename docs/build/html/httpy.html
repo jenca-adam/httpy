@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy module &mdash; httpy 1.0.6 documentation</title>
+  <title>httpy module &mdash; httpy 1.1.2 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -379,7 +379,7 @@ for whence are:</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="httpy.Response">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">Response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fromcache</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_content</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.Response" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">Response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fromcache</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_elapsed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.Response" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class for HTTP Response.</p>
 <dl class="field-list simple">
@@ -391,6 +391,7 @@ for whence are:</p>
 <li><p><strong>history</strong> (<em>list</em>) – Response history</p></li>
 <li><p><strong>fromcache</strong> (<em>bool</em>) – Indicates whether or not  was response loaded from cache</p></li>
 <li><p><strong>original_content</strong> (<em>bytes</em>) – Document content before any Content-Encoding was applied.</p></li>
+<li><p><strong>time_elapsed</strong> (<em>float</em>) – Total request time</p></li>
 </ul>
 </dd>
 <dt class="field-even">Variables</dt>
@@ -401,6 +402,7 @@ for whence are:</p>
 <li><p><strong>history</strong> – Response history</p></li>
 <li><p><strong>fromcache</strong> – Indicates whether or not was response loaded from cache</p></li>
 <li><p><strong>charset</strong> – Document charset</p></li>
+<li><p><strong>speed</strong> – Average download speed in bytes per second</p></li>
 </ul>
 </dd>
 </dl>
@@ -414,6 +416,11 @@ for whence are:</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="httpy.Response.charset">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">charset</span></span><a class="headerlink" href="#httpy.Response.charset" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="httpy.Response.plain">
@@ -570,7 +577,7 @@ for whence are:</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.multipart">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--zDz2ToHKmP\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--lRqmChh6Q5\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
 <dd><p>Builds multipart/form-data from form</p>
 </dd></dl>
 

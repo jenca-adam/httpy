@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: httpy-client
-Version: 1.1.0
+Version: 1.1.2
 Summary: Lightweight socket-based HTTP(s) client.
 Home-page: https://github.com/jenca-adam/httpy
 Author: Adam Jenca
@@ -30,7 +30,8 @@ A lightweight socket-based library to create HTTP(s) connections.
    * Easy debugging
    * HTTP authentication
    * Form support
-   * No requirements
+   * No requirements(save Python)
+   * Keep-Alive and connection pooling
 ## License
     GPLv3
 Docs at <https://httpy.readthedocs.io/>
