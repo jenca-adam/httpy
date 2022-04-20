@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy module &mdash; httpy 1.1.2 documentation</title>
+  <title>httpy module &mdash; httpy 1.1.3 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -403,6 +403,7 @@ for whence are:</p>
 <li><p><strong>fromcache</strong> – Indicates whether or not was response loaded from cache</p></li>
 <li><p><strong>charset</strong> – Document charset</p></li>
 <li><p><strong>speed</strong> – Average download speed in bytes per second</p></li>
+<li><p><strong>ok</strong> – <cite>self.status==200</cite></p></li>
 </ul>
 </dd>
 </dl>
@@ -439,7 +440,7 @@ for whence are:</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="httpy.Status">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">Status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statstring</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.Status" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
 <p>Creates HTTP status from string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -476,6 +477,11 @@ for whence are:</p>
 <dd></dd></dl>
 
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.absolute_path">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">absolute_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.absolute_path" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.cacheWrite">
@@ -577,7 +583,7 @@ for whence are:</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.multipart">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--lRqmChh6Q5\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--jrvhLEKvQz\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
 <dd><p>Builds multipart/form-data from form</p>
 </dd></dl>
 
@@ -608,6 +614,11 @@ for whence are:</p>
 <span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">reslash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.reslash" title="Permalink to this definition"></a></dt>
 <dd><p>Adds trailing slash to the end of URL</p>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.set_debug">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">set_debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.set_debug" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.urlencode">
