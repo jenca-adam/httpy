@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy module &mdash; httpy 1.1.3 documentation</title>
+  <title>httpy module &mdash; httpy 1.1.4 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -145,6 +145,13 @@
 
 </dd></dl>
 
+<dl class="py exception">
+<dt class="sig sig-object py" id="httpy.ClientError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">ClientError</span></span><a class="headerlink" href="#httpy.ClientError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#httpy.StatusError" title="httpy.StatusError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.StatusError</span></code></a></p>
+<p>Raised if server responded with 4xx status code</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="httpy.Connection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">Connection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.Connection" title="Permalink to this definition"></a></dt>
@@ -188,6 +195,13 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">ConnectionPool</span></span><a class="headerlink" href="#httpy.ConnectionPool" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class for connection pools</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="httpy.ContentTypeError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">ContentTypeError</span></span><a class="headerlink" href="#httpy.ContentTypeError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#httpy.HTTPyError" title="httpy.HTTPyError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.HTTPyError</span></code></a></p>
+<p>Raised if content type of resource does not match  the desired operation</p>
 </dd></dl>
 
 <dl class="py class">
@@ -423,6 +437,11 @@ for whence are:</p>
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">charset</span></span><a class="headerlink" href="#httpy.Response.charset" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="httpy.Response.json">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">json</span></span><a class="headerlink" href="#httpy.Response.json" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="httpy.Response.plain">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">plain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.Response.plain" title="Permalink to this definition"></a></dt>
@@ -433,8 +452,8 @@ for whence are:</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="httpy.ServerError">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">ServerError</span></span><a class="headerlink" href="#httpy.ServerError" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#httpy.HTTPyError" title="httpy.HTTPyError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.HTTPyError</span></code></a></p>
-<p>Raised if server is not found</p>
+<dd><p>Bases: <a class="reference internal" href="#httpy.StatusError" title="httpy.StatusError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.StatusError</span></code></a></p>
+<p>Raised if server is not found or if it responded with 5xx code</p>
 </dd></dl>
 
 <dl class="py class">
@@ -450,10 +469,17 @@ for whence are:</p>
 </dd></dl>
 
 <dl class="py exception">
+<dt class="sig sig-object py" id="httpy.StatusError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">StatusError</span></span><a class="headerlink" href="#httpy.StatusError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#httpy.HTTPyError" title="httpy.HTTPyError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.HTTPyError</span></code></a></p>
+<p>Metaclass for ClientError and Server Error</p>
+</dd></dl>
+
+<dl class="py exception">
 <dt class="sig sig-object py" id="httpy.TooManyRedirectsError">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">TooManyRedirectsError</span></span><a class="headerlink" href="#httpy.TooManyRedirectsError" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#httpy.HTTPyError" title="httpy.HTTPyError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.HTTPyError</span></code></a></p>
-<p>Raised if server has responded with too many redirects (over redirection limit)</p>
+<p>Raised if server  responded with too many redirects (over redirection limit)</p>
 </dd></dl>
 
 <dl class="py class">
@@ -583,13 +609,13 @@ for whence are:</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.multipart">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--jrvhLEKvQz\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--M3qSwrucM2\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
 <dd><p>Builds multipart/form-data from form</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.request">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.request" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.request" title="Permalink to this definition"></a></dt>
 <dd><p>Performs request.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -603,6 +629,7 @@ for whence are:</p>
 <li><p><strong>content_type</strong> – content type of request body, defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 <li><p><strong>timeout</strong> (<code class="docutils literal notranslate"><span class="pre">int</span></code>) – request timeout, defaults to <code class="docutils literal notranslate"><span class="pre">30</span></code></p></li>
 <li><p><strong>history</strong> – request history, defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+<li><p><strong>throw_on_error</strong> – if throw_on_error is <code class="docutils literal notranslate"><span class="pre">True</span></code> , StatusError will be raised if server responded with 4xx or 5xx status code.</p></li>
 <li><p><strong>debug</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – whether or not shall debug mode be used , defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></p></li>
 </ul>
 </dd>

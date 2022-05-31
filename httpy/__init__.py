@@ -42,7 +42,7 @@ except ImportError:
 
 HTTPY_DIR = pathlib.Path.home() / ".cache/httpy"
 os.makedirs(HTTPY_DIR / "sites", exist_ok=True)
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -331,14 +331,17 @@ STATUS_CODES = {
         "description": "indicates that the client needs to authenticate to gain network access.",
     },
 }
+
 context = ssl.create_default_context()
 schemes = {"http": 80, "https": 443}
 
 
 class HTTPyError(Exception):
     """A metaclass for all HTTPy Exceptions."""
-
-
+class ContentTypeError(HTTPyError):
+    """Raised if content type of resource does not match  the desired operation"""
+class StatusError(HTTPyError):
+    """Metaclass for ClientError and Server Error"""
 class AuthError(HTTPyError):
     """Error in authentication"""
 
@@ -355,13 +358,14 @@ class ConnectionExpiredError(HTTPyError, ConnectionError, TimeoutError):
     """Connection Expired"""
 
 
-class ServerError(HTTPyError):
-    """Raised if server is not found"""
+class ServerError(StatusError):
+    """Raised if server is not found or if it responded with 5xx code"""
 
 
 class TooManyRedirectsError(HTTPyError):
-    """Raised if server has responded with too many redirects (over redirection limit)"""
-
+    """Raised if server  responded with too many redirects (over redirection limit)"""
+class ClientError(StatusError):
+    """Raised if server responded with 4xx status code"""
 
 def _mk2l(original):
     if len(original) == 1:
@@ -930,7 +934,7 @@ class Response:
         self.url = reslash(url)
         self.fromcache = fromcache
         self._time_elapsed = time_elapsed
-
+        self.content_type = headers.get("content-type","text/html")
         if not self.fromcache and (self.content or self.headers or self.status):
             cacheWrite(self)
 
@@ -966,7 +970,18 @@ class Response:
         if self._charset is None and chardet is not None:
             self._charset = chardet.detect(self.content)["encoding"]
         return self._charset
-
+    @property
+    def json(self):
+        if self.content_type == "application/json" : #the ONLY acceptable MIME, see RFC 4627
+            if self._charset is None:
+                JSON=self.content.decode("UTF-8") #
+            else:
+                JSON = self.content.decode(self._charset)
+            return json.loads(JSON)
+        raise ContentTypeError(
+                f"Content type is {self.content_type} , not application/json"
+                )
+            
     def __repr__(self):
         return f"<Response [{self.status} {self.reason}] ({self.url})>"
 
@@ -1124,7 +1139,6 @@ class Connection:
             debugger.warn(f"Connection limit reached")
             raise ConnectionLimitError("connection limit reached")
         return self._sock
-
     def close(self):
         self._sock.close()
 
@@ -1146,7 +1160,8 @@ class ConnectionPool:
 
             sock = self.connections[host].sock
         except ConnectionError:
-            del self.connection[host]
+            raise
+            del self.connections[host]
 
             raise ConnectionClosedError("Connection closed by host")
         if sock.fileno() == -1:
@@ -1159,6 +1174,7 @@ class ConnectionPool:
 
     def __delitem__(self, host):
         del self.connections[host]
+
 
     def __del__(self):
         for conn in self.connections.values():
@@ -1541,6 +1557,7 @@ def _raw_request(
         headers = Headers(headers)
         if "set-cookie" in headers:
             cookie = headers["set-cookie"]
+
             h = makehost(host, port)
             if h not in jar:
                 jar.add_domain(h)
@@ -1577,9 +1594,11 @@ def _raw_request(
                 chunk = file.read(chunksize)
                 file.read(2)  # discard CLRF
                 body += chunk
+
     except:
         del pool[host, port]
         raise
+    pool.connections[host,port]._sock=sock #Fix bug #23 -- New  connections in keep-alive mode slowing down requests
     end_time = time.time()
     elapsed_time = end_time - start_time
     content_encoding = headers.get("content-encoding", "identity")
@@ -1619,6 +1638,7 @@ def request(
     content_type=None,
     timeout=30,
     history=None,
+    throw_on_error=False,
     debug=False,
 ):
     """
@@ -1639,6 +1659,7 @@ def request(
     :param timeout: request timeout, defaults to ``30``
     :type timeout: ``int``
     :param history: request history, defaults to ``None``
+    :param throw_on_error: if throw_on_error is ``True`` , StatusError will be raised if server responded with 4xx or 5xx status code.
     :param debug: whether or not shall debug mode be used , defaults to ``False``
     :type debug: ``bool``
     """
@@ -1727,7 +1748,11 @@ def request(
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
+        if throw_on_error:
+            raise ClientError(f"\n{resp.status} {resp.reason}: {resp.status.description}")
     if 499 < resp.status < 600:
+        if throw_on_error:
+            raise ServerError(f"\n{resp.status} {resp.reason}: {resp.status.description}")
         debugger.warn(f"Server error : {resp.status} {resp.reason}")
     if resp.ok:
         debugger.ok(f"Response OK")

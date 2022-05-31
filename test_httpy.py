@@ -16,7 +16,7 @@ except :
 try:
     
     import httpy
-    
+    httpy.set_debug()
 except:
     httpy=None
 def test_HTTPy_imports():
@@ -43,9 +43,13 @@ def test_httpy_get_status_codes(capsys):
         for code in iterator:
             if 400<=int(code):
                 assert httpy.request(f'https://httpbin.org/status/{code}').status==int(code)
-    httpy.set_debug()
 def test_httpy_post_raw():
-    f=httpy.request
+    f=httpy.request('https://www.httpbin.org/post',method="POST",body="12345")
+    assert f.json['data']=="12345"
+def test_httpy_post_form():
+    f=httpy.request('https://www.httpbin.org/post',method="POST",body={"foo":"bar"})
+    assert f.json['form']=={"foo":"bar"}
+
 with warnings.catch_warnings():
     unittest.main(argv=['first-arg-is-ignored'],exit=False,warnings='ignore')
 
