@@ -49,7 +49,6 @@ def test_httpy_post_raw():
 def test_httpy_post_form():
     f=httpy.request('https://www.httpbin.org/post',method="POST",body={"foo":"bar"})
     assert f.json['form']=={"foo":"bar"}
-
 with warnings.catch_warnings():
     unittest.main(argv=['first-arg-is-ignored'],exit=False,warnings='ignore')
 

@@ -7,7 +7,7 @@
 #  IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
 #  ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
 """
-HTTPy is a lightweight socket-based HTTP client.
+HTTPy is a lightweight socket-based HTTP and WebSocket client.
 """
 import socket  # of course
 import os  # for file manipulation
@@ -34,6 +34,7 @@ import hashlib  # for Digest auth
 import builtins  # for debugging
 import inspect  # for debugging
 import sys  # for debugging
+import pickle  # to save data
 
 try:
     import chardet  # to detect charsets
@@ -49,6 +50,10 @@ URLPATTERN = re.compile(
 STATUSPATTERN = re.compile(
     rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
 )
+if not os.path.exists(HTTPY_DIR / "permredir.pickle"):
+    with open(HTTPY_DIR / "permredir.pickle", "wb") as permr:
+        pickle.dump({}, permr)
+WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 STATUS_CODES = {
     "100": {
         "code": "100",
@@ -338,12 +343,22 @@ schemes = {"http": 80, "https": 443}
 
 class HTTPyError(Exception):
     """A metaclass for all HTTPy Exceptions."""
+
+
 class ContentTypeError(HTTPyError):
     """Raised if content type of resource does not match  the desired operation"""
+
+
 class StatusError(HTTPyError):
     """Metaclass for ClientError and Server Error"""
+
+
 class AuthError(HTTPyError):
     """Error in authentication"""
+
+
+class DeadConnectionError(HTTPyError, ConnectionError):
+    """Raised if the server didn't respond to the request"""
 
 
 class ConnectionClosedError(HTTPyError, ConnectionError):
@@ -364,15 +379,20 @@ class ServerError(StatusError):
 
 class TooManyRedirectsError(HTTPyError):
     """Raised if server  responded with too many redirects (over redirection limit)"""
+
+
 class ClientError(StatusError):
     """Raised if server responded with 4xx status code"""
+
 
 def _mk2l(original):
     if len(original) == 1:
         original.append(True)
     return original
-
-
+def get_host(url):
+    return URLPATTERN.search(url).group("host")
+def capitalize(string):
+    return string[0].upper()+string[1:]
 class Status(int):
     """
     Creates HTTP status from string.
@@ -923,19 +943,23 @@ class Response:
         fromcache,
         original_content,
         time_elapsed=math.inf,
+        cache=True
     ):
         self.status = status
         self.headers = headers
         self.content = content
         self.ok = self.status == 200
-        self.reason=self.status.reason
+        self.reason = self.status.reason
         self._original = original_content
-        self.speed = len(self._original) / time_elapsed
+        try:
+            self.speed = len(self._original) / time_elapsed
+        except ZeroDivisionError:  # bug #28 permanent redirects
+            self.speed = float("inf")
         self.url = reslash(url)
         self.fromcache = fromcache
         self._time_elapsed = time_elapsed
-        self.content_type = headers.get("content-type","text/html")
-        if not self.fromcache and (self.content or self.headers or self.status):
+        self.content_type = headers.get("content-type", "text/html")
+        if not self.fromcache and (self.content or self.headers or self.status) and cache:
             cacheWrite(self)
 
         self._charset = determine_charset(headers)
@@ -970,18 +994,21 @@ class Response:
         if self._charset is None and chardet is not None:
             self._charset = chardet.detect(self.content)["encoding"]
         return self._charset
+
     @property
     def json(self):
-        if self.content_type == "application/json" : #the ONLY acceptable MIME, see RFC 4627
+        if (
+            self.content_type == "application/json"
+        ):  # the ONLY acceptable MIME, see RFC 4627
             if self._charset is None:
-                JSON=self.content.decode("UTF-8") #
+                JSON = self.content.decode("UTF-8")  #
             else:
                 JSON = self.content.decode(self._charset)
             return json.loads(JSON)
         raise ContentTypeError(
-                f"Content type is {self.content_type} , not application/json"
-                )
-            
+            f"Content type is {self.content_type} , not application/json"
+        )
+
     def __repr__(self):
         return f"<Response [{self.status} {self.reason}] ({self.url})>"
 
@@ -1009,7 +1036,6 @@ class WWW_Authenticate:
                     o = [c[1].strip()]
                 else:
                     o.append(c[1].strip().replace('"', ""))
-        self.params = CaseInsensitiveDict(real)
 
     def encode_password(
         self, user, password, path="/", method="GET", original=b"", decoded=b""
@@ -1118,6 +1144,30 @@ class NonceCounter:
         return format(self.nonces[item], "08x")
 
 
+class PickleFile(dict):
+    def __init__(self, fn):
+        self.fn = fn
+        with open(fn, "rb") as f:
+            self._dict = pickle.load(f)
+        super().__init__(self._dict)
+
+    def __getitem__(self, item):
+        return self._dict[item]
+
+    def __setitem__(self, item, value):
+        self._dict[item] = value
+        with open(self.fn, "wb") as f:
+            pickle.dump(self._dict, f)
+
+    def __delitem__(self, item):
+        del self._dict[item]
+        with open(self.fn, "wb") as f:
+            pickle.dump(self._dict, f)
+
+    def __contains__(self, item):
+        return item in self._dict
+
+
 class Connection:
     """Class for connnections"""
 
@@ -1139,6 +1189,7 @@ class Connection:
             debugger.warn(f"Connection limit reached")
             raise ConnectionLimitError("connection limit reached")
         return self._sock
+
     def close(self):
         self._sock.close()
 
@@ -1175,7 +1226,6 @@ class ConnectionPool:
     def __delitem__(self, host):
         del self.connections[host]
 
-
     def __del__(self):
         for conn in self.connections.values():
             conn.close()
@@ -1205,7 +1255,7 @@ def hashing_function(function_name):
     return decorated
 
 
-md5, sha256, sha512 = (hashing_function(i) for i in ("md5", "sha256", "sha512"))
+md5, sha256, sha512, sha1  = (hashing_function(i) for i in ("md5", "sha256", "sha512","sha1"))
 ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512}
 
 
@@ -1471,22 +1521,43 @@ def _raw_request(
     data=b"",
     content_type=None,
     timeout=32,
+    enable_cache=True,
     headers={},
     auth={},
     history=[],
     debug=False,
     last_status=-1,
+    pure_headers=False
 ):
-    debug = debug or getattr(builtins,'debug',False)
+    headers = {capitalize(key):value for key,value in headers.items()}
+    debug = debug or getattr(builtins, "debug", False)
     debugger.info("_raw_request() called.")
-    debugger.info("Accessing cache.")
-    cf = cache[deslash(url)]
+    if (host, port, path) in permanent_redirects:
+        nep = permanent_redirects[host, port, path]
+        debugger.info(f"Permanently redirecting from {path} to {nep}")
+        return Response(
+            Status(b"301 Moved Permanently"),
+            {"Location": nep},
+            "",
+            history,
+            url,
+            True,
+            b"",
+            0,
+        )
     socket.setdefaulttimeout(timeout)
-    if cf and not cf.expired:
-        debugger.info("Not expired data in cache, loading from cache")
-        return Response.cacheload(cf)
+
+    if enable_cache:
+        debugger.info("Accessing cache.")
+        cf = cache[deslash(url)]
+        if cf and not cf.expired:
+            debugger.info("Not expired data in cache, loading from cache")
+            return Response.cacheload(cf)
+        else:
+            debugger.info("No data in cache.")
     else:
-        debugger.info("No data in cache.")
+        debugger.info("Cache disabled.")
+        cf=None
     defhdr = {
         "Accept-Encoding": "gzip, deflate, identity",
         "Host": makehost(host, port),
@@ -1530,6 +1601,8 @@ def _raw_request(
             sock = context.wrap_socket(sock, server_hostname=host)
 
         defhdr.update(headers)
+        if pure_headers:
+            defhdr=headers
         if cf:
             cf.add_header(defhdr)
         headers = "\r\n".join([mk_header(i) for i in defhdr.items()])
@@ -1544,6 +1617,10 @@ def _raw_request(
         statusline = file.readline()
         _debugprint(debug, "\nresponse: ")
         _debugprint(debug, statusline)
+        if not statusline:
+            debugger.warn("dead connection")
+            raise DeadConnectionError("peer did not send a response")
+
         status = Status(statusline)
         if status.status == 304:
             return Response.cacheload(cf)
@@ -1598,14 +1675,18 @@ def _raw_request(
     except:
         del pool[host, port]
         raise
-    pool.connections[host,port]._sock=sock #Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+    pool.connections[
+        host, port
+    ]._sock = (
+        sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+    )
     end_time = time.time()
     elapsed_time = end_time - start_time
     content_encoding = headers.get("content-encoding", "identity")
     decoded_body = decode_content(body, content_encoding)
 
     return Response(
-        status, headers, decoded_body, history, url, False, body, elapsed_time
+        status, headers, decoded_body, history, url, False, body, elapsed_time,enable_cache
     )
 
 
@@ -1640,6 +1721,8 @@ def request(
     history=None,
     throw_on_error=False,
     debug=False,
+    pure_headers=False,
+    enable_cache=True
 ):
     """
     Performs request.
@@ -1710,9 +1793,14 @@ def request(
         content_type=content_type,
         debug=debug,
         last_status=last_status,
+        pure_headers=pure_headers,
+        enable_cache=enable_cache
     )
+    if resp.status == 301:
+        debugger.info("Updating permanent redirects data file")
+        permanent_redirects[host, port, "/" + path] = resp.headers["Location"]
     if 300 <= resp.status < 400:
-
+        debugger.info("Redirect")
         if len(history) == redirlimit:
             debugger.warn("too many redirects!")
             raise TooManyRedirectsError("too many redirects")
@@ -1730,6 +1818,8 @@ def request(
                 content_type=content_type,
                 history=resp.history,
                 debug=debug,
+                pure_headers=pure_headers,
+                enable_cache=enable_cache,
             )
     if resp.status == 401:
         if last_status == 401:
@@ -1745,18 +1835,77 @@ def request(
             content_type=content_type,
             history=resp.history,
             debug=debug,
+            pure_headers=pure_headers,
+            enable_cache=enable_cache
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
         if throw_on_error:
-            raise ClientError(f"\n{resp.status} {resp.reason}: {resp.status.description}")
+            raise ClientError(
+                f"\n{resp.status} {resp.reason}: {resp.status.description}"
+            )
     if 499 < resp.status < 600:
         if throw_on_error:
-            raise ServerError(f"\n{resp.status} {resp.reason}: {resp.status.description}")
+            raise ServerError(
+                f"\n{resp.status} {resp.reason}: {resp.status.description}"
+            )
         debugger.warn(f"Server error : {resp.status} {resp.reason}")
     if resp.ok:
         debugger.ok(f"Response OK")
     return resp
+
+
+def generate_websocket_key():
+    return base64.b64encode(
+        ("".join(random.choices(string.ascii_letters + string.digits, k=16))).encode()
+    )
+
+
+def websocket_handshake(
+    url, key, debug = False, subprotocol=None, origin=None, additional_headers={}
+):
+    set_debug(debug)
+    debugger.info("started handshake")
+    base = {
+        "Host":get_host(url),
+        "upgrade": "websocket",
+        "connection": "Upgrade",
+        "Sec-WebSocket-Version": "13", # we don't plan  supporting other versions
+        "Sec-WebSocket-Key":key
+        }
+    if origin is not None:
+        base["origin"] = origin
+    if subprotocol is not None:
+        base["Sec-WebSocket-Protocol"] = subprotocol
+    base.update(additional_headers)
+    debugger.info("sending request")
+
+    with warnings.catch_warnings():
+        set_debug(False)
+        warnings.filterwarnings("ignore",message = "no content-length nor transfer-encoding, setting socket timeout")
+        response = request(url, headers=base,pure_headers=True,enable_cache=False)
+    set_debug()
+    debugger.info("checking response")
+    assert response.status == 101 , f"Invalid status in handshake, expected 101, got {response.status}"
+    accept = response.headers["Sec-WebSocket-Accept"]
+    encoded = hashlib.sha1(key+WEBSOCKET_GUID).digest()
+    check = base64.b64encode(encoded).decode()
+    assert accept == check, f"Invalid Sec-WebSocket-Accept header field, expected {check} got {accept}"
+    debugger.ok("Handshake Ok")
+    return response
+class WebSocket:
+    def __init__(self, url, debug=False, use_tls=False, subprotocol=None, origin=None):
+        self.url = url
+        self.use_tls = use_tls
+        self.port = 443 if use_tls else 80
+        self.debug = debug
+        set_debug(debug)
+        self.key = generate_websocket_key()
+        self.base_url = url.split("://")[-1]
+        self.http_url = f"http{'s' if use_tls else ''}://{self.base_url}"
+        self.handshake_response=websocket_handshake(self.http_url, self.key, self.debug)
+        debugger.info("extracting socket")
+        self.socket = pool.connections[get_host(self.http_url),self.port]._sock
 
 
 encodings = {
@@ -1769,5 +1918,6 @@ cache = Cache()
 nonce_counter = NonceCounter()
 debugger = _Debugger(False)
 pool = ConnectionPool()
+permanent_redirects = PickleFile(HTTPY_DIR / "permredir.pickle")
 __version__ = VERSION
 __author__ = "Adam Jenca"
