@@ -54,6 +54,13 @@ if not os.path.exists(HTTPY_DIR / "permredir.pickle"):
     with open(HTTPY_DIR / "permredir.pickle", "wb") as permr:
         pickle.dump({}, permr)
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+WEBSOCKET_CONTINUATION_FRAME = 0x0
+WEBSOCKET_TEXT_FRAME = 0x1
+WEBSOCKET_BINARY_FRAME = 0x2
+WEBSOCKET_CONNECTION_CLOSE = 0x8
+WEBSOCKET_PING = 0x9
+WEBSOCKET_PONG = 0xA
+WEBSCOKET_OPCODES = {0x0,0x1,0x2,0x8,0x9,0xA}
 STATUS_CODES = {
     "100": {
         "code": "100",
@@ -393,6 +400,27 @@ def get_host(url):
     return URLPATTERN.search(url).group("host")
 def capitalize(string):
     return string[0].upper()+string[1:]
+def byte_length(i):
+    if i==0 :
+        return 1
+    return math.ceil(i.bit_length()/8)
+def mkbits(i,pad=None):
+    j=bin(i)[2:]
+    if pad is None:
+        return j
+    return "0"*(pad-len(j))+j
+def int2bytes(i,bl=None):
+    if bl is None:
+        bl=byte_length(i)
+    return i.to_bytes(bl,"big")
+def getbytes(bits):
+    return int2bytes(int(bits,2))
+def mask(data,mask):
+    r = bytearray()
+    for ix, i in enumerate(data):
+        b = mask[ix%len(mask)]
+        r.append(b^i)
+    return r
 class Status(int):
     """
     Creates HTTP status from string.
@@ -1224,6 +1252,7 @@ class ConnectionPool:
         return host in self.connections
 
     def __delitem__(self, host):
+        if host not in self:return
         del self.connections[host]
 
     def __del__(self):
@@ -1894,18 +1923,57 @@ def websocket_handshake(
     debugger.ok("Handshake Ok")
     return response
 class WebSocket:
-    def __init__(self, url, debug=False, use_tls=False, subprotocol=None, origin=None):
+    def __init__(self, url, debug=False, use_tls=None, subprotocol=None, origin=None):
         self.url = url
-        self.use_tls = use_tls
+        self.use_tls = use_tls if use_tls is not None else url.split('://')[0]=="wss"
         self.port = 443 if use_tls else 80
         self.debug = debug
-        set_debug(debug)
+        self.debugger = Debugger(debug)
         self.key = generate_websocket_key()
+        self._bit_buffer =""
         self.base_url = url.split("://")[-1]
         self.http_url = f"http{'s' if use_tls else ''}://{self.base_url}"
+        del pool[get_host(self.http_url),self.port]
         self.handshake_response=websocket_handshake(self.http_url, self.key, self.debug)
         debugger.info("extracting socket")
         self.socket = pool.connections[get_host(self.http_url),self.port]._sock
+    def _recv_bits(self,num):
+        while len(self._bit_buffer)<num:
+            self._bit_buffer+=mkbits(ord(self.socket.recv(1)))
+        bits = self._bit_buffer[:num]
+        self._bit_buffer = self._bit_buffer[num:]
+        return bits
+    def _fail(self,message):
+        self.debugger.error(f"{message}, failing connection")
+        #TODO
+    def _recv_frame(self):
+        fin = self._recv_bits(1)=='1'
+        rsvs = self._recv_bits(3)
+        if rsvs != '000':
+            self._fail("Invalid reserved bits")
+            return
+        opcode = int(self._recv_bits(4),2)
+        if opcode not in WEBSOCKET_OPCODES:
+            self._fail(f"Unknown opcode {hex(opcode)}")
+    def _send_frame(self,opcode,payload,final=1):
+        header_1=0b10000000|opcode
+        
+        payload_length=len(payload)
+        masking_key=os.urandom(4)
+        message=io.BytesIO()
+        if payload_length<=125:
+            message.write(struct.pack("!BB",header_1,0b10000000|payload_length))
+        elif payload_length<=65535:
+            message.write(struct.pack("!BBH",header_1,0b1000000|126,payload_length))
+            header_bits+=mkbits(int.from_bytes(int2bytes(payload_length,bl=2),'big'))
+        elif payload_length<=18446744073709551615:
+            message.write(struct.pack("!BBQ",header_1,0b100000|127,payload_length))
+        else:
+            raise OverflowError(f"Length of payload exceeded {18446744073709551615:,} bytes")
+        message.write(masking_key)
+        message.write(payload)
+        self.socket.send(message.getvalue())
+
 
 
 encodings = {
