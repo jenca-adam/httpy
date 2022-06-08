@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: httpy
-Version: 1.2.0
-Summary: Lightweight socket-based HTTP(s) client.
+Version: 1.2.1
+Summary: Lightweight socket-based HTTP(s) and WebSocket client.
 Home-page: https://github.com/jenca-adam/httpy
 Author: Adam Jenca
 Author-email: jenca.a@gjh.sk
@@ -23,7 +23,7 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 
 
-A lightweight socket-based library to create HTTP(s) connections.
+A lightweight socket-based library to create HTTP(s) and WebSocket connections.
 ## Features
    * Cookies support
    * Caching support

@@ -15,9 +15,9 @@ if sys.hexversion < 0x3060000:
 setuptools.setup(
     name="httpy",
     author="Adam Jenca",
-    description="Lightweight socket-based HTTP(s) client.",
+    description="Lightweight socket-based HTTP(s) and WebSocket client.",
     long_description="""
-A lightweight socket-based library to create HTTP(s) connections.
+A lightweight socket-based library to create HTTP(s) and WebSocket connections.
 ## Features
    * Cookies support
    * Caching support
@@ -29,7 +29,7 @@ A lightweight socket-based library to create HTTP(s) connections.
 ## License
     GPLv3
 Docs at <https://httpy.readthedocs.io/>""",
-    version="1.2.0",
+    version="1.2.1",
     long_description_content_type="text/markdown",
     packages=["httpy"],
     author_email="jenca.a@gjh.sk",
