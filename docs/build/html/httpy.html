@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy module &mdash; httpy 1.1.4 documentation</title>
+  <title>httpy module &mdash; httpy 1.2.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -66,7 +66,7 @@
              
   <section id="module-httpy">
 <span id="httpy-module"></span><h1>httpy module<a class="headerlink" href="#module-httpy" title="Permalink to this headline"></a></h1>
-<p>HTTPy is a lightweight socket-based HTTP client.</p>
+<p>HTTPy is a lightweight socket-based HTTP and WebSocket client.</p>
 <dl class="py exception">
 <dt class="sig sig-object py" id="httpy.AuthError">
 <em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">AuthError</span></span><a class="headerlink" href="#httpy.AuthError" title="Permalink to this definition"></a></dt>
@@ -297,6 +297,13 @@
 
 </dd></dl>
 
+<dl class="py exception">
+<dt class="sig sig-object py" id="httpy.DeadConnectionError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">DeadConnectionError</span></span><a class="headerlink" href="#httpy.DeadConnectionError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#httpy.HTTPyError" title="httpy.HTTPyError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.HTTPyError</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ConnectionError</span></code></p>
+<p>Raised if the server didn’t respond to the request</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="httpy.ETag">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">ETag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.ETag" title="Permalink to this definition"></a></dt>
@@ -392,8 +399,14 @@ for whence are:</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="httpy.PickleFile">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">PickleFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.PickleFile" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="httpy.Response">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">Response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fromcache</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_elapsed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.Response" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">Response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fromcache</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_elapsed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.Response" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class for HTTP Response.</p>
 <dl class="field-list simple">
@@ -504,9 +517,64 @@ for whence are:</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="httpy.WebSocket">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">WebSocket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_tls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subprotocol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.WebSocket" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.WebSocket.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.WebSocket.close" title="Permalink to this definition"></a></dt>
+<dd><p>Closes the WebSocket connection with close code of 1000</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.WebSocket.recv">
+<span class="sig-name descname"><span class="pre">recv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.WebSocket.recv" title="Permalink to this definition"></a></dt>
+<dd><p>Receives data from WebSocket server</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.WebSocket.send">
+<span class="sig-name descname"><span class="pre">send</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.WebSocket.send" title="Permalink to this definition"></a></dt>
+<dd><p>Sends data to WebSocket server</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>str</em><em> or </em><em>bytes</em>) – Data to send to the server</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="httpy.WebSocketClientError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">WebSocketClientError</span></span><a class="headerlink" href="#httpy.WebSocketClientError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#httpy.WebSocketError" title="httpy.WebSocketError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.WebSocketError</span></code></a></p>
+<p>Raised on erroneous close code</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="httpy.WebSocketError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">WebSocketError</span></span><a class="headerlink" href="#httpy.WebSocketError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#httpy.HTTPyError" title="httpy.HTTPyError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.HTTPyError</span></code></a></p>
+<p>Metaclass for exceptions in websockets</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="httpy.WebSocketHandshakeError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">WebSocketHandshakeError</span></span><a class="headerlink" href="#httpy.WebSocketHandshakeError" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#httpy.WebSocketError" title="httpy.WebSocketError"><code class="xref py py-class docutils literal notranslate"><span class="pre">httpy.WebSocketError</span></code></a></p>
+<p>Error in handshake</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.absolute_path">
 <span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">absolute_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.absolute_path" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.byte_length">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">byte_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.byte_length" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -519,6 +587,11 @@ for whence are:</p>
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.capitalize">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">capitalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.capitalize" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.chain_functions">
@@ -573,6 +646,12 @@ for whence are:</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="httpy.generate_websocket_key">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">generate_websocket_key</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.generate_websocket_key" title="Permalink to this definition"></a></dt>
+<dd><p>Generates a websocket key</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="httpy.get_content_type">
 <span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">get_content_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.get_content_type" title="Permalink to this definition"></a></dt>
 <dd><p>Used to automatically get request content type</p>
@@ -585,8 +664,23 @@ for whence are:</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="httpy.get_host">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">get_host</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.get_host" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.getbytes">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">getbytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.getbytes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="httpy.hashing_function">
 <span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">hashing_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.hashing_function" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.int2bytes">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">int2bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.int2bytes" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -596,10 +690,20 @@ for whence are:</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="httpy.mask">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.mask" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="httpy.mk_header">
 <span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">mk_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key_value_pair</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.mk_header" title="Permalink to this definition"></a></dt>
 <dd><p>Makes header from key/value pair</p>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.mkbits">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">mkbits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.mkbits" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.mkdict">
@@ -609,13 +713,13 @@ for whence are:</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.multipart">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--M3qSwrucM2\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--DBWMWp8MO1\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
 <dd><p>Builds multipart/form-data from form</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.request">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.request" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure_headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.request" title="Permalink to this definition"></a></dt>
 <dd><p>Performs request.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -651,6 +755,23 @@ for whence are:</p>
 <dt class="sig sig-object py" id="httpy.urlencode">
 <span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">urlencode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.urlencode" title="Permalink to this definition"></a></dt>
 <dd><p>Creates urlencoded string from dict data</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.websocket_handshake">
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">websocket_handshake</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdebugger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subprotocol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.websocket_handshake" title="Permalink to this definition"></a></dt>
+<dd><p>Performs a WebSocket Handshake</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>) – url to send request to</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – WebSocket secret key</p></li>
+<li><p><strong>subprotocol</strong> (<em>str</em><em> or </em><em>None</em>) – Subprotocol to use, defaults to <cite>None</cite></p></li>
+<li><p><strong>origin</strong> (<em>str</em><em> or </em><em>None</em>) – Origin of request, defaults to <cite>None</cite></p></li>
+<li><p><strong>additional_headers</strong> (<em>dict</em>) – Additional headers to send request with, defaults to <cite>{}</cite></p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

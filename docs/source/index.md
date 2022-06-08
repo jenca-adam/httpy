@@ -1,5 +1,5 @@
 # httpy
-A Python lightweight socket-based library to create HTTP(s) connections.
+A Python lightweight socket-based library to create HTTP(s) and WebSocket connections.
 ## Features
    * Cookies support
    * Caching support
@@ -7,9 +7,12 @@ A Python lightweight socket-based library to create HTTP(s) connections.
    * HTTP Basic and Digest authentication
    * Form support
    * Keep-Alive and connection pooling support
+   * JSON support
 ## Requirements
    * Python>=3.6
 ## Usage
+### HTTP
+
 It's easy.
 ```{code-block} python
 ---
@@ -19,6 +22,19 @@ import httpy
 resp = httpy.request("https://example.com/") # Do a request
 resp.content #Access content
 ```
+### WebSocket
+This is not THAT easy, but it's fine.
+```{code-block} python
+---
+lineno-start: 1
+---
+>>> import httpy
+>>> sock = httpy.WebSocket("wss://echo.websocket.events/")# create a websocket(echo server example)
+>>> sock.send("Hello, world!💥")# you can send also bytes
+>>> sock.recv()
+"Hello, world!💥"
+```
+
 [API Documentation](httpy)
 ## Examples
 ### POST method

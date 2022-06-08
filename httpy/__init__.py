@@ -43,7 +43,7 @@ except ImportError:
 
 HTTPY_DIR = pathlib.Path.home() / ".cache/httpy"
 os.makedirs(HTTPY_DIR / "sites", exist_ok=True)
-VERSION = "1.1.4"
+VERSION = "1.2.0"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -60,7 +60,23 @@ WEBSOCKET_BINARY_FRAME = 0x2
 WEBSOCKET_CONNECTION_CLOSE = 0x8
 WEBSOCKET_PING = 0x9
 WEBSOCKET_PONG = 0xA
-WEBSCOKET_OPCODES = {0x0,0x1,0x2,0x8,0x9,0xA}
+WEBSOCKET_OPCODES = {0x0, 0x1, 0x2, 0x8, 0x9, 0xA}
+WEBSOCKET_CLOSE_CODES = {
+    1000: "Normal closure",
+    1001: "Going away",
+    1002: "Protocol error",
+    1003: "Unsupported Data",
+    1005: "No status received",
+    1006: "Abnormal closure",
+    1007: "Invalid frame payload data",
+    1008: "Policy Violation",
+    1009: "Message Too Big",
+    1010: "Mandatory Ext.",
+    1011: "Internal Error",
+    1012: "Service restart",
+    1014: "Bad Gateway",
+    1015: "TLS handshake",
+}
 STATUS_CODES = {
     "100": {
         "code": "100",
@@ -392,35 +408,63 @@ class ClientError(StatusError):
     """Raised if server responded with 4xx status code"""
 
 
+class WebSocketError(HTTPyError):
+    """Metaclass for exceptions in websockets"""
+
+
+class WebSocketClientError(WebSocketError):
+    """Raised on erroneous close code"""
+
+
+class WebSocketHandshakeError(WebSocketError):
+    """Error in handshake"""
+
+
 def _mk2l(original):
     if len(original) == 1:
         original.append(True)
     return original
+
+
 def get_host(url):
     return URLPATTERN.search(url).group("host")
+
+
 def capitalize(string):
-    return string[0].upper()+string[1:]
+    return string[0].upper() + string[1:]
+
+
 def byte_length(i):
-    if i==0 :
+    if i == 0:
         return 1
-    return math.ceil(i.bit_length()/8)
-def mkbits(i,pad=None):
-    j=bin(i)[2:]
+    return math.ceil(i.bit_length() / 8)
+
+
+def mkbits(i, pad=None):
+    j = bin(i)[2:]
     if pad is None:
         return j
-    return "0"*(pad-len(j))+j
-def int2bytes(i,bl=None):
+    return "0" * (pad - len(j)) + j
+
+
+def int2bytes(i, bl=None):
     if bl is None:
-        bl=byte_length(i)
-    return i.to_bytes(bl,"big")
+        bl = byte_length(i)
+    return i.to_bytes(bl, "big")
+
+
 def getbytes(bits):
-    return int2bytes(int(bits,2))
-def mask(data,mask):
+    return int2bytes(int(bits, 2))
+
+
+def mask(data, mask):
     r = bytearray()
     for ix, i in enumerate(data):
-        b = mask[ix%len(mask)]
-        r.append(b^i)
+        b = mask[ix % len(mask)]
+        r.append(b ^ i)
     return r
+
+
 class Status(int):
     """
     Creates HTTP status from string.
@@ -466,7 +510,9 @@ class _Debugger:
 
     @property
     def debug(self):
-        return self._debug or getattr(builtins, "debug", False)
+        if  self._debug is not None:
+            return self._debug
+        return getattr(builtins,"debug",False)
 
     def debugging_method(self, suffix):
         def decorated(a, data):
@@ -490,9 +536,10 @@ class _Debugger:
 
         return decorated
 
-    info = debugging_method("\033[94m[INFO]", "\033[0m")
-    ok = debugging_method("\033[92m[OK]", "\033[0m")
-    warn = debugging_method("\033[93m[WARN]", "\033[0m")
+    info = debugging_method("\033[94;1m[INFO]", "\033[0m")
+    ok = debugging_method("\033[92;1m[OK]", "\033[0m")
+    warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
+    error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
 
 
 class CaseInsensitiveDict(dict):
@@ -971,7 +1018,7 @@ class Response:
         fromcache,
         original_content,
         time_elapsed=math.inf,
-        cache=True
+        cache=True,
     ):
         self.status = status
         self.headers = headers
@@ -987,7 +1034,11 @@ class Response:
         self.fromcache = fromcache
         self._time_elapsed = time_elapsed
         self.content_type = headers.get("content-type", "text/html")
-        if not self.fromcache and (self.content or self.headers or self.status) and cache:
+        if (
+            not self.fromcache
+            and (self.content or self.headers or self.status)
+            and cache
+        ):
             cacheWrite(self)
 
         self._charset = determine_charset(headers)
@@ -1252,7 +1303,8 @@ class ConnectionPool:
         return host in self.connections
 
     def __delitem__(self, host):
-        if host not in self:return
+        if host not in self:
+            return
         del self.connections[host]
 
     def __del__(self):
@@ -1284,7 +1336,9 @@ def hashing_function(function_name):
     return decorated
 
 
-md5, sha256, sha512, sha1  = (hashing_function(i) for i in ("md5", "sha256", "sha512","sha1"))
+md5, sha256, sha512, sha1 = (
+    hashing_function(i) for i in ("md5", "sha256", "sha512", "sha1")
+)
 ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512}
 
 
@@ -1556,9 +1610,9 @@ def _raw_request(
     history=[],
     debug=False,
     last_status=-1,
-    pure_headers=False
+    pure_headers=False,
 ):
-    headers = {capitalize(key):value for key,value in headers.items()}
+    headers = {capitalize(key): value for key, value in headers.items()}
     debug = debug or getattr(builtins, "debug", False)
     debugger.info("_raw_request() called.")
     if (host, port, path) in permanent_redirects:
@@ -1586,7 +1640,7 @@ def _raw_request(
             debugger.info("No data in cache.")
     else:
         debugger.info("Cache disabled.")
-        cf=None
+        cf = None
     defhdr = {
         "Accept-Encoding": "gzip, deflate, identity",
         "Host": makehost(host, port),
@@ -1631,7 +1685,7 @@ def _raw_request(
 
         defhdr.update(headers)
         if pure_headers:
-            defhdr=headers
+            defhdr = headers
         if cf:
             cf.add_header(defhdr)
         headers = "\r\n".join([mk_header(i) for i in defhdr.items()])
@@ -1690,6 +1744,7 @@ def _raw_request(
                     except socket.timeout:  # end of response??
                         break
                     body += b
+                sock.settimeout(timeout)
             else:
                 body = file.read(cl)  # recv <content-length> bytes
         else:  # chunked read
@@ -1715,7 +1770,15 @@ def _raw_request(
     decoded_body = decode_content(body, content_encoding)
 
     return Response(
-        status, headers, decoded_body, history, url, False, body, elapsed_time,enable_cache
+        status,
+        headers,
+        decoded_body,
+        history,
+        url,
+        False,
+        body,
+        elapsed_time,
+        enable_cache,
     )
 
 
@@ -1751,7 +1814,7 @@ def request(
     throw_on_error=False,
     debug=False,
     pure_headers=False,
-    enable_cache=True
+    enable_cache=True,
 ):
     """
     Performs request.
@@ -1823,7 +1886,7 @@ def request(
         debug=debug,
         last_status=last_status,
         pure_headers=pure_headers,
-        enable_cache=enable_cache
+        enable_cache=enable_cache,
     )
     if resp.status == 301:
         debugger.info("Updating permanent redirects data file")
@@ -1865,7 +1928,7 @@ def request(
             history=resp.history,
             debug=debug,
             pure_headers=pure_headers,
-            enable_cache=enable_cache
+            enable_cache=enable_cache,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -1885,95 +1948,246 @@ def request(
 
 
 def generate_websocket_key():
+    '''Generates a websocket key'''
     return base64.b64encode(
         ("".join(random.choices(string.ascii_letters + string.digits, k=16))).encode()
     )
 
 
 def websocket_handshake(
-    url, key, debug = False, subprotocol=None, origin=None, additional_headers={}
+    url, key, cdebugger, subprotocol=None, origin=None, additional_headers={}
 ):
-    set_debug(debug)
-    debugger.info("started handshake")
+    """
+    Performs a WebSocket Handshake
+    
+    :param url: url to send request to
+    :type url: str
+    :param key: WebSocket secret key
+    :type key: str
+    :param subprotocol: Subprotocol to use, defaults to `None`
+    :type subprotocol: str or None
+    :param origin: Origin of request, defaults to `None`
+    :type origin: str or None
+    :param additional_headers: Additional headers to send request with, defaults to `{}`
+    :type additional_headers: dict
+    """
+    cdebugger.info("started handshake")
     base = {
-        "Host":get_host(url),
+        "Host": get_host(url),
         "upgrade": "websocket",
         "connection": "Upgrade",
-        "Sec-WebSocket-Version": "13", # we don't plan  supporting other versions
-        "Sec-WebSocket-Key":key
-        }
+        "Sec-WebSocket-Version": "13",          
+        "Sec-WebSocket-Key": key,
+    }
     if origin is not None:
         base["origin"] = origin
     if subprotocol is not None:
         base["Sec-WebSocket-Protocol"] = subprotocol
     base.update(additional_headers)
-    debugger.info("sending request")
+    cdebugger.info("sending request")
 
     with warnings.catch_warnings():
         set_debug(False)
-        warnings.filterwarnings("ignore",message = "no content-length nor transfer-encoding, setting socket timeout")
-        response = request(url, headers=base,pure_headers=True,enable_cache=False)
+        warnings.filterwarnings(
+            "ignore",
+            message="no content-length nor transfer-encoding, setting socket timeout",
+        )
+        response = request(url, headers=base, pure_headers=True, enable_cache=False)
     set_debug()
-    debugger.info("checking response")
-    assert response.status == 101 , f"Invalid status in handshake, expected 101, got {response.status}"
+    cdebugger.info("checking response")
+    if response.status != 101:
+        raise WebSocketHandshakeError(
+            f"Invalid status in handshake, expected 101, got {response.status}"
+        )
     accept = response.headers["Sec-WebSocket-Accept"]
-    encoded = hashlib.sha1(key+WEBSOCKET_GUID).digest()
+    encoded = hashlib.sha1(key + WEBSOCKET_GUID).digest()
     check = base64.b64encode(encoded).decode()
-    assert accept == check, f"Invalid Sec-WebSocket-Accept header field, expected {check} got {accept}"
-    debugger.ok("Handshake Ok")
+    if accept != check:
+        raise WebSocketHandshakeError(
+            f"Invalid Sec-WebSocket-Accept header field, expected {check} got {accept}"
+        )
+    cdebugger.ok("Handshake Ok")
     return response
+
+
 class WebSocket:
+
     def __init__(self, url, debug=False, use_tls=None, subprotocol=None, origin=None):
+        """
+        :param url: Url for WebSocket
+        :type url: str
+        :param debug: Specifies whether or not to use the debug mode
+        :type debug: str
+        :param use_tls: Specifies wheter or not to use TLS for the WebSocket
+        :param subprotocol: Subprotocol to use, defaults to `None`
+        :type subprotocol: str or None
+        :param origin: Origin of request, defaults to `None`
+        :type origin: str or None
+        """
+
         self.url = url
-        self.use_tls = use_tls if use_tls is not None else url.split('://')[0]=="wss"
+        self.closed = False
+        self.use_tls = use_tls if use_tls is not None else url.split("://")[0] == "wss"
         self.port = 443 if use_tls else 80
         self.debug = debug
-        self.debugger = Debugger(debug)
+        self.debugger = _Debugger(debug)
         self.key = generate_websocket_key()
-        self._bit_buffer =""
         self.base_url = url.split("://")[-1]
         self.http_url = f"http{'s' if use_tls else ''}://{self.base_url}"
-        del pool[get_host(self.http_url),self.port]
-        self.handshake_response=websocket_handshake(self.http_url, self.key, self.debug)
-        debugger.info("extracting socket")
-        self.socket = pool.connections[get_host(self.http_url),self.port]._sock
-    def _recv_bits(self,num):
-        while len(self._bit_buffer)<num:
-            self._bit_buffer+=mkbits(ord(self.socket.recv(1)))
-        bits = self._bit_buffer[:num]
-        self._bit_buffer = self._bit_buffer[num:]
-        return bits
-    def _fail(self,message):
+        del pool[get_host(self.http_url), self.port]
+        self.handshake_response = websocket_handshake(
+            self.http_url, self.key, self.debugger
+        )
+        self.debugger.info("extracting socket")
+        self.socket = pool.connections[get_host(self.http_url), self.port]._sock
+
+    def _fail(self, message):
         self.debugger.error(f"{message}, failing connection")
-        #TODO
+        self._client_close(1002, message)
+
     def _recv_frame(self):
-        fin = self._recv_bits(1)=='1'
-        rsvs = self._recv_bits(3)
-        if rsvs != '000':
+        if self.closed:
+            raise RuntimeError("WebSocket is closed.")
+        fb = ord(self.socket.recv(1))
+        fin = bool(fb & 0b10000000)
+        self.debugger.info(f"Final: {fin}")
+
+        rsvok = not fb & 0b01110000
+        if not rsvok:
             self._fail("Invalid reserved bits")
             return
-        opcode = int(self._recv_bits(4),2)
+        opcode = fb & 0b00001111
+        self.debugger.info(f"Opcode: {hex(opcode)}")
         if opcode not in WEBSOCKET_OPCODES:
             self._fail(f"Unknown opcode {hex(opcode)}")
-    def _send_frame(self,opcode,payload,final=1):
-        header_1=0b10000000|opcode
-        
-        payload_length=len(payload)
-        masking_key=os.urandom(4)
-        message=io.BytesIO()
-        if payload_length<=125:
-            message.write(struct.pack("!BB",header_1,0b10000000|payload_length))
-        elif payload_length<=65535:
-            message.write(struct.pack("!BBH",header_1,0b1000000|126,payload_length))
-            header_bits+=mkbits(int.from_bytes(int2bytes(payload_length,bl=2),'big'))
-        elif payload_length<=18446744073709551615:
-            message.write(struct.pack("!BBQ",header_1,0b100000|127,payload_length))
+        sb = ord(self.socket.recv(1))
+        masked = bool(sb & 0b10000000)
+        self.debugger.info(f"Masked: {masked}")
+        ln = sb & 0b01111111
+        if ln <= 125:
+            payload_length = ln
+        elif ln == 126:
+            next2bytes = self.socket.recv(2)
+            (payload_length,) = struct.unpack("!H",next2bytes)
+        elif ln == 127:
+            next8bytes = self.socket.recv(8)
+            (payload_length,) = struct.unpack("!Q",next8bytes)
+        self.debugger.info(f"Length: {payload_length} bytes")
+        if masked:
+            masking_key = self.socket.recv(4)
+            self.debugger.info("Masking key: {masking_key}")
+        self.debugger.info("Receiving payload")
+        payload = self.socket.recv(payload_length)
+        if masked:
+            self.debugger.info("Unmasking")
+            payload = mask(payload, masking_key)
+        if not fin:  # continuation
+            debugger.info("Not a final frame, continuing")
+            p, o = self._recv_frame()
+            payload += p
+            if o != 0:
+                self._fail(f"Expected opcode 0x0 ,got {hex(o)}")
+        return payload, opcode
+
+    def send(self, data):
+        """Sends data to WebSocket server
+
+        :param data: Data to send to the server
+        :type data: str or bytes
+        """
+        payload, opcode = self._opcode_unparse(data)
+        self._send_frame(opcode, payload)
+
+    def recv(self):
+        """Receives data from WebSocket server"""
+        payload, opcode = self._recv_frame()
+        return self._opcode_parse(payload, opcode)
+
+    def close(self):
+        """Closes the WebSocket connection with close code of 1000"""
+        self._client_close(1000, "")
+
+    def _send_frame(self, opcode, payload, final=True):
+        if self.closed:
+            raise RuntimeError("WebSocket is closed.")
+
+        self.debugger.info("building header")
+        header_1 = (int(final) * (0b10000000)) | opcode
+        self.debugger.info(f"First part: {bin(header_1)}")
+
+        payload_length = len(payload)
+        self.debugger.info("selecting masking key")
+        masking_key = os.urandom(4)
+        message = io.BytesIO()
+        self.debugger.info("Encoding payload length")
+        if payload_length <= 125:
+            message.write(struct.pack("!BB", header_1, 0b10000000 | payload_length))
+        elif payload_length <= 65535:
+            message.write(
+                struct.pack("!BBH", header_1, 0b10000000 | 126, payload_length)
+            )
+        elif payload_length <= 18446744073709551615:
+            message.write(
+                struct.pack("!BBQ", header_1, 0b10000000 | 127, payload_length)
+            )
         else:
-            raise OverflowError(f"Length of payload exceeded {18446744073709551615:,} bytes")
+            raise OverflowError(
+                f"Length of payload exceeded {18446744073709551615:,} bytes"
+            )
         message.write(masking_key)
-        message.write(payload)
+        self.debugger.info("Masking payload")
+        message.write(mask(payload, masking_key))
+        self.debugger.info("Sending")
         self.socket.send(message.getvalue())
 
+    def _client_close(self, close_code, message):
+        if close_code == 1000:
+            self.debugger.info("Closing connection.")
+        else:
+            self.debugger.error(
+                f"Server error: {close_code} {WEBSOCKET_CLOSE_CODES[close_code]}, {message}"
+            )
+        self._send_frame(0x8, int2bytes(close_code) + force_bytes(message))
+        self.debugger.info("Closing underlying TCP conn")
+        self.socket.close()
+        self.closed = True
+
+    def _server_close(self, close_code, message):
+        if close_code == 1000:
+            self.debugger.info(
+                "Received 0x8 CLOSE, exitting. Close code: 1000 Normal closure"
+            )
+            self._client_close(close_code, message)
+            return
+        else:
+            self.debugger.error(
+                f"Received erroneous close code: {close_code} {WEBSOCKET_CLOSE_CODES[close_code]}, {message}"
+            )
+            self._client_close(close_code, message)
+            raise WebSocketClientError(
+                f"{close_code} {WEBSOCKET_CLOSE_CODES[close_code]} : {message}"
+            )
+
+    def _opcode_parse(self, data, opcode):
+        debugger.info("Parsing opcode")
+        if opcode == 0x8:
+            close_code = int.from_bytes(data[:2], "big")
+            self._server_close(close_code, data[2:])
+        elif opcode == 0x1:
+            return data
+        elif opcode == 0x2:
+            return data.decode("UTF-8")
+        elif opcode == 0x0:
+            self._fail("Continuation frame after final frame")
+
+    def _opcode_unparse(self, data):
+        if isinstance(data, bytes):
+            return data, 0x1
+        if isinstance(data, str):
+            return data.encode("UTF-8"), 0x2
+        raise TypeError(
+            f"Unsupported data type : {type(data).__name__!r}, please use either str or bytes."
+        )
 
 
 encodings = {

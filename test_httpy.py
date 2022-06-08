@@ -4,6 +4,8 @@ import importlib
 import pathlib
 import warnings
 import sys
+import time
+import os
 import pytest
 try: import alive_progress
 except:
@@ -49,6 +51,29 @@ def test_httpy_post_raw():
 def test_httpy_post_form():
     f=httpy.request('https://www.httpbin.org/post',method="POST",body={"foo":"bar"})
     assert f.json['form']=={"foo":"bar"}
+def test_httpy_websocket_string():
+    wsk = httpy.WebSocket('wss://echo.websocket.events',debug=True)
+    wsk.send("Hello")
+    assert wsk.recv()=="Hello"
+def test_httpy_websocket_bytes():
+    wsk = httpy.WebSocket('wss://echo.websocket.events',debug=True)
+    wsk.send(b"World")
+    assert wsk.recv()==b"World"
+def test_httpy_websocket_string_long():
+    wsk = httpy.WebSocket('wss://echo.websocket.events',debug=True)
+    wsk.send("bla bla bla"*20)
+    assert wsk.recv()=="bla bla bla"*20
+def test_httpy_websocket_bytes_long():
+    wsk = httpy.WebSocket('wss://echo.websocket.events',debug=True)
+    a=os.urandom(500)
+    wsk.send(a)
+    assert wsk.recv()==a
+def test_httpy_websocket_bytes_supalong():
+    wsk = httpy.WebSocket('wss://echo.websocket.events',debug=True)
+    a=os.urandom(65537)
+    wsk.send(a)
+    time.sleep(1)
+    assert wsk.recv()==a
 with warnings.catch_warnings():
     unittest.main(argv=['first-arg-is-ignored'],exit=False,warnings='ignore')
 

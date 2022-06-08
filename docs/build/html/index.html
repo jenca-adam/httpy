@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy &mdash; httpy 1.1.4 documentation</title>
+  <title>httpy &mdash; httpy 1.2.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -40,7 +40,11 @@
 <li><a class="reference internal" href="#">httpy</a><ul>
 <li><a class="reference internal" href="#features">Features</a></li>
 <li><a class="reference internal" href="#requirements">Requirements</a></li>
-<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#usage">Usage</a><ul>
+<li><a class="reference internal" href="#http">HTTP</a></li>
+<li><a class="reference internal" href="#websocket">WebSocket</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#examples">Examples</a><ul>
 <li><a class="reference internal" href="#post-method">POST method</a><ul>
 <li><a class="reference internal" href="#simple-form">Simple Form</a></li>
@@ -83,7 +87,7 @@
              
   <section id="httpy">
 <h1>httpy<a class="headerlink" href="#httpy" title="Permalink to this headline"></a></h1>
-<p>A Python lightweight socket-based library to create HTTP(s) connections.</p>
+<p>A Python lightweight socket-based library to create HTTP(s) and WebSocket connections.</p>
 <section id="features">
 <h2>Features<a class="headerlink" href="#features" title="Permalink to this headline"></a></h2>
 <ul class="simple">
@@ -93,6 +97,7 @@
 <li><p>HTTP Basic and Digest authentication</p></li>
 <li><p>Form support</p></li>
 <li><p>Keep-Alive and connection pooling support</p></li>
+<li><p>JSON support</p></li>
 </ul>
 </section>
 <section id="requirements">
@@ -103,13 +108,27 @@
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline"></a></h2>
+<section id="http">
+<h3>HTTP<a class="headerlink" href="#http" title="Permalink to this headline"></a></h3>
 <p>It’s easy.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="linenos">2</span><span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span> <span class="c1"># Do a request</span>
 <span class="linenos">3</span><span class="n">resp</span><span class="o">.</span><span class="n">content</span> <span class="c1">#Access content</span>
 </pre></div>
 </div>
+</section>
+<section id="websocket">
+<h3>WebSocket<a class="headerlink" href="#websocket" title="Permalink to this headline"></a></h3>
+<p>This is not THAT easy, but it’s fine.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="linenos">2</span><span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s2">&quot;wss://echo.websocket.events/&quot;</span><span class="p">)</span><span class="c1"># create a websocket(echo server example)</span>
+<span class="linenos">3</span><span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;Hello, world!💥&quot;</span><span class="p">)</span><span class="c1"># you can send also bytes</span>
+<span class="linenos">4</span><span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="linenos">5</span><span class="go">&quot;Hello, world!💥&quot;</span>
+</pre></div>
+</div>
 <p><a class="reference internal" href="httpy.html"><span class="doc std std-doc">API Documentation</span></a></p>
+</section>
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h2>

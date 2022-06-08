@@ -1,11 +1,13 @@
 
-A lightweight socket-based library to create HTTP(s) connections.
+A lightweight socket-based library to create HTTP(s) and WebSocket connections.
 ## Features
    * Cookies support
    * Caching support
    * Easy debugging
    * HTTP authentication
    * Form support
+   * JSON support
+   * Connection pooling	
 
 
 

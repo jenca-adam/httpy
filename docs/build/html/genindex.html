@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; httpy 1.1.4 documentation</title>
+  <title>Index &mdash; httpy 1.2.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -118,6 +118,10 @@
       <li><a href="httpy.html#httpy.WWW_Authenticate.basic_auth">basic_auth() (httpy.WWW_Authenticate method)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.html#httpy.byte_length">byte_length() (in module httpy)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
@@ -133,6 +137,8 @@
 </li>
       <li><a href="httpy.html#httpy.cacheWrite">cacheWrite() (in module httpy)</a>
 </li>
+      <li><a href="httpy.html#httpy.capitalize">capitalize() (in module httpy)</a>
+</li>
       <li><a href="httpy.html#httpy.CaseInsensitiveDict">CaseInsensitiveDict (class in httpy)</a>
 </li>
       <li><a href="httpy.html#httpy.chain_functions">chain_functions() (in module httpy)</a>
@@ -146,7 +152,11 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.Connection.close">close() (httpy.Connection method)</a>
+
+      <ul>
+        <li><a href="httpy.html#httpy.WebSocket.close">(httpy.WebSocket method)</a>
 </li>
+      </ul></li>
       <li><a href="httpy.html#httpy.Connection">Connection (class in httpy)</a>
 </li>
       <li><a href="httpy.html#httpy.ConnectionClosedError">ConnectionClosedError</a>
@@ -173,6 +183,8 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.html#httpy.DeadConnectionError">DeadConnectionError</a>
+</li>
       <li><a href="httpy.html#httpy.decode_content">decode_content() (in module httpy)</a>
 </li>
       <li><a href="httpy.html#httpy.CookieDomain.delete_cookie">delete_cookie() (httpy.CookieDomain method)</a>
@@ -231,15 +243,21 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.generate_cnonce">generate_cnonce() (in module httpy)</a>
 </li>
+      <li><a href="httpy.html#httpy.generate_websocket_key">generate_websocket_key() (in module httpy)</a>
+</li>
       <li><a href="httpy.html#httpy.CaseInsensitiveDict.get">get() (httpy.CaseInsensitiveDict method)</a>
+</li>
+      <li><a href="httpy.html#httpy.get_content_type">get_content_type() (in module httpy)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.get_content_type">get_content_type() (in module httpy)</a>
-</li>
       <li><a href="httpy.html#httpy.CookieJar.get_cookies">get_cookies() (httpy.CookieJar method)</a>
 </li>
       <li><a href="httpy.html#httpy.get_encoding_chain">get_encoding_chain() (in module httpy)</a>
+</li>
+      <li><a href="httpy.html#httpy.get_host">get_host() (in module httpy)</a>
+</li>
+      <li><a href="httpy.html#httpy.getbytes">getbytes() (in module httpy)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -267,6 +285,10 @@
 
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.html#httpy.int2bytes">int2bytes() (in module httpy)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.CaseInsensitiveDict.items">items() (httpy.CaseInsensitiveDict method)</a>
 </li>
@@ -298,12 +320,16 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.makehost">makehost() (in module httpy)</a>
 </li>
+      <li><a href="httpy.html#httpy.mask">mask() (in module httpy)</a>
+</li>
       <li><a href="httpy.html#httpy.mk_header">mk_header() (in module httpy)</a>
 </li>
-      <li><a href="httpy.html#httpy.mkdict">mkdict() (in module httpy)</a>
+      <li><a href="httpy.html#httpy.mkbits">mkbits() (in module httpy)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.html#httpy.mkdict">mkdict() (in module httpy)</a>
+</li>
       <li>
     module
 
@@ -335,6 +361,10 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.html#httpy.PickleFile">PickleFile (class in httpy)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.Response.plain">plain() (httpy.Response class method)</a>
 </li>
   </ul></td>
@@ -345,10 +375,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.File.read">read() (httpy.File method)</a>
 </li>
-      <li><a href="httpy.html#httpy.request">request() (in module httpy)</a>
+      <li><a href="httpy.html#httpy.WebSocket.recv">recv() (httpy.WebSocket method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.html#httpy.request">request() (in module httpy)</a>
+</li>
       <li><a href="httpy.html#httpy.reslash">reslash() (in module httpy)</a>
 </li>
       <li><a href="httpy.html#httpy.Response">Response (class in httpy)</a>
@@ -362,6 +394,8 @@
       <li><a href="httpy.html#httpy.File.save">save() (httpy.File method)</a>
 </li>
       <li><a href="httpy.html#httpy.File.seek">seek() (httpy.File method)</a>
+</li>
+      <li><a href="httpy.html#httpy.WebSocket.send">send() (httpy.WebSocket method)</a>
 </li>
       <li><a href="httpy.html#httpy.ServerError">ServerError</a>
 </li>
@@ -421,10 +455,20 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.File.write">write() (httpy.File method)</a>
+      <li><a href="httpy.html#httpy.WebSocket">WebSocket (class in httpy)</a>
+</li>
+      <li><a href="httpy.html#httpy.websocket_handshake">websocket_handshake() (in module httpy)</a>
+</li>
+      <li><a href="httpy.html#httpy.WebSocketClientError">WebSocketClientError</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.html#httpy.WebSocketError">WebSocketError</a>
+</li>
+      <li><a href="httpy.html#httpy.WebSocketHandshakeError">WebSocketHandshakeError</a>
+</li>
+      <li><a href="httpy.html#httpy.File.write">write() (httpy.File method)</a>
+</li>
       <li><a href="httpy.html#httpy.WWW_Authenticate">WWW_Authenticate (class in httpy)</a>
 </li>
   </ul></td>
