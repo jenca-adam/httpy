@@ -7,7 +7,8 @@ A lightweight socket-based library to create HTTP(s) and WebSocket connections.
    * HTTP authentication
    * Form support
    * JSON support
-   * Connection pooling	
+   * Connection pooling
+   * Session support	
 
 
 

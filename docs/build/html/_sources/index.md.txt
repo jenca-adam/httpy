@@ -8,6 +8,7 @@ A Python lightweight socket-based library to create HTTP(s) and WebSocket connec
    * Form support
    * Keep-Alive and connection pooling support
    * JSON support
+   * Sessions support
 ## Requirements
    * Python>=3.6
 ## Usage
@@ -22,6 +23,17 @@ import httpy
 resp = httpy.request("https://example.com/") # Do a request
 resp.content #Access content
 ```
+#### Sessions
+The `Session` class is there for you
+```{code-block} python
+---
+lineno-start: 1
+---
+import httpy
+session = httpy.Session()
+session.request("https://example.com/") # ...
+```
+
 ### WebSocket
 This is not THAT easy, but it's fine.
 ```{code-block} python

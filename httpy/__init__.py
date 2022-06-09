@@ -41,18 +41,16 @@ try:
 except ImportError:
     chardet = None
 
-HTTPY_DIR = pathlib.Path.home() / ".cache/httpy"
-os.makedirs(HTTPY_DIR / "sites", exist_ok=True)
-VERSION = "1.2.0"
+HTTPY_DIR = pathlib.Path.home() / ".cache"/"httpy"
+os.makedirs(HTTPY_DIR/"sessions",exist_ok=True)
+os.makedirs(HTTPY_DIR/"default"/"sites",exist_ok=True)
+VERSION = "1.3.0"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
 STATUSPATTERN = re.compile(
     rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
 )
-if not os.path.exists(HTTPY_DIR / "permredir.pickle"):
-    with open(HTTPY_DIR / "permredir.pickle", "wb") as permr:
-        pickle.dump({}, permr)
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 WEBSOCKET_CONTINUATION_FRAME = 0x0
 WEBSOCKET_TEXT_FRAME = 0x1
@@ -456,7 +454,8 @@ def int2bytes(i, bl=None):
 def getbytes(bits):
     return int2bytes(int(bits, 2))
 
-
+def _int16unpk(b):
+    return struct.unpack("!H",b)[0]
 def mask(data, mask):
     r = bytearray()
     for ix, i in enumerate(data):
@@ -578,7 +577,7 @@ class CaseInsensitiveDict(dict):
 
 
 def _binappendstr(s):
-    return bytes([len(s)]) + force_bytes(s)
+    return struct.pack("!H",len(s)) + force_bytes(s)
 
 
 def _binappendfloat(b):
@@ -640,7 +639,7 @@ class CacheFile:
         self.time_cached = _unpk_float(file.read(tml))
         etl = ord(file.read(1))
         self.time_elapsed = _unpk_float(file.read(etl))
-        srl = ord(file.read(1))
+        srl = _int16unpk(file.read(2))
         sl = file.read(srl)
         self.status = Status(sl)
         self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
@@ -688,7 +687,7 @@ class Cache:
     Cache Class
     """
 
-    def __init__(self, d=HTTPY_DIR / "sites"):
+    def __init__(self, d=HTTPY_DIR / "default"/"sites"):
         self.dir = d
         self.files = [CacheFile(os.path.join(d, i)) for i in os.listdir(d)]
 
@@ -747,7 +746,7 @@ class Cookie:
         """Converts cookie to binary representation"""
         data = _binappendstr(self.name + "=" + self.value)
         if self.host == self._host:
-            data += b"\x00"
+            data += b"\x00\x00"
         else:
             data += _binappendstr(self.host)
         data += _binappendstr(self.path)
@@ -779,14 +778,14 @@ class Cookie:
     def from_binary(self, binary, host):
         """Creates cookie from binary representation"""
         buffer = io.BytesIO(binary)
-        kvpl = ord(buffer.read(1))
+        kvpl = _int16unpk(buffer.read(2))
         k, v = buffer.read(kvpl).split(b"=", 1)
-        hostl = ord(buffer.read(1))
+        hostl = _int16unpk(buffer.read(2))
         data = {}
         if hostl > 0:
             data["Host"] = buffer.read(hostl).decode()
-        pl = buffer.read(1)
-        p = buffer.read(ord(pl))
+        pl = _int16unpk(buffer.read(2))
+        p = buffer.read(pl)
         data["Path"] = p
         n = buffer.read(1)
         if n == b"\x01":
@@ -796,8 +795,11 @@ class Cookie:
             expires = None
         else:
             tstamp = buffer.read(ord(n))
-            expires = _unpk_float(tstamp)
-            data["Expires"] = expires
+            if tstamp:
+                expires = _unpk_float(tstamp)
+                data["Expires"] = expires
+            else :
+                expires=None
         return Cookie(k.decode(), v.decode(), data, host)
 
 
@@ -807,7 +809,7 @@ class CookieDomain:
     def __init__(self, content, jar):
         self.content = content
         bio = io.BytesIO(content)
-        nl = ord(bio.read(1))
+        nl = _int16unpk(bio.read(2))
         self.jar = jar
         self.name = bio.read(nl).decode()
         self.cookies = []
@@ -862,7 +864,7 @@ class CookieDomain:
 class CookieJar:
     """Class for cookie jar"""
 
-    def __init__(self, jarfile=HTTPY_DIR / "CookieJar"):
+    def __init__(self, jarfile=HTTPY_DIR / "default"/"cj"):
         try:
             self.jarfile = open(jarfile, "rb")
             self.domains = []
@@ -1019,6 +1021,7 @@ class Response:
         original_content,
         time_elapsed=math.inf,
         cache=True,
+        base_dir=HTTPY_DIR/"default"
     ):
         self.status = status
         self.headers = headers
@@ -1039,7 +1042,7 @@ class Response:
             and (self.content or self.headers or self.status)
             and cache
         ):
-            cacheWrite(self)
+            cacheWrite(self,base_dir)
 
         self._charset = determine_charset(headers)
         self.history = history
@@ -1229,8 +1232,13 @@ class PickleFile(dict):
         with open(fn, "rb") as f:
             self._dict = pickle.load(f)
         super().__init__(self._dict)
+    def update(self):
+        with open(self.fn, "rb") as f:
+            self._dict = pickle.load(f)
+        super().__init__(self._dict)
 
     def __getitem__(self, item):
+        self.update()
         return self._dict[item]
 
     def __setitem__(self, item, value):
@@ -1342,7 +1350,7 @@ md5, sha256, sha512, sha1 = (
 ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512}
 
 
-def cacheWrite(response):
+def cacheWrite(response,base_dir):
     """
     Writes response to cache
 
@@ -1357,7 +1365,7 @@ def cacheWrite(response):
     data += response.content
 
     with open(
-        HTTPY_DIR
+        base_dir
         / "sites"
         / (response.url.replace("://", "\x01").replace("/", "\x02")),
         "wb",
@@ -1592,7 +1600,68 @@ def create_connection(host, port, last_response):
         raise  # Added in 1.1.1
     pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max)
     return conn, False
+def generate_session_id():
+    return "".join(random.choices(string.hexdigits,k=16))
+def setup_session(sess_path,name):
+    os.makedirs(sess_path/"sites",exist_ok=True)
+    if not os.path.exists(sess_path/"permredir.pickle"):
+        with open(sess_path/"permredir.pickle",'wb') as f:
+            pickle.dump({},f)
+    if not os.path.exists(sess_path/"cj"):
+        with open(sess_path/"cj",'wb')as f:
 
+            f.write(b'')
+           
+            
+    if not os.path.exists(sess_path/"meta.json"):
+        if  name is None:
+            name=f"session-{session_count()+1}"
+        with open(sess_path/"meta.json",'w')as f:
+            json.dump({"name":name},f)
+    elif name is not None:
+        # don't reset additional meta
+        with open(sess_path/"meta.json",'w')as f:
+            json.dump({"name":name},f)
+    else:
+        with open(sess_path/"meta.json",'r')as f:
+            meta=json.load(f)
+            name = meta["name"]
+    return name
+        
+
+def find_session_by_id(sessid):
+    if sessid in os.listdir(HTTPY_DIR/"sessions"):
+        return  HTTPY_DIR/"sessions"/sessid
+
+
+def session_count():
+    return len(os.listdir(HTTPY_DIR/"sessions"))
+class Session:
+    def __init__(self,session_id=None,path=None,name=None):
+        if session_id is None:
+                session_id=generate_session_id()
+                
+        if path is None:
+            path=find_session_by_id(session_id)
+            if path is None:
+                path = HTTPY_DIR/"sessions"/session_id
+        self.new=os.path.exists(path) 
+        name = setup_session(path,name)
+        self.name=name
+        self.session_id = session_id
+        self.path=path
+        self.jar=CookieJar(path/"cj")
+        self.permanent_redirects=PickleFile(path/"permredir.pickle")
+        self.cache = Cache(path/"sites")
+        if self.new:
+            sessions.append(self)
+    def request(self,url,**kwargs):
+        if "base_dir" in kwargs:
+            del kwargs["base_dir"]
+        return request(url,**kwargs,base_dir = self.path)
+    def __repr__(self):
+        return f"<Session {self.name} ( {self.session_id} ) at {self.path!r}>"
+                
 
 def _raw_request(
     host,
@@ -1611,7 +1680,11 @@ def _raw_request(
     debug=False,
     last_status=-1,
     pure_headers=False,
+    base_dir=HTTPY_DIR
 ):
+    cache=Cache(base_dir / "sites")
+    jar = CookieJar(base_dir / "cj")
+    permanent_redirects = PickleFile(base_dir / "permredir.pickle")
     headers = {capitalize(key): value for key, value in headers.items()}
     debug = debug or getattr(builtins, "debug", False)
     debugger.info("_raw_request() called.")
@@ -1779,6 +1852,7 @@ def _raw_request(
         body,
         elapsed_time,
         enable_cache,
+        base_dir
     )
 
 
@@ -1803,6 +1877,7 @@ def absolute_path(url, last_url, scheme, host):
 
 def request(
     url,
+    *,
     method="GET",
     headers={},
     body=b"",
@@ -1815,9 +1890,11 @@ def request(
     debug=False,
     pure_headers=False,
     enable_cache=True,
+    base_dir=HTTPY_DIR/"default",
 ):
     """
     Performs request.
+    _Note: all arguments but ``url`` are keyword-only_
 
     :param url: url to request
     :type url: ``str``
@@ -1837,6 +1914,8 @@ def request(
     :param throw_on_error: if throw_on_error is ``True`` , StatusError will be raised if server responded with 4xx or 5xx status code.
     :param debug: whether or not shall debug mode be used , defaults to ``False``
     :type debug: ``bool``
+    :param base_dir: HTTPy directory for request default is `"~/.cache/httpy/default"`
+    :type base_dir: ``pathlib.Path``
     """
     global debugger
     debugger = _Debugger(debug)
@@ -1887,6 +1966,7 @@ def request(
         last_status=last_status,
         pure_headers=pure_headers,
         enable_cache=enable_cache,
+        base_dir=base_dir
     )
     if resp.status == 301:
         debugger.info("Updating permanent redirects data file")
@@ -1912,6 +1992,7 @@ def request(
                 debug=debug,
                 pure_headers=pure_headers,
                 enable_cache=enable_cache,
+                base_dir=base_dir
             )
     if resp.status == 401:
         if last_status == 401:
@@ -1929,6 +2010,7 @@ def request(
             debug=debug,
             pure_headers=pure_headers,
             enable_cache=enable_cache,
+            base_dir=base_dir
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2068,7 +2150,7 @@ class WebSocket:
             payload_length = ln
         elif ln == 126:
             next2bytes = self.socket.recv(2)
-            (payload_length,) = struct.unpack("!H",next2bytes)
+            payload_length = _int16unpk(next2bytes)
         elif ln == 127:
             next8bytes = self.socket.recv(8)
             (payload_length,) = struct.unpack("!Q",next8bytes)
@@ -2200,6 +2282,10 @@ cache = Cache()
 nonce_counter = NonceCounter()
 debugger = _Debugger(False)
 pool = ConnectionPool()
-permanent_redirects = PickleFile(HTTPY_DIR / "permredir.pickle")
+session_ids = os.listdir(HTTPY_DIR/"sessions")
+sessions = []
+sessions=[Session(session_id=i) for i in session_ids]
+default_session = Session(path=HTTPY_DIR/"default",name="default")
+permanent_redirects = PickleFile(HTTPY_DIR / "default"/"permredir.pickle")
 __version__ = VERSION
 __author__ = "Adam Jenca"
