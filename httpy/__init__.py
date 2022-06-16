@@ -44,7 +44,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache"/"httpy"
 os.makedirs(HTTPY_DIR/"sessions",exist_ok=True)
 os.makedirs(HTTPY_DIR/"default"/"sites",exist_ok=True)
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -1066,7 +1066,14 @@ class Response:
             cache_file.content,
             cache_file.time_elapsed,
         )
-
+    @property
+    def string(self):
+        if self.charset is None:
+            try:
+                return self.content.decode()
+            except Exception as e:
+                raise ValueError("no charset, can't decode")from e
+        return self.content.decode(self.charset)
     @classmethod
     def plain(self):
         return Response(Status(b"000"), Headers({}), b"", [], "", False, b"")
