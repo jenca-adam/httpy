@@ -29,7 +29,7 @@ A lightweight socket-based library to create HTTP(s) and WebSocket connections.
 ## License
     GPLv3
 Docs at <https://httpy.readthedocs.io/>""",
-    version="1.3.1",
+    version="1.3.3",
     long_description_content_type="text/markdown",
     packages=["httpy"],
     author_email="jenca.a@gjh.sk",

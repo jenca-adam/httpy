@@ -44,7 +44,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache"/"httpy"
 os.makedirs(HTTPY_DIR/"sessions",exist_ok=True)
 os.makedirs(HTTPY_DIR/"default"/"sites",exist_ok=True)
-VERSION = "1.3.1"
+VERSION = "1.3.3"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -2097,11 +2097,86 @@ def websocket_handshake(
         )
     cdebugger.ok("Handshake Ok")
     return response
+class strarray:
+    def __init__(self,data=''):
+        self.__b=list(self._ordize(i) for i in data)
+    def _ordize(self,d):
+        if isinstance(d,str):
+            return ord(d)
+        elif isinstance(d,int):
+            return d
+        raise TypeError(
+                f"can't add type {type(d).__name__!r} to strarray"
+                )
+    def __len__(self):
+        return len(self.__b)
+    def __getitem__(self,i):
+        if isinstance(i,slice):
+            return strarray(self.__b[i])
+        return self.__b[i]
+    def append(self,s):
+        self.__b.append(self._ordize(s))
+    def extend(self,s):
+        self.__b.extend(self._ordize(i) for i in s)
+    def __str__(self):
+        return ''.join(chr(i) for i in self.__b)
+class WebSocketFile:
+    '''WebSocket file class'''
+    def __init__(self,websocket):
+        self.websocket=websocket
+        if websocket.mode == 't':
+            self.buffer=strarray()
+        elif websocket.mode == 'b':
+            self.buffer=bytearray()
+        else:
+            raise ValueError("can't establish a WebSocket file using WebSocket in flexible mode")
+        self.mode=websocket.mode
+        self.position=0
+        self.closed=False
+    def seek(self,position):
+        '''Moves the cursor to a different position'''
+        self.position=position
+    def tell(self):
+        '''Returns the cursor position'''
+        return self.position
+    def close(self):
+        '''Closes the Websocket'''
+        self.websocket.close()
+        self.closed=True
+    def read(self,b=None):
+        '''Reads from the Websocket
+        :param b: Number of bytes to read. If `None` - reads until the end of buffer(if the buffer is empty, reads entire new frame)
+        :type b:`int` or `None`
+        '''
+        r=self._read(b)
+        if isinstance(r,strarray):
+            return str(r)
+        elif isinstance(r,bytearray):
+            return bytes(r)
+        elif isinstance(r,int):
+            if self.mode=='t':
+                return chr(r)
+            return r
+    def _read(self,b=None):
+        if b is None:
+            if self.position == len(self.buffer):
+                self.buffer.extend(self.websocket.recv())
+            r=self.buffer[self.position:]
+            self.position=len(self.buffer)
+            return r
+        while len(self.buffer[self.position:self.position+b])<b:
+            self.buffer.extend(self.websocket.recv())
+        r=self.buffer[self.position:self.position+b]
+        self.position+=b
+        return r
+    def write(self,what):
+        '''Writes to the WebSocket'''
+        self.websocket.send(what)
 
 
 class WebSocket:
 
-    def __init__(self, url, debug=False, use_tls=None, subprotocol=None, origin=None):
+    def __init__(self, url,mode='', debug=False, use_tls=None, subprotocol=None, origin=None):
         """
         :param url: Url for WebSocket
         :type url: str
@@ -2110,15 +2185,21 @@ class WebSocket:
         :param use_tls: Specifies wheter or not to use TLS for the WebSocket
         :param subprotocol: Subprotocol to use, defaults to `None`
         :type subprotocol: str or None
+        :param mode: Specifies default mode for the WebSocket. Possible values:`'t'` for textual `'b'` for binary or `''` to decide automatically.
+        :type mode: str
         :param origin: Origin of request, defaults to `None`
         :type origin: str or None
         """
-
+        self.mode=mode
+        if self.mode and self.mode not in 'tb':
+            raise ValueError("invalid mode")
         self.url = url
         self.closed = False
         self.use_tls = use_tls if use_tls is not None else url.split("://")[0] == "wss"
         self.port = 443 if use_tls else 80
         self.debug = debug
+        self.subprotocol = subprotocol
+        self.origin=origin
         self.debugger = _Debugger(debug)
         self.key = generate_websocket_key()
         self.base_url = url.split("://")[-1]
@@ -2133,6 +2214,7 @@ class WebSocket:
     def _fail(self, message):
         self.debugger.error(f"{message}, failing connection")
         self._client_close(1002, message)
+
 
     def _recv_frame(self):
         if self.closed:
@@ -2177,7 +2259,11 @@ class WebSocket:
             if o != 0:
                 self._fail(f"Expected opcode 0x0 ,got {hex(o)}")
         return payload, opcode
-
+    def reconnect(self):
+        self.close()
+        return WebSocket(self.url,self.mode,self.debug,self.use_tls,self.subprotocol,self.origin)
+    def makefile(self):
+        return WebSocketFile(self)
     def send(self, data):
         """Sends data to WebSocket server
 
@@ -2194,7 +2280,8 @@ class WebSocket:
 
     def close(self):
         """Closes the WebSocket connection with close code of 1000"""
-        self._client_close(1000, "")
+        if not self.closed:
+            self._client_close(1000, "")
 
     def _send_frame(self, opcode, payload, final=True):
         if self.closed:
@@ -2263,16 +2350,27 @@ class WebSocket:
             close_code = int.from_bytes(data[:2], "big")
             self._server_close(close_code, data[2:])
         elif opcode == 0x1:
+            if self.mode == 't':
+                try:
+                    return data.decode("UTF-8")
+                except UnicodeDecodeError:#expected
+                    raise TypeError("undecodeable binary data sent to client in binary mode")
             return data
         elif opcode == 0x2:
+            if self.mode=='b':
+                return data
             return data.decode("UTF-8")
         elif opcode == 0x0:
             self._fail("Continuation frame after final frame")
 
     def _opcode_unparse(self, data):
         if isinstance(data, bytes):
+            if self.mode == 't':
+                raise TypeError("You can't send binary data in textual mode")
             return data, 0x1
         if isinstance(data, str):
+            if self.mode == 'b':
+                raise TypeError("You can't send textual data in binary mode")
             return data.encode("UTF-8"), 0x2
         raise TypeError(
             f"Unsupported data type : {type(data).__name__!r}, please use either str or bytes."
