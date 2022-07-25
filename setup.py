@@ -1,7 +1,22 @@
 '''setup.py module'''
 import sys
 import setuptools
-
+ld="""A lightweight socket-based library to create HTTP(s) and WebSocket connections.
+## Features
+   * Cookies support
+   * Caching support
+   * Easy debugging
+   * HTTP authentication
+   * Form support
+   * No requirements(save Python)
+   * Keep-Alive and connection pooling
+## License
+    GPLv3
+Docs at <https://httpy.readthedocs.io/>"""
+try :
+    ld = open("README.md").read()
+except:
+    pass    
 class VersionError(Exception):
     '''Raised if vrong wersion'''
 
@@ -16,20 +31,8 @@ setuptools.setup(
     name="httpy",
     author="Adam Jenca",
     description="Lightweight socket-based HTTP(s) and WebSocket client.",
-    long_description="""
-A lightweight socket-based library to create HTTP(s) and WebSocket connections.
-## Features
-   * Cookies support
-   * Caching support
-   * Easy debugging
-   * HTTP authentication
-   * Form support
-   * No requirements(save Python)
-   * Keep-Alive and connection pooling
-## License
-    GPLv3
-Docs at <https://httpy.readthedocs.io/>""",
-    version="1.4.1",
+    long_description=ld,
+    version="1.4.2",
     long_description_content_type="text/markdown",
     packages=["httpy"],
     author_email="jenca.a@gjh.sk",

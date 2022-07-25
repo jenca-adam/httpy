@@ -44,7 +44,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.4.1"
+VERSION = "1.4.2"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
