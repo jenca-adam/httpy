@@ -41,10 +41,10 @@ try:
 except ImportError:
     chardet = None
 
-HTTPY_DIR = pathlib.Path.home() / ".cache"/"httpy"
-os.makedirs(HTTPY_DIR/"sessions",exist_ok=True)
-os.makedirs(HTTPY_DIR/"default"/"sites",exist_ok=True)
-VERSION = "1.3.2"
+HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
+os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
+os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
+VERSION = "1.4.1"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -358,7 +358,9 @@ STATUS_CODES = {
     },
 }
 
-context = ssl.create_default_context()
+context = ssl._create_default_https_context()
+context.set_alpn_protocols(["http/1.1"])
+context.post_handshake_auth=True
 schemes = {"http": 80, "https": 443}
 
 
@@ -454,8 +456,11 @@ def int2bytes(i, bl=None):
 def getbytes(bits):
     return int2bytes(int(bits, 2))
 
+
 def _int16unpk(b):
-    return struct.unpack("!H",b)[0]
+    return struct.unpack("!H", b)[0]
+
+
 def mask(data, mask):
     r = bytearray()
     for ix, i in enumerate(data):
@@ -509,9 +514,9 @@ class _Debugger:
 
     @property
     def debug(self):
-        if  self._debug is not None:
+        if self._debug is not None:
             return self._debug
-        return getattr(builtins,"debug",False)
+        return getattr(builtins, "debug", False)
 
     def debugging_method(self, suffix):
         def decorated(a, data):
@@ -577,7 +582,7 @@ class CaseInsensitiveDict(dict):
 
 
 def _binappendstr(s):
-    return struct.pack("!H",len(s)) + force_bytes(s)
+    return struct.pack("!H", len(s)) + force_bytes(s)
 
 
 def _binappendfloat(b):
@@ -687,7 +692,7 @@ class Cache:
     Cache Class
     """
 
-    def __init__(self, d=HTTPY_DIR / "default"/"sites"):
+    def __init__(self, d=HTTPY_DIR / "default" / "sites"):
         self.dir = d
         self.files = [CacheFile(os.path.join(d, i)) for i in os.listdir(d)]
 
@@ -798,8 +803,8 @@ class Cookie:
             if tstamp:
                 expires = _unpk_float(tstamp)
                 data["Expires"] = expires
-            else :
-                expires=None
+            else:
+                expires = None
         return Cookie(k.decode(), v.decode(), data, host)
 
 
@@ -864,7 +869,7 @@ class CookieDomain:
 class CookieJar:
     """Class for cookie jar"""
 
-    def __init__(self, jarfile=HTTPY_DIR / "default"/"cj"):
+    def __init__(self, jarfile=HTTPY_DIR / "default" / "cj"):
         try:
             self.jarfile = open(jarfile, "rb")
             self.domains = []
@@ -1021,7 +1026,7 @@ class Response:
         original_content,
         time_elapsed=math.inf,
         cache=True,
-        base_dir=HTTPY_DIR/"default"
+        base_dir=HTTPY_DIR / "default",
     ):
         self.status = status
         self.headers = headers
@@ -1042,7 +1047,7 @@ class Response:
             and (self.content or self.headers or self.status)
             and cache
         ):
-            cacheWrite(self,base_dir)
+            cacheWrite(self, base_dir)
 
         self._charset = determine_charset(headers)
         self.history = history
@@ -1066,14 +1071,16 @@ class Response:
             cache_file.content,
             cache_file.time_elapsed,
         )
+
     @property
     def string(self):
         if self.charset is None:
             try:
                 return self.content.decode()
             except Exception as e:
-                raise ValueError("no charset, can't decode")from e
+                raise ValueError("no charset, can't decode") from e
         return self.content.decode(self.charset)
+
     @classmethod
     def plain(self):
         return Response(Status(b"000"), Headers({}), b"", [], "", False, b"")
@@ -1239,6 +1246,7 @@ class PickleFile(dict):
         with open(fn, "rb") as f:
             self._dict = pickle.load(f)
         super().__init__(self._dict)
+
     def update(self):
         with open(self.fn, "rb") as f:
             self._dict = pickle.load(f)
@@ -1326,7 +1334,13 @@ class ConnectionPool:
         for conn in self.connections.values():
             conn.close()
 
-
+class ProtoVersion:
+    def __init__(self):
+        pass
+    def send_request(self,sock,*args):
+        return self.sender(*args).send(sock)
+    def recv_response(self,sock,*args):
+        return self.recver(sock,*args)
 class KeepAlive:
     """Class for parsing keep-alive headers"""
 
@@ -1357,7 +1371,7 @@ md5, sha256, sha512, sha1 = (
 ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512}
 
 
-def cacheWrite(response,base_dir):
+def cacheWrite(response, base_dir):
     """
     Writes response to cache
 
@@ -1372,9 +1386,7 @@ def cacheWrite(response,base_dir):
     data += response.content
 
     with open(
-        base_dir
-        / "sites"
-        / (response.url.replace("://", "\x01").replace("/", "\x02")),
+        base_dir / "sites" / (response.url.replace("://", "\x01").replace("/", "\x02")),
         "wb",
     ) as f:
         f.write(gzip.compress(data))
@@ -1597,78 +1609,168 @@ def create_connection(host, port, last_response):
     try:
         debugger.info("calling socket.create_connection")
         conn = socket.create_connection((host, port))
-    except socket.gaierror:
+    except socket.gaierror as gai:
         debugger.warn("gaierror raised, getting errno")
         # Get errno using ctypes, check for  -2(-3)
-        errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
+        if hasattr(ctypes,"pythonapi"):
+            #Not PyPy
+            
+            errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
+           
+        else:
+            #PyPy
+            errno = -72
+            if str(gai).startswith("[Errno -2]")or str(gai).startswith("[Errno -3]"):
+                errno = 2
         if errno in [2, 3]:
-            raise ServerError(f"could not find server {host!r}")
+                raise ServerError(f"could not find server {host!r}")
+
         debugger.warn(f"unknown errno {errno!r}")
         raise  # Added in 1.1.1
     pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max)
     return conn, False
-def generate_session_id():
-    return "".join(random.choices(string.hexdigits,k=16))
-def setup_session(sess_path,name):
-    os.makedirs(sess_path/"sites",exist_ok=True)
-    if not os.path.exists(sess_path/"permredir.pickle"):
-        with open(sess_path/"permredir.pickle",'wb') as f:
-            pickle.dump({},f)
-    if not os.path.exists(sess_path/"cj"):
-        with open(sess_path/"cj",'wb')as f:
 
-            f.write(b'')
-           
-            
-    if not os.path.exists(sess_path/"meta.json"):
-        if  name is None:
-            name=f"session-{session_count()+1}"
-        with open(sess_path/"meta.json",'w')as f:
-            json.dump({"name":name},f)
+
+def generate_session_id():
+    return "".join(random.choices(string.hexdigits, k=16))
+
+
+def setup_session(sess_path, name):
+    os.makedirs(sess_path / "sites", exist_ok=True)
+    if not os.path.exists(sess_path / "permredir.pickle"):
+        with open(sess_path / "permredir.pickle", "wb") as f:
+            pickle.dump({}, f)
+    if not os.path.exists(sess_path / "cj"):
+        with open(sess_path / "cj", "wb") as f:
+
+            f.write(b"")
+
+    if not os.path.exists(sess_path / "meta.json"):
+        if name is None:
+            name = f"session-{session_count()+1}"
+        with open(sess_path / "meta.json", "w") as f:
+            json.dump({"name": name}, f)
     elif name is not None:
         # don't reset additional meta
-        with open(sess_path/"meta.json",'w')as f:
-            json.dump({"name":name},f)
+        with open(sess_path / "meta.json", "w") as f:
+            json.dump({"name": name}, f)
     else:
-        with open(sess_path/"meta.json",'r')as f:
-            meta=json.load(f)
+        with open(sess_path / "meta.json", "r") as f:
+            meta = json.load(f)
             name = meta["name"]
     return name
-        
+
 
 def find_session_by_id(sessid):
-    if sessid in os.listdir(HTTPY_DIR/"sessions"):
-        return  HTTPY_DIR/"sessions"/sessid
+    if sessid in os.listdir(HTTPY_DIR / "sessions"):
+        return HTTPY_DIR / "sessions" / sessid
 
 
 def session_count():
-    return len(os.listdir(HTTPY_DIR/"sessions"))
+    return len(os.listdir(HTTPY_DIR / "sessions"))
+
+
+class HTTP11Sender:
+    def __init__(self, method, headers, body, path, debug):
+        self.method = method
+        self.headers = headers
+        self.body = body
+        self.path = path
+        self.debug = debug
+        headers = "\r\n".join([mk_header(i) for i in self.headers.items()])
+        request_data = f"{method} {path} HTTP/1.1" + "\r\n"
+        request_data += headers
+        request_data += "\r\n\r\n"
+        self.request_data = request_data
+
+    def send(self, sock):
+        _debugprint(self.debug, "\nsend:\n" + self.request_data)
+        sock.send(self.request_data.encode())
+        if self.body:
+            sock.send(self.body)
+class HTTP11Recver:
+    def __call__(self,sock,debug,timeout):
+        file=sock.makefile('b')
+        statusline = file.readline()
+        _debugprint(debug, "\nresponse: ")
+        _debugprint(debug, statusline)
+        if not statusline:
+            debugger.warn("dead connection")
+            raise DeadConnectionError("peer did not send a response")
+
+        status = Status(statusline)
+        headers = []
+        while True:
+            line = file.readline()
+            if line == b"\r\n":
+                break
+            _debugprint(debug, line.decode(), end="")
+            headers.append(line)
+        headers = Headers(headers)
+        body = b""
+        chunked = headers.get("transfer-encoding", "").strip() == "chunked"
+        if not chunked:
+            cl = int(headers.get("content-length", -1))
+            if cl == -1:
+                warnings.warn(
+                    "no content-length nor transfer-encoding, setting socket timeout"
+                )
+                sock.settimeout(0.5)
+                while True:
+                    try:
+                        b = file.read(1)  # recv 1 byte
+                        if not b:
+                            break
+                    except socket.timeout:  # end of response??
+                        break
+                    body += b
+                sock.settimeout(timeout)
+            else:
+                body = file.read(cl)  # recv <content-length> bytes
+        else:  # chunked read
+            while True:
+                chunksize = int(file.readline().strip(), base=16)  # get chunk size
+                if chunksize == 0:  # final byte
+                    break
+                chunk = file.read(chunksize)
+                file.read(2)  # discard CLRF
+                body += chunk
+        content_encoding = headers.get("content-encoding", "identity")
+        decoded_body = decode_content(body, content_encoding)
+        return status,headers,decoded_body,body
+class HTTP11(ProtoVersion):
+    version='1.1'
+    sender=HTTP11Sender
+    recver=HTTP11Recver()
+
 class Session:
-    def __init__(self,session_id=None,path=None,name=None):
+    def __init__(self, session_id=None, path=None, name=None):
         if session_id is None:
-                session_id=generate_session_id()
-                
+            session_id = generate_session_id()
+
         if path is None:
-            path=find_session_by_id(session_id)
+            path = find_session_by_id(session_id)
             if path is None:
-                path = HTTPY_DIR/"sessions"/session_id
-        self.new=os.path.exists(path) 
-        name = setup_session(path,name)
-        self.name=name
+                path = HTTPY_DIR / "sessions" / session_id
+        self.new = os.path.exists(path)
+        name = setup_session(path, name)
+        self.name = name
         self.session_id = session_id
-        self.path=path
-        self.jar=CookieJar(path/"cj")
-        self.permanent_redirects=PickleFile(path/"permredir.pickle")
-        self.cache = Cache(path/"sites")
+        self.path = path
+        self.jar = CookieJar(path / "cj")
+        self.permanent_redirects = PickleFile(path / "permredir.pickle")
+        self.cache = Cache(path / "sites")
         if self.new:
             sessions.append(self)
-    def request(self,url,**kwargs):
+
+    def request(self, url, **kwargs):
         if "base_dir" in kwargs:
             del kwargs["base_dir"]
-        return request(url,**kwargs,base_dir = self.path)
+        return request(url, **kwargs, base_dir=self.path)
+
     def __repr__(self):
         return f"<Session {self.name} ( {self.session_id} ) at {self.path!r}>"
-                
+
 
 def _raw_request(
     host,
@@ -1687,9 +1789,10 @@ def _raw_request(
     debug=False,
     last_status=-1,
     pure_headers=False,
-    base_dir=HTTPY_DIR
+    base_dir=HTTPY_DIR,
+    http_version="1.1"
 ):
-    cache=Cache(base_dir / "sites")
+    cache = Cache(base_dir / "sites")
     jar = CookieJar(base_dir / "cj")
     permanent_redirects = PickleFile(base_dir / "permredir.pickle")
     headers = {capitalize(key): value for key, value in headers.items()}
@@ -1708,6 +1811,7 @@ def _raw_request(
             b"",
             0,
         )
+
     socket.setdefaulttimeout(timeout)
 
     if enable_cache:
@@ -1768,33 +1872,11 @@ def _raw_request(
             defhdr = headers
         if cf:
             cf.add_header(defhdr)
-        headers = "\r\n".join([mk_header(i) for i in defhdr.items()])
-        request_data = f"{method} {path} HTTP/1.1" + "\r\n"
-        request_data += headers
-        _debugprint(debug, "\nsend:\n" + request_data)
-        request_data += "\r\n\r\n"
-        request_data = request_data.encode()
-        sock.send(request_data)
-        sock.send(data)
-        file = sock.makefile("b")
-        statusline = file.readline()
-        _debugprint(debug, "\nresponse: ")
-        _debugprint(debug, statusline)
-        if not statusline:
-            debugger.warn("dead connection")
-            raise DeadConnectionError("peer did not send a response")
-
-        status = Status(statusline)
-        if status.status == 304:
+        proto=proto_versions[http_version]
+        proto.send_request(sock,method,defhdr,data,path,debug)
+        status,headers,decoded_body,body=proto.recv_response(sock,debug,timeout)
+        if status==304:
             return Response.cacheload(cf)
-        headers = []
-        while True:
-            line = file.readline()
-            if line == b"\r\n":
-                break
-            _debugprint(debug, line.decode(), end="")
-            headers.append(line)
-        headers = Headers(headers)
         if "set-cookie" in headers:
             cookie = headers["set-cookie"]
 
@@ -1807,35 +1889,7 @@ def _raw_request(
                     domain.add_cookie(c)
             else:
                 domain.add_cookie(cookie)
-        body = b""
-        chunked = headers.get("transfer-encoding", "").strip() == "chunked"
-        if not chunked:
-            cl = int(headers.get("content-length", -1))
-            if cl == -1:
-                warnings.warn(
-                    "no content-length nor transfer-encoding, setting socket timeout"
-                )
-                sock.settimeout(0.5)
-                while True:
-                    try:
-                        b = file.read(1)  # recv 1 byte
-                        if not b:
-                            break
-                    except socket.timeout:  # end of response??
-                        break
-                    body += b
-                sock.settimeout(timeout)
-            else:
-                body = file.read(cl)  # recv <content-length> bytes
-        else:  # chunked read
-            while True:
-                chunksize = int(file.readline().strip(), base=16)  # get chunk size
-                if chunksize == 0:  # final byte
-                    break
-                chunk = file.read(chunksize)
-                file.read(2)  # discard CLRF
-                body += chunk
-
+       
     except:
         del pool[host, port]
         raise
@@ -1846,9 +1900,7 @@ def _raw_request(
     )
     end_time = time.time()
     elapsed_time = end_time - start_time
-    content_encoding = headers.get("content-encoding", "identity")
-    decoded_body = decode_content(body, content_encoding)
-
+    
     return Response(
         status,
         headers,
@@ -1859,8 +1911,9 @@ def _raw_request(
         body,
         elapsed_time,
         enable_cache,
-        base_dir
+        base_dir,
     )
+
 
 
 def set_debug(d=True):
@@ -1897,7 +1950,8 @@ def request(
     debug=False,
     pure_headers=False,
     enable_cache=True,
-    base_dir=HTTPY_DIR/"default",
+    base_dir=HTTPY_DIR / "default",
+    http_version="1.1"
 ):
     """
     Performs request.
@@ -1921,8 +1975,9 @@ def request(
     :param throw_on_error: if throw_on_error is ``True`` , StatusError will be raised if server responded with 4xx or 5xx status code.
     :param debug: whether or not shall debug mode be used , defaults to ``False``
     :type debug: ``bool``
-    :param base_dir: HTTPy directory for request default is `"~/.cache/httpy/default"`
+    :param base_dir: HTTPy directory for request, default is `"~/.cache/httpy/default"`
     :type base_dir: ``pathlib.Path``
+    :param http_version: HTTP version to use ,MUST be "1.1" (meant for future implementation of more HTTP versions)
     """
     global debugger
     debugger = _Debugger(debug)
@@ -1973,7 +2028,8 @@ def request(
         last_status=last_status,
         pure_headers=pure_headers,
         enable_cache=enable_cache,
-        base_dir=base_dir
+        base_dir=base_dir,
+        http_version=http_version
     )
     if resp.status == 301:
         debugger.info("Updating permanent redirects data file")
@@ -1999,7 +2055,8 @@ def request(
                 debug=debug,
                 pure_headers=pure_headers,
                 enable_cache=enable_cache,
-                base_dir=base_dir
+                base_dir=base_dir,
+                http_version=http_version
             )
     if resp.status == 401:
         if last_status == 401:
@@ -2017,7 +2074,8 @@ def request(
             debug=debug,
             pure_headers=pure_headers,
             enable_cache=enable_cache,
-            base_dir=base_dir
+            base_dir=base_dir,
+            http_version=http_version
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2037,7 +2095,7 @@ def request(
 
 
 def generate_websocket_key():
-    '''Generates a websocket key'''
+    """Generates a websocket key"""
     return base64.b64encode(
         ("".join(random.choices(string.ascii_letters + string.digits, k=16))).encode()
     )
@@ -2048,7 +2106,7 @@ def websocket_handshake(
 ):
     """
     Performs a WebSocket Handshake
-    
+
     :param url: url to send request to
     :type url: str
     :param key: WebSocket secret key
@@ -2065,7 +2123,7 @@ def websocket_handshake(
         "Host": get_host(url),
         "upgrade": "websocket",
         "connection": "Upgrade",
-        "Sec-WebSocket-Version": "13",          
+        "Sec-WebSocket-Version": "13",
         "Sec-WebSocket-Key": key,
     }
     if origin is not None:
@@ -2097,86 +2155,104 @@ def websocket_handshake(
         )
     cdebugger.ok("Handshake Ok")
     return response
+
+
 class strarray:
-    def __init__(self,data=''):
-        self.__b=list(self._ordize(i) for i in data)
-    def _ordize(self,d):
-        if isinstance(d,str):
+    def __init__(self, data=""):
+        self.__b = list(self._ordize(i) for i in data)
+
+    def _ordize(self, d):
+        if isinstance(d, str):
             return ord(d)
-        elif isinstance(d,int):
+        elif isinstance(d, int):
             return d
-        raise TypeError(
-                f"can't add type {type(d).__name__!r} to strarray"
-                )
+        raise TypeError(f"can't add type {type(d).__name__!r} to strarray")
+
     def __len__(self):
         return len(self.__b)
-    def __getitem__(self,i):
-        if isinstance(i,slice):
+
+    def __getitem__(self, i):
+        if isinstance(i, slice):
             return strarray(self.__b[i])
         return self.__b[i]
-    def append(self,s):
+
+    def append(self, s):
         self.__b.append(self._ordize(s))
-    def extend(self,s):
+
+    def extend(self, s):
         self.__b.extend(self._ordize(i) for i in s)
+
     def __str__(self):
-        return ''.join(chr(i) for i in self.__b)
+        return "".join(chr(i) for i in self.__b)
+
+
 class WebSocketFile:
-    '''WebSocket file class'''
-    def __init__(self,websocket):
-        self.websocket=websocket
-        if websocket.mode == 't':
-            self.buffer=strarray()
-        elif websocket.mode == 'b':
-            self.buffer=bytearray()
+    """WebSocket file class"""
+
+    def __init__(self, websocket):
+        self.websocket = websocket
+        if websocket.mode == "t":
+            self.buffer = strarray()
+        elif websocket.mode == "b":
+            self.buffer = bytearray()
         else:
-            raise ValueError("can't establish a WebSocket file using WebSocket in flexible mode")
-        self.mode=websocket.mode
-        self.position=0
-        self.closed=False
-    def seek(self,position):
-        '''Moves the cursor to a different position'''
-        self.position=position
+            raise ValueError(
+                "can't establish a WebSocket file using WebSocket in flexible mode"
+            )
+        self.mode = websocket.mode
+        self.position = 0
+        self.closed = False
+
+    def seek(self, position):
+        """Moves the cursor to a different position"""
+        self.position = position
+
     def tell(self):
-        '''Returns the cursor position'''
+        """Returns the cursor position"""
         return self.position
+
     def close(self):
-        '''Closes the Websocket'''
+        """Closes the Websocket"""
         self.websocket.close()
-        self.closed=True
-    def read(self,b=None):
-        '''Reads from the Websocket
+        self.closed = True
+
+    def read(self, b=None):
+        """Reads from the Websocket
         :param b: Number of bytes to read. If `None` - reads until the end of buffer(if the buffer is empty, reads entire new frame)
         :type b:`int` or `None`
-        '''
-        r=self._read(b)
-        if isinstance(r,strarray):
+        """
+        r = self._read(b)
+        if isinstance(r, strarray):
             return str(r)
-        elif isinstance(r,bytearray):
+        elif isinstance(r, bytearray):
             return bytes(r)
-        elif isinstance(r,int):
-            if self.mode=='t':
+        elif isinstance(r, int):
+            if self.mode == "t":
                 return chr(r)
             return r
-    def _read(self,b=None):
+
+    def _read(self, b=None):
         if b is None:
             if self.position == len(self.buffer):
                 self.buffer.extend(self.websocket.recv())
-            r=self.buffer[self.position:]
-            self.position=len(self.buffer)
+            r = self.buffer[self.position :]
+            self.position = len(self.buffer)
             return r
-        while len(self.buffer[self.position:self.position+b])<b:
+        while len(self.buffer[self.position : self.position + b]) < b:
             self.buffer.extend(self.websocket.recv())
-        r=self.buffer[self.position:self.position+b]
-        self.position+=b
+        r = self.buffer[self.position : self.position + b]
+        self.position += b
         return r
-    def write(self,what):
-        '''Writes to the WebSocket'''
+
+    def write(self, what):
+        """Writes to the WebSocket"""
         self.websocket.send(what)
 
 
 class WebSocket:
-
-    def __init__(self, url,mode='', debug=False, use_tls=None, subprotocol=None, origin=None):
+    def __init__(
+        self, url, mode="", debug=False, use_tls=None, subprotocol=None, origin=None
+    ):
         """
         :param url: Url for WebSocket
         :type url: str
@@ -2190,8 +2266,8 @@ class WebSocket:
         :param origin: Origin of request, defaults to `None`
         :type origin: str or None
         """
-        self.mode=mode
-        if self.mode and self.mode not in 'tb':
+        self.mode = mode
+        if self.mode and self.mode not in "tb":
             raise ValueError("invalid mode")
         self.url = url
         self.closed = False
@@ -2199,7 +2275,7 @@ class WebSocket:
         self.port = 443 if use_tls else 80
         self.debug = debug
         self.subprotocol = subprotocol
-        self.origin=origin
+        self.origin = origin
         self.debugger = _Debugger(debug)
         self.key = generate_websocket_key()
         self.base_url = url.split("://")[-1]
@@ -2214,7 +2290,6 @@ class WebSocket:
     def _fail(self, message):
         self.debugger.error(f"{message}, failing connection")
         self._client_close(1002, message)
-
 
     def _recv_frame(self):
         if self.closed:
@@ -2242,7 +2317,7 @@ class WebSocket:
             payload_length = _int16unpk(next2bytes)
         elif ln == 127:
             next8bytes = self.socket.recv(8)
-            (payload_length,) = struct.unpack("!Q",next8bytes)
+            (payload_length,) = struct.unpack("!Q", next8bytes)
         self.debugger.info(f"Length: {payload_length} bytes")
         if masked:
             masking_key = self.socket.recv(4)
@@ -2259,11 +2334,16 @@ class WebSocket:
             if o != 0:
                 self._fail(f"Expected opcode 0x0 ,got {hex(o)}")
         return payload, opcode
+
     def reconnect(self):
         self.close()
-        return WebSocket(self.url,self.mode,self.debug,self.use_tls,self.subprotocol,self.origin)
+        return WebSocket(
+            self.url, self.mode, self.debug, self.use_tls, self.subprotocol, self.origin
+        )
+
     def makefile(self):
         return WebSocketFile(self)
+
     def send(self, data):
         """Sends data to WebSocket server
 
@@ -2350,14 +2430,16 @@ class WebSocket:
             close_code = int.from_bytes(data[:2], "big")
             self._server_close(close_code, data[2:])
         elif opcode == 0x1:
-            if self.mode == 't':
+            if self.mode == "t":
                 try:
                     return data.decode("UTF-8")
-                except UnicodeDecodeError:#expected
-                    raise TypeError("undecodeable binary data sent to client in binary mode")
+                except UnicodeDecodeError:  # expected
+                    raise TypeError(
+                        "undecodeable binary data sent to client in binary mode"
+                    )
             return data
         elif opcode == 0x2:
-            if self.mode=='b':
+            if self.mode == "b":
                 return data
             return data.decode("UTF-8")
         elif opcode == 0x0:
@@ -2365,11 +2447,11 @@ class WebSocket:
 
     def _opcode_unparse(self, data):
         if isinstance(data, bytes):
-            if self.mode == 't':
+            if self.mode == "t":
                 raise TypeError("You can't send binary data in textual mode")
             return data, 0x1
         if isinstance(data, str):
-            if self.mode == 'b':
+            if self.mode == "b":
                 raise TypeError("You can't send textual data in binary mode")
             return data.encode("UTF-8"), 0x2
         raise TypeError(
@@ -2382,15 +2464,18 @@ encodings = {
     "deflate": _zlib_decompress,
     "gzip": _gzip_decompress,
 }
+proto_versions = {
+    "1.1":HTTP11()
+    }
 jar = CookieJar()
 cache = Cache()
 nonce_counter = NonceCounter()
 debugger = _Debugger(False)
 pool = ConnectionPool()
-session_ids = os.listdir(HTTPY_DIR/"sessions")
+session_ids = os.listdir(HTTPY_DIR / "sessions")
 sessions = []
-sessions=[Session(session_id=i) for i in session_ids]
-default_session = Session(path=HTTPY_DIR/"default",name="default")
-permanent_redirects = PickleFile(HTTPY_DIR / "default"/"permredir.pickle")
+sessions = [Session(session_id=i) for i in session_ids]
+default_session = Session(path=HTTPY_DIR / "default", name="default")
+permanent_redirects = PickleFile(HTTPY_DIR / "default" / "permredir.pickle")
 __version__ = VERSION
 __author__ = "Adam Jenca"

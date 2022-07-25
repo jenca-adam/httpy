@@ -24,7 +24,7 @@ resp = httpy.request("https://example.com/") # Do a request
 resp.content #Access content
 ```
 #### Sessions
-The `Session` class is there for you
+The `Session` class is there for you:
 ```{code-block} python
 ---
 lineno-start: 1
@@ -35,7 +35,7 @@ session.request("https://example.com/") # ...
 ```
 
 ### WebSocket
-This is not THAT easy, but it's fine.
+Easy again...
 ```{code-block} python
 ---
 lineno-start: 1

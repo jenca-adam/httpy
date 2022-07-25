@@ -44,7 +44,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.4.0"
+VERSION = "1.4.1"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -358,7 +358,9 @@ STATUS_CODES = {
     },
 }
 
-context = ssl.create_default_context()
+context = ssl._create_default_https_context()
+context.set_alpn_protocols(["http/1.1"])
+context.post_handshake_auth=True
 schemes = {"http": 80, "https": 443}
 
 
@@ -1607,12 +1609,22 @@ def create_connection(host, port, last_response):
     try:
         debugger.info("calling socket.create_connection")
         conn = socket.create_connection((host, port))
-    except socket.gaierror:
+    except socket.gaierror as gai:
         debugger.warn("gaierror raised, getting errno")
         # Get errno using ctypes, check for  -2(-3)
-        errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
+        if hasattr(ctypes,"pythonapi"):
+            #Not PyPy
+            
+            errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
+           
+        else:
+            #PyPy
+            errno = -72
+            if str(gai).startswith("[Errno -2]")or str(gai).startswith("[Errno -3]"):
+                errno = 2
         if errno in [2, 3]:
-            raise ServerError(f"could not find server {host!r}")
+                raise ServerError(f"could not find server {host!r}")
+
         debugger.warn(f"unknown errno {errno!r}")
         raise  # Added in 1.1.1
     pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max)
@@ -1674,7 +1686,8 @@ class HTTP11Sender:
     def send(self, sock):
         _debugprint(self.debug, "\nsend:\n" + self.request_data)
         sock.send(self.request_data.encode())
-        sock.send(self.body)
+        if self.body:
+            sock.send(self.body)
 class HTTP11Recver:
     def __call__(self,sock,debug,timeout):
         file=sock.makefile('b')

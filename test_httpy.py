@@ -24,14 +24,14 @@ except:
 def test_HTTPy_imports():
     import httpy
 def test_http_200_ok():
-    resp = httpy.request('http://httpbin.org/')
+    resp = httpy.request('http://httpbin.org/',enable_cache=False)
     assert resp.status==200
 def test_https_200_ok():
-    resp = httpy.request('https://python.org/')
+    resp = httpy.request('https://python.org/',enable_cache=False)
     assert resp.status==200
 def test_httpy_redirect_limit():
     with pytest.raises(httpy.TooManyRedirectsError):
-        httpy.request('http://httpbin.org/redirect/8389382902',redirlimit=5)
+        httpy.request('http://httpbin.org/redirect/8389382902',redirlimit=5,enable_cache=False)
 def test_httpy_cache():
     httpy.request("https://example.net/")
     assert httpy.request("https://example.net/").fromcache
@@ -44,12 +44,12 @@ def test_httpy_get_status_codes(capsys):
         print()
         for code in iterator:
             if 400<=int(code):
-                assert httpy.request(f'https://httpbin.org/status/{code}').status==int(code)
+                assert httpy.request(f'https://httpbin.org/status/{code}',enable_cache=False).status==int(code)
 def test_httpy_post_raw():
-    f=httpy.request('https://www.httpbin.org/post',method="POST",body="12345")
+    f=httpy.request('https://www.httpbin.org/post',method="POST",body="12345",enable_cache=False)
     assert f.json['data']=="12345"
 def test_httpy_post_form():
-    f=httpy.request('https://www.httpbin.org/post',method="POST",body={"foo":"bar"})
+    f=httpy.request('https://www.httpbin.org/post',method="POST",body={"foo":"bar"},enable_cache=False)
     assert f.json['form']=={"foo":"bar"}
 def test_httpy_websocket_string():
     wsk = httpy.WebSocket('wss://echo.websocket.events',debug=True)
