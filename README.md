@@ -9,7 +9,7 @@ A lightweight socket-based library to create HTTP(s) and WebSocket connections.
    * JSON support
    * Connection pooling
    * Session support	
-
+   * Runs on PyPy
 
 
 Docs at <https://httpy.readthedocs.io/>

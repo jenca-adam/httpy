@@ -9,6 +9,8 @@ A Python lightweight socket-based library to create HTTP(s) and WebSocket connec
    * Keep-Alive and connection pooling support
    * JSON support
    * Sessions support
+   * Runs in PyPy
+   * Independent of http.client
 ## Requirements
    * Python>=3.6
 ## Usage
