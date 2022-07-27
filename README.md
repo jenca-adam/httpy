@@ -8,7 +8,7 @@ From PyPI
 ```
 On Arch Linux
 ```
-   $ pacman -S httpy
+   $ yay -S httpy
 ```
 ## Features
    * Cookies support
