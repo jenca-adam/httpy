@@ -18,7 +18,6 @@ except :
 try:
     
     import httpy
-    httpy.set_debug()
 except:
     httpy=None
 def test_HTTPy_imports():

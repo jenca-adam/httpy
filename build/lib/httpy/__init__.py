@@ -44,7 +44,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.5.0"
+VERSION = "1.5.1"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -655,8 +655,8 @@ class CacheFile:
                 )
             file.seek(file.tell()-2)
         else:
-            method_l=ord(file.read(1))
-            self.method=file.read(method_l).decode('ascii')
+            method_l=_int16unpk(file.read(2))
+            self.method=file.read(method_l).decode()
 
         self.content = file.read()
         file.seek(0)
@@ -722,7 +722,7 @@ class Cache:
         u,m=t
         self.updateCache()  # ...
         for f in self.files:
-            if reslash(f.url) == reslash(u):
+            if reslash(f.url) == reslash(u) and f.method==m:
                 return f
         return None
 
