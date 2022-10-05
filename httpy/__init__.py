@@ -44,7 +44,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.4.2"
+VERSION = "1.5.0"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -648,6 +648,16 @@ class CacheFile:
         sl = file.read(srl)
         self.status = Status(sl)
         self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
+        method_desc=file.read(2)
+        if method_desc!=b'\150+':
+            warnings.warn(
+                DeprecationWarning(f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems")
+                )
+            file.seek(file.tell()-2)
+        else:
+            method_l=ord(file.read(1))
+            self.method=file.read(method_l).decode('ascii')
+
         self.content = file.read()
         file.seek(0)
         file.close()
@@ -708,8 +718,8 @@ class Cache:
         self.files = [
             CacheFile(os.path.join(self.dir, i)) for i in os.listdir(self.dir)
         ]
-
-    def __getitem__(self, u):
+    def __getitem__(self, t):
+        u,m=t
         self.updateCache()  # ...
         for f in self.files:
             if reslash(f.url) == reslash(u):
@@ -1017,6 +1027,7 @@ class Response:
 
     def __init__(
         self,
+        method,
         status,
         headers,
         content,
@@ -1028,6 +1039,7 @@ class Response:
         cache=True,
         base_dir=HTTPY_DIR / "default",
     ):
+        self.method = method
         self.status = status
         self.headers = headers
         self.content = content
@@ -1062,6 +1074,7 @@ class Response:
         :type cache_file: CacheFile
         """
         return Response(
+            cache_file.method,
             cache_file.status,
             cache_file.headers,
             cache_file.body,
@@ -1083,7 +1096,7 @@ class Response:
 
     @classmethod
     def plain(self):
-        return Response(Status(b"000"), Headers({}), b"", [], "", False, b"")
+        return Response("",Status(b"000"), Headers({}), b"", [], "", False, b"")
 
     @property
     def charset(self):
@@ -1106,7 +1119,7 @@ class Response:
         )
 
     def __repr__(self):
-        return f"<Response [{self.status} {self.reason}] ({self.url})>"
+        return f"<Response {self.method} [{self.status} {self.reason}] ({self.url})>"
 
 
 class WWW_Authenticate:
@@ -1381,6 +1394,8 @@ def cacheWrite(response, base_dir):
     data += _binappendfloat(time.time())
     data += _binappendfloat(response._time_elapsed)
     data += _binappendstr(f"{response.status:03} {response.reason}")
+    data += b"\150+"
+    data += _binappendstr(response.method)
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
     data += response.content
@@ -1792,6 +1807,7 @@ def _raw_request(
     base_dir=HTTPY_DIR,
     http_version="1.1"
 ):
+    method=method.upper()
     cache = Cache(base_dir / "sites")
     jar = CookieJar(base_dir / "cj")
     permanent_redirects = PickleFile(base_dir / "permredir.pickle")
@@ -1816,7 +1832,7 @@ def _raw_request(
 
     if enable_cache:
         debugger.info("Accessing cache.")
-        cf = cache[deslash(url)]
+        cf = cache[deslash(url),method]
         if cf and not cf.expired:
             debugger.info("Not expired data in cache, loading from cache")
             return Response.cacheload(cf)
@@ -1902,6 +1918,7 @@ def _raw_request(
     elapsed_time = end_time - start_time
     
     return Response(
+        method,
         status,
         headers,
         decoded_body,
