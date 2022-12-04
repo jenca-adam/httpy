@@ -44,13 +44,14 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.5.1"
+VERSION = "1.6.0"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
 STATUSPATTERN = re.compile(
     rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
 )
+HTTPY_CACHEABLE_METHODS=["GET","HEAD"]
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 WEBSOCKET_CONTINUATION_FRAME = 0x0
 WEBSOCKET_TEXT_FRAME = 0x1
@@ -545,29 +546,39 @@ class _Debugger:
     warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
     error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
 
-
+def _find(key,d):
+    for i in d:
+        if i.lower()==key.lower():
+            return i
+    return key
 class CaseInsensitiveDict(dict):
     """Case insensitive subclass of dictionary"""
 
     def __init__(self, data):
-        self.original = {force_string(k).lower(): v for k, v in dict(data).items()}
+        self.lowercase = {force_string(k).lower(): v for k, v in dict(data).items()}
+        self.original = data
         super().__init__(self.original)
 
     def __contains__(self, item):
-        return force_string(item).lower() in self.original
+        return (force_string(item).lower() in self.lowercase) | (force_string(item) in self.original)
 
     def __getitem__(self, item):
-        return self.original[force_string(item).lower()]
-
+        try:
+            return self.lowercase[force_string(item).lower()]
+        except KeyError:
+            return self.original[force_string(item)]
     def __setitem__(self, item, val):
-        self.original[force_string(item).lower()] = val
+        self.lowercase[force_string(item).lower()] = val
+        self.original[_find(item,self.original)] = val
         super().__init__(self.original)  # remake??
 
     def get(self, key, default=None):
         if key in self:
             return self[key]
         return default
-
+    def update(self,d):
+        for key in d:
+            self[key]=d[key]
     def __iter__(self):
         return iter(self.original)
 
@@ -647,7 +658,13 @@ class CacheFile:
         srl = _int16unpk(file.read(2))
         sl = file.read(srl)
         self.status = Status(sl)
-        self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
+        if '\x01' in f:
+            warnings.warn(
+                DeprecationWarning(f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems")
+                )
+            self.url=os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
+
+        self.url = os.path.split(f)[-1].replace("\xfe", "://").replace("\xff", "/")
         method_desc=file.read(2)
         if method_desc!=b'\150+':
             warnings.warn(
@@ -712,7 +729,7 @@ class Cache:
             if file.expired:
                 os.remove(
                     os.path.join(
-                        self.dir, file.url.replace("://", "\x01").replace("/", "\x02")
+                        self.dir, file.url.replace("://", "\xfe").replace("/", "\xff")
                     )
                 )
         self.files = [
@@ -984,14 +1001,13 @@ class Headers(CaseInsensitiveDict):
         h = filter(lambda x: x, h)
         self.headers = (
             [
-                a.split(b": ", 1)[0].lower().decode(),
-                a.split(b": ", 1)[1].decode().strip(),
+                force_string(a).split(": ", 1)[0].lower(),
+                force_string(a).split(": ", 1)[1].strip(),
             ]
             for a in h
         )
         self.headers = mkdict(self.headers)
         super().__init__(self.headers)
-
     def __setitem__(self, item, value):
         raise NotImplementedError
 
@@ -1018,13 +1034,14 @@ class Response:
     :ivar charset: Document charset
     :ivar speed: Average download speed in bytes per second
     :type speed: float
+    :type method: str
+    :ivar method: Indicates HTTP method used to request
     :param original_content: Document content before any Content-Encoding was applied.
     :type original_content: bytes
     :param time_elapsed: Total request time
     :type time_elapsed: float
     :ivar ok: `self.status==200`
     """
-
     def __init__(
         self,
         method,
@@ -1401,7 +1418,7 @@ def cacheWrite(response, base_dir):
     data += response.content
 
     with open(
-        base_dir / "sites" / (response.url.replace("://", "\x01").replace("/", "\x02")),
+        base_dir / "sites" / (response.url.replace("://", "\xfe").replace("/", "\xff")),
         "wb",
     ) as f:
         f.write(gzip.compress(data))
@@ -1786,6 +1803,13 @@ class Session:
     def __repr__(self):
         return f"<Session {self.name} ( {self.session_id} ) at {self.path!r}>"
 
+def _dictrm(d,l):
+    for i in l:
+        if i in d:
+            debugger.info(f"dictrming {i}")
+            del d[i]
+        else:
+            debugger.warn(f"dictrm {i} failed: not in dict")
 
 def _raw_request(
     host,
@@ -1805,7 +1829,8 @@ def _raw_request(
     last_status=-1,
     pure_headers=False,
     base_dir=HTTPY_DIR,
-    http_version="1.1"
+    http_version="1.1",
+    disabled_headers=[],
 ):
     method=method.upper()
     cache = Cache(base_dir / "sites")
@@ -1818,6 +1843,7 @@ def _raw_request(
         nep = permanent_redirects[host, port, path]
         debugger.info(f"Permanently redirecting from {path} to {nep}")
         return Response(
+            method,
             Status(b"301 Moved Permanently"),
             {"Location": nep},
             "",
@@ -1829,7 +1855,8 @@ def _raw_request(
         )
 
     socket.setdefaulttimeout(timeout)
-
+    if method not in HTTPY_CACHEABLE_METHODS:
+        enable_cache=False
     if enable_cache:
         debugger.info("Accessing cache.")
         cf = cache[deslash(url),method]
@@ -1841,12 +1868,13 @@ def _raw_request(
     else:
         debugger.info("Cache disabled.")
         cf = None
-    defhdr = {
+    defhdr = CaseInsensitiveDict({
         "Accept-Encoding": "gzip, deflate, identity",
         "Host": makehost(host, port),
         "User-Agent": "httpy/" + VERSION,
         "Connection": "keep-alive",
-    }
+        }
+        )
 
     if data:
         debugger.info("Adding form data")
@@ -1871,6 +1899,8 @@ def _raw_request(
             defhdr["Cookie"].append(c.name + "=" + c.value)
 
     defhdr.update(headers)
+    debugger.info("Removing disabled headers")
+    _dictrm(defhdr,disabled_headers)
     debugger.info("Establishing connection ")
     if history:
         last_response = history[-1]
@@ -1968,7 +1998,8 @@ def request(
     pure_headers=False,
     enable_cache=True,
     base_dir=HTTPY_DIR / "default",
-    http_version="1.1"
+    http_version="1.1",
+    disabled_headers=[]
 ):
     """
     Performs request.
@@ -1994,7 +2025,9 @@ def request(
     :type debug: ``bool``
     :param base_dir: HTTPy directory for request, default is `"~/.cache/httpy/default"`
     :type base_dir: ``pathlib.Path``
-    :param http_version: HTTP version to use ,MUST be "1.1" (meant for future implementation of more HTTP versions)
+    :param http_version: HTTP version to use, MUST be "1.1" (meant for future implementation of more HTTP versions)
+    :param disabled_headers: Disable selected headers.
+    :type disabled_headers: ``list``
     """
     global debugger
     debugger = _Debugger(debug)
@@ -2046,7 +2079,9 @@ def request(
         pure_headers=pure_headers,
         enable_cache=enable_cache,
         base_dir=base_dir,
-        http_version=http_version
+        http_version=http_version,
+        disabled_headers=disabled_headers
+
     )
     if resp.status == 301:
         debugger.info("Updating permanent redirects data file")
@@ -2073,7 +2108,8 @@ def request(
                 pure_headers=pure_headers,
                 enable_cache=enable_cache,
                 base_dir=base_dir,
-                http_version=http_version
+                http_version=http_version,
+                disabled_headers=disabled_headers
             )
     if resp.status == 401:
         if last_status == 401:

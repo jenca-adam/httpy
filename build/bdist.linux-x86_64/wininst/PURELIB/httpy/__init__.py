@@ -44,14 +44,13 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.6.0"
+VERSION = "1.5.2"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
 STATUSPATTERN = re.compile(
     rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
 )
-HTTPY_CACHEABLE_METHODS=["GET","HEAD"]
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 WEBSOCKET_CONTINUATION_FRAME = 0x0
 WEBSOCKET_TEXT_FRAME = 0x1
@@ -546,39 +545,29 @@ class _Debugger:
     warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
     error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
 
-def _find(key,d):
-    for i in d:
-        if i.lower()==key.lower():
-            return i
-    return key
+
 class CaseInsensitiveDict(dict):
     """Case insensitive subclass of dictionary"""
 
     def __init__(self, data):
-        self.lowercase = {force_string(k).lower(): v for k, v in dict(data).items()}
-        self.original = data
+        self.original = {force_string(k).lower(): v for k, v in dict(data).items()}
         super().__init__(self.original)
 
     def __contains__(self, item):
-        return (force_string(item).lower() in self.lowercase) | (force_string(item) in self.original)
+        return force_string(item).lower() in self.original
 
     def __getitem__(self, item):
-        try:
-            return self.lowercase[force_string(item).lower()]
-        except KeyError:
-            return self.original[force_string(item)]
+        return self.original[force_string(item).lower()]
+
     def __setitem__(self, item, val):
-        self.lowercase[force_string(item).lower()] = val
-        self.original[_find(item,self.original)] = val
+        self.original[force_string(item).lower()] = val
         super().__init__(self.original)  # remake??
 
     def get(self, key, default=None):
         if key in self:
             return self[key]
         return default
-    def update(self,d):
-        for key in d:
-            self[key]=d[key]
+
     def __iter__(self):
         return iter(self.original)
 
@@ -658,13 +647,7 @@ class CacheFile:
         srl = _int16unpk(file.read(2))
         sl = file.read(srl)
         self.status = Status(sl)
-        if '\x01' in f:
-            warnings.warn(
-                DeprecationWarning(f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems")
-                )
-            self.url=os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
-
-        self.url = os.path.split(f)[-1].replace("\xfe", "://").replace("\xff", "/")
+        self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
         method_desc=file.read(2)
         if method_desc!=b'\150+':
             warnings.warn(
@@ -729,7 +712,7 @@ class Cache:
             if file.expired:
                 os.remove(
                     os.path.join(
-                        self.dir, file.url.replace("://", "\xfe").replace("/", "\xff")
+                        self.dir, file.url.replace("://", "\x01").replace("/", "\x02")
                     )
                 )
         self.files = [
@@ -1001,13 +984,14 @@ class Headers(CaseInsensitiveDict):
         h = filter(lambda x: x, h)
         self.headers = (
             [
-                force_string(a).split(": ", 1)[0].lower(),
-                force_string(a).split(": ", 1)[1].strip(),
+                a.split(b": ", 1)[0].lower().decode(),
+                a.split(b": ", 1)[1].decode().strip(),
             ]
             for a in h
         )
         self.headers = mkdict(self.headers)
         super().__init__(self.headers)
+
     def __setitem__(self, item, value):
         raise NotImplementedError
 
@@ -1042,6 +1026,7 @@ class Response:
     :type time_elapsed: float
     :ivar ok: `self.status==200`
     """
+
     def __init__(
         self,
         method,
@@ -1418,7 +1403,7 @@ def cacheWrite(response, base_dir):
     data += response.content
 
     with open(
-        base_dir / "sites" / (response.url.replace("://", "\xfe").replace("/", "\xff")),
+        base_dir / "sites" / (response.url.replace("://", "\x01").replace("/", "\x02")),
         "wb",
     ) as f:
         f.write(gzip.compress(data))
@@ -1803,13 +1788,6 @@ class Session:
     def __repr__(self):
         return f"<Session {self.name} ( {self.session_id} ) at {self.path!r}>"
 
-def _dictrm(d,l):
-    for i in l:
-        if i in d:
-            debugger.info(f"dictrming {i}")
-            del d[i]
-        else:
-            debugger.warn(f"dictrm {i} failed: not in dict")
 
 def _raw_request(
     host,
@@ -1829,8 +1807,7 @@ def _raw_request(
     last_status=-1,
     pure_headers=False,
     base_dir=HTTPY_DIR,
-    http_version="1.1",
-    disabled_headers=[],
+    http_version="1.1"
 ):
     method=method.upper()
     cache = Cache(base_dir / "sites")
@@ -1855,8 +1832,7 @@ def _raw_request(
         )
 
     socket.setdefaulttimeout(timeout)
-    if method not in HTTPY_CACHEABLE_METHODS:
-        enable_cache=False
+
     if enable_cache:
         debugger.info("Accessing cache.")
         cf = cache[deslash(url),method]
@@ -1868,13 +1844,12 @@ def _raw_request(
     else:
         debugger.info("Cache disabled.")
         cf = None
-    defhdr = CaseInsensitiveDict({
+    defhdr = {
         "Accept-Encoding": "gzip, deflate, identity",
         "Host": makehost(host, port),
         "User-Agent": "httpy/" + VERSION,
         "Connection": "keep-alive",
-        }
-        )
+    }
 
     if data:
         debugger.info("Adding form data")
@@ -1899,8 +1874,6 @@ def _raw_request(
             defhdr["Cookie"].append(c.name + "=" + c.value)
 
     defhdr.update(headers)
-    debugger.info("Removing disabled headers")
-    _dictrm(defhdr,disabled_headers)
     debugger.info("Establishing connection ")
     if history:
         last_response = history[-1]
@@ -1998,8 +1971,7 @@ def request(
     pure_headers=False,
     enable_cache=True,
     base_dir=HTTPY_DIR / "default",
-    http_version="1.1",
-    disabled_headers=[]
+    http_version="1.1"
 ):
     """
     Performs request.
@@ -2025,9 +1997,7 @@ def request(
     :type debug: ``bool``
     :param base_dir: HTTPy directory for request, default is `"~/.cache/httpy/default"`
     :type base_dir: ``pathlib.Path``
-    :param http_version: HTTP version to use, MUST be "1.1" (meant for future implementation of more HTTP versions)
-    :param disabled_headers: Disable selected headers.
-    :type disabled_headers: ``list``
+    :param http_version: HTTP version to use ,MUST be "1.1" (meant for future implementation of more HTTP versions)
     """
     global debugger
     debugger = _Debugger(debug)
@@ -2079,9 +2049,7 @@ def request(
         pure_headers=pure_headers,
         enable_cache=enable_cache,
         base_dir=base_dir,
-        http_version=http_version,
-        disabled_headers=disabled_headers
-
+        http_version=http_version
     )
     if resp.status == 301:
         debugger.info("Updating permanent redirects data file")
@@ -2108,8 +2076,7 @@ def request(
                 pure_headers=pure_headers,
                 enable_cache=enable_cache,
                 base_dir=base_dir,
-                http_version=http_version,
-                disabled_headers=disabled_headers
+                http_version=http_version
             )
     if resp.status == 401:
         if last_status == 401:
