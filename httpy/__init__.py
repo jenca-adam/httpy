@@ -44,13 +44,14 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.6.0"
+VERSION = "1.6.1"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
 STATUSPATTERN = re.compile(
     rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
 )
+STRTIME_PATTERN="%a, %d %b% Y, %H:%M:%S%Z"
 HTTPY_CACHEABLE_METHODS=["GET","HEAD"]
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 WEBSOCKET_CONTINUATION_FRAME = 0x0
@@ -674,6 +675,13 @@ class CacheFile:
         else:
             method_l=_int16unpk(file.read(2))
             self.method=file.read(method_l).decode()
+        has_expires=file.read(1)
+        self.expires=None
+        if has_expires=="\xff":
+            expires_length=ord(file.read(1))
+            self.expires=_unpk_float(file.read(expires_length))
+        elif has_expires!="\x00":
+            file.seek(file.tell()-1)
 
         self.content = file.read()
         file.seek(0)
@@ -697,6 +705,8 @@ class CacheFile:
 
     @property
     def expired(self):
+        if self.expires is not None and  self.expires<time.time():
+            return True
         return time.time() - self.time_generated > self.cache_control.max_age
 
     def __repr__(self):
@@ -1076,7 +1086,7 @@ class Response:
             and (self.content or self.headers or self.status)
             and cache
         ):
-            cacheWrite(self, base_dir)
+            cacheWrite(self, base_dir, expires_override=headers.get("Expires",None))
 
         self._charset = determine_charset(headers)
         self.history = history
@@ -1394,14 +1404,13 @@ def hashing_function(function_name):
     decorated.__qualname__ = function_name
     return decorated
 
-
 md5, sha256, sha512, sha1 = (
     hashing_function(i) for i in ("md5", "sha256", "sha512", "sha1")
 )
 ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512}
 
 
-def cacheWrite(response, base_dir):
+def cacheWrite(response, base_dir, expires_override=None):
     """
     Writes response to cache
 
@@ -1413,6 +1422,18 @@ def cacheWrite(response, base_dir):
     data += _binappendstr(f"{response.status:03} {response.reason}")
     data += b"\150+"
     data += _binappendstr(response.method)
+    if expires_override is not None:
+        expires = time.mktime(email.utils.parsedate(expires_override))
+        if expires<time.time():
+            _debugprint("Expired Cache. Aborting cacheWrite.")
+            return
+        data+=b"\xff"
+        expires_bin=_binappendfloat(expires)
+        data+=bytes([len(expires_bin)])
+        data+=expires_bin
+    else:
+        data+=b"\x00"
+
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
     data += response.content
