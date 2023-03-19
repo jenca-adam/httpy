@@ -44,7 +44,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.6.1"
+VERSION = "1.6.2"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -1425,7 +1425,7 @@ def cacheWrite(response, base_dir, expires_override=None):
     if expires_override is not None:
         expires = time.mktime(email.utils.parsedate(expires_override))
         if expires<time.time():
-            _debugprint("Expired Cache. Aborting cacheWrite.")
+            debugger.info("Expired Cache. Aborting cacheWrite.")
             return
         data+=b"\xff"
         expires_bin=_binappendfloat(expires)
@@ -2532,6 +2532,7 @@ class WebSocket:
             f"Unsupported data type : {type(data).__name__!r}, please use either str or bytes."
         )
 
+debugger = _Debugger(False)
 
 encodings = {
     "identity": lambda x: x,
@@ -2544,7 +2545,6 @@ proto_versions = {
 jar = CookieJar()
 cache = Cache()
 nonce_counter = NonceCounter()
-debugger = _Debugger(False)
 pool = ConnectionPool()
 session_ids = os.listdir(HTTPY_DIR / "sessions")
 sessions = []
