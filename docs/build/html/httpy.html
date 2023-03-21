@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy module &mdash; httpy 1.6.0 documentation</title>
+  <title>httpy module &mdash; httpy 1.7.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -12,9 +12,6 @@
   <![endif]-->
   
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -27,11 +24,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> httpy
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            httpy
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -121,6 +122,13 @@
 <li><a class="reference internal" href="#httpy.Headers"><code class="docutils literal notranslate"><span class="pre">Headers</span></code></a></li>
 <li><a class="reference internal" href="#httpy.KeepAlive"><code class="docutils literal notranslate"><span class="pre">KeepAlive</span></code></a></li>
 <li><a class="reference internal" href="#httpy.NonceCounter"><code class="docutils literal notranslate"><span class="pre">NonceCounter</span></code></a></li>
+<li><a class="reference internal" href="#httpy.PendingRequest"><code class="docutils literal notranslate"><span class="pre">PendingRequest</span></code></a><ul>
+<li><a class="reference internal" href="#httpy.PendingRequest.empty"><code class="docutils literal notranslate"><span class="pre">PendingRequest.empty</span></code></a></li>
+<li><a class="reference internal" href="#httpy.PendingRequest.finished"><code class="docutils literal notranslate"><span class="pre">PendingRequest.finished</span></code></a></li>
+<li><a class="reference internal" href="#httpy.PendingRequest.response"><code class="docutils literal notranslate"><span class="pre">PendingRequest.response</span></code></a></li>
+<li><a class="reference internal" href="#httpy.PendingRequest.wait"><code class="docutils literal notranslate"><span class="pre">PendingRequest.wait()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#httpy.PickleFile"><code class="docutils literal notranslate"><span class="pre">PickleFile</span></code></a><ul>
 <li><a class="reference internal" href="#httpy.PickleFile.update"><code class="docutils literal notranslate"><span class="pre">PickleFile.update()</span></code></a></li>
 </ul>
@@ -228,8 +236,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>httpy module</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">httpy module</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/httpy.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -621,6 +629,32 @@ for whence are:</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="httpy.PendingRequest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">PendingRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.PendingRequest" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="httpy.PendingRequest.empty">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty</span></span><a class="headerlink" href="#httpy.PendingRequest.empty" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="httpy.PendingRequest.finished">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">finished</span></span><a class="headerlink" href="#httpy.PendingRequest.finished" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="httpy.PendingRequest.response">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">response</span></span><a class="headerlink" href="#httpy.PendingRequest.response" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.PendingRequest.wait">
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.PendingRequest.wait" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="httpy.PickleFile">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">PickleFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.PickleFile" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
@@ -891,7 +925,7 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.cacheWrite">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">cacheWrite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.cacheWrite" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">cacheWrite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expires_override</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.cacheWrite" title="Permalink to this definition"></a></dt>
 <dd><p>Writes response to cache</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1035,15 +1069,15 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.multipart">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--kxKYm2ViFr\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--4eN0tsunkr\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.multipart" title="Permalink to this definition"></a></dt>
 <dd><p>Builds multipart/form-data from form</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.request">
-<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure_headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/adam/.cache/httpy/default')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'1.1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disabled_headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.request" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.</span></span><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure_headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/adam/.cache/httpy/default')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'1.1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disabled_headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.request" title="Permalink to this definition"></a></dt>
 <dd><p>Performs request.
-_Note: all arguments but <code class="docutils literal notranslate"><span class="pre">url</span></code> are <a href="#id1"><span class="problematic" id="id2">keyword-only_</span></a></p>
+<cite>Note:</cite> all arguments but <code class="docutils literal notranslate"><span class="pre">url</span></code> are keyword-only</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1058,9 +1092,10 @@ _Note: all arguments but <code class="docutils literal notranslate"><span class=
 <li><p><strong>history</strong> – request history, defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 <li><p><strong>throw_on_error</strong> – if throw_on_error is <code class="docutils literal notranslate"><span class="pre">True</span></code> , StatusError will be raised if server responded with 4xx or 5xx status code.</p></li>
 <li><p><strong>debug</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – whether or not shall debug mode be used , defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></p></li>
-<li><p><strong>base_dir</strong> (<code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code>) – HTTPy directory for request, default is <cite>“~/.cache/httpy/default”</cite></p></li>
+<li><p><strong>base_dir</strong> (<code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code>) – HTTPy directory for request, default is <code class="docutils literal notranslate"><span class="pre">&quot;~/.cache/httpy/default&quot;</span></code></p></li>
 <li><p><strong>http_version</strong> – HTTP version to use, MUST be “1.1” (meant for future implementation of more HTTP versions)</p></li>
 <li><p><strong>disabled_headers</strong> (<code class="docutils literal notranslate"><span class="pre">list</span></code>) – Disable selected headers.</p></li>
+<li><p><strong>blocking</strong> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – If <code class="docutils literal notranslate"><span class="pre">False</span></code>, request is performed in a separate thread. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
 </ul>
 </dd>
 </dl>

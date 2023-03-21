@@ -1,5 +1,6 @@
 # httpy
 A Python lightweight socket-based library to create HTTP(s) and WebSocket connections.
+
 ## Features
    * Cookies support
    * Caching support
@@ -11,47 +12,49 @@ A Python lightweight socket-based library to create HTTP(s) and WebSocket connec
    * Sessions support
    * Runs in PyPy
    * Independent of http.client
+
 ## Requirements
+   
    * Python>=3.6
+
 ## Installation
+
 ### Any platform
+
 #### Git
 1. `git clone https://github.com/jenca-adam/httpy`
 1. `cd httpy`
 1. `python3 setup.py install`
 The Python version check will be performed automatically
+
 #### Pip
+
 1. `python3 -m pip install httpy`
+
 ### Arch Linux
+
 1. `yay -S httpy`
 :warning: This is stuck on version 1.5.1 and probably won't be updated any time soon, because I am stupid and deleted my SSH key.
+
 ## Usage
+
 ### HTTP
 
 It's easy.
-```{code-block} python
----
-lineno-start: 1
----
+```
 import httpy
 resp = httpy.request("https://example.com/") # Do a request
 resp.content #Access content
 ```
 #### Non-blocking requests
-```{code-block} python
----
-lineno-start:1
----
+```
 import httpy
 pending = httpy.request("https://example.com/", blocking = False)
 # PendingRequest.response returns the result of the response. You can check if the request is already done using PendingRequest.finished
 ```
 #### Sessions
 The `Session` class is there for you:
-```{code-block} python
----
-lineno-start: 1
----
+```
 import httpy
 session = httpy.Session()
 session.request("https://example.com/") # ...
@@ -59,10 +62,7 @@ session.request("https://example.com/") # ...
 
 ### WebSocket
 Easy again...
-```{code-block} python
----
-lineno-start: 1
----
+```
 >>> import httpy
 >>> sock = httpy.WebSocket("wss://echo.websocket.events/")# create a websocket(echo server example)
 >>> sock.send("Hello, world!💥")# you can send also bytes
@@ -74,51 +74,36 @@ lineno-start: 1
 ## Examples
 ### POST method
 #### Simple Form
-```{code-block} python
----
-lineno-start: 1
----
+```
 import httpy
 resp = httpy.request("https://example.com/", method="POST", body = {"foo":"bar"})
 # ...
 ```
 #### Sending files
-```{code-block} python
----
-lineno-start: 1
----
+```
 import httpy
 resp = httpy.request("https://example.com/", method = "POST", body = { "foo" : "bar", "file" : httpy.File.open( "example.txt" ) })
 # ...
 ```
 #### Sending binary data
-```{code-block} python
----
-lineno-start: 1
----
+```
 import httpy
 resp = httpy.request("https://example.com/", method = "POST", body= b" Hello, World ! ")
 # ...
 ```
 #### Sending plain text
-```{code-block} python
----
-lineno-start: 1
----
+```
 resp = httpy.request("https://example.com/", method = "POST", body = "I support Ünicode !")
 # ...
 ```
 #### Sending JSON
-```{code-block} python
----
-lineno-start: 1
----
+```
 resp = httpy.request("https://example.com/", method = "POST", body = "{\"foo\" : \"bar\" }", content_type = "application/json")
 # ...
 ```
 ### Debugging
 Just set `debug` to `True` :
-```{code-block} python
+```
 >>> import httpy
 >>> httpy.request("https://example.com/",debug=True)
 [INFO][request](1266): request() called.

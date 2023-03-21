@@ -28,6 +28,13 @@ def test_http_200_ok():
 def test_https_200_ok():
     resp = httpy.request('https://python.org/',enable_cache=False)
     assert resp.status==200
+def test_httpy_nonblocking():
+    t=time.time()
+    resps=[httpy.request("https://httpbin.org/delay/1",blocking=False) for i in range(4)]
+    assert time.time()-t<1
+    for i in resps:
+        i.wait()
+        assert i.response.ok
 def test_httpy_redirect_limit():
     with pytest.raises(httpy.TooManyRedirectsError):
         httpy.request('http://httpbin.org/redirect/8389382902',redirlimit=5,enable_cache=False)

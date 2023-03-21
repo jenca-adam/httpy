@@ -1,1 +1,1 @@
-pytest test_httpy.py -sv --full-trace
+pytest test_httpy.py -sv 

@@ -35,6 +35,8 @@ import builtins  # for debugging
 import inspect  # for debugging
 import sys  # for debugging
 import pickle  # to save data
+import threading  # to create threads
+import queue  # to communicate between threads
 
 try:
     import chardet  # to detect charsets
@@ -44,15 +46,15 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.6.2"
+VERSION = "1.7.0"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
 STATUSPATTERN = re.compile(
     rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
 )
-STRTIME_PATTERN="%a, %d %b% Y, %H:%M:%S%Z"
-HTTPY_CACHEABLE_METHODS=["GET","HEAD"]
+STRTIME_PATTERN = "%a, %d %b% Y, %H:%M:%S%Z"
+HTTPY_CACHEABLE_METHODS = ["GET", "HEAD"]
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 WEBSOCKET_CONTINUATION_FRAME = 0x0
 WEBSOCKET_TEXT_FRAME = 0x1
@@ -362,7 +364,7 @@ STATUS_CODES = {
 
 context = ssl._create_default_https_context()
 context.set_alpn_protocols(["http/1.1"])
-context.post_handshake_auth=True
+context.post_handshake_auth = True
 schemes = {"http": 80, "https": 443}
 
 
@@ -547,11 +549,14 @@ class _Debugger:
     warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
     error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
 
-def _find(key,d):
+
+def _find(key, d):
     for i in d:
-        if i.lower()==key.lower():
+        if i.lower() == key.lower():
             return i
     return key
+
+
 class CaseInsensitiveDict(dict):
     """Case insensitive subclass of dictionary"""
 
@@ -561,25 +566,30 @@ class CaseInsensitiveDict(dict):
         super().__init__(self.original)
 
     def __contains__(self, item):
-        return (force_string(item).lower() in self.lowercase) | (force_string(item) in self.original)
+        return (force_string(item).lower() in self.lowercase) | (
+            force_string(item) in self.original
+        )
 
     def __getitem__(self, item):
         try:
             return self.lowercase[force_string(item).lower()]
         except KeyError:
             return self.original[force_string(item)]
+
     def __setitem__(self, item, val):
         self.lowercase[force_string(item).lower()] = val
-        self.original[_find(item,self.original)] = val
+        self.original[_find(item, self.original)] = val
         super().__init__(self.original)  # remake??
 
     def get(self, key, default=None):
         if key in self:
             return self[key]
         return default
-    def update(self,d):
+
+    def update(self, d):
         for key in d:
-            self[key]=d[key]
+            self[key] = d[key]
+
     def __iter__(self):
         return iter(self.original)
 
@@ -659,29 +669,33 @@ class CacheFile:
         srl = _int16unpk(file.read(2))
         sl = file.read(srl)
         self.status = Status(sl)
-        if '\x01' in f:
+        if "\x01" in f:
             warnings.warn(
-                DeprecationWarning(f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems")
+                DeprecationWarning(
+                    f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
                 )
-            self.url=os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
+            )
+            self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
 
         self.url = os.path.split(f)[-1].replace("\xfe", "://").replace("\xff", "/")
-        method_desc=file.read(2)
-        if method_desc!=b'\150+':
+        method_desc = file.read(2)
+        if method_desc != b"\150+":
             warnings.warn(
-                DeprecationWarning(f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems")
+                DeprecationWarning(
+                    f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
                 )
-            file.seek(file.tell()-2)
+            )
+            file.seek(file.tell() - 2)
         else:
-            method_l=_int16unpk(file.read(2))
-            self.method=file.read(method_l).decode()
-        has_expires=file.read(1)
-        self.expires=None
-        if has_expires=="\xff":
-            expires_length=ord(file.read(1))
-            self.expires=_unpk_float(file.read(expires_length))
-        elif has_expires!="\x00":
-            file.seek(file.tell()-1)
+            method_l = _int16unpk(file.read(2))
+            self.method = file.read(method_l).decode()
+        has_expires = file.read(1)
+        self.expires = None
+        if has_expires == "\xff":
+            expires_length = ord(file.read(1))
+            self.expires = _unpk_float(file.read(expires_length))
+        elif has_expires != "\x00":
+            file.seek(file.tell() - 1)
 
         self.content = file.read()
         file.seek(0)
@@ -705,7 +719,7 @@ class CacheFile:
 
     @property
     def expired(self):
-        if self.expires is not None and  self.expires<time.time():
+        if self.expires is not None and self.expires < time.time():
             return True
         return time.time() - self.time_generated > self.cache_control.max_age
 
@@ -745,11 +759,12 @@ class Cache:
         self.files = [
             CacheFile(os.path.join(self.dir, i)) for i in os.listdir(self.dir)
         ]
+
     def __getitem__(self, t):
-        u,m=t
+        u, m = t
         self.updateCache()  # ...
         for f in self.files:
-            if reslash(f.url) == reslash(u) and f.method==m:
+            if reslash(f.url) == reslash(u) and f.method == m:
                 return f
         return None
 
@@ -1018,6 +1033,7 @@ class Headers(CaseInsensitiveDict):
         )
         self.headers = mkdict(self.headers)
         super().__init__(self.headers)
+
     def __setitem__(self, item, value):
         raise NotImplementedError
 
@@ -1052,6 +1068,7 @@ class Response:
     :type time_elapsed: float
     :ivar ok: `self.status==200`
     """
+
     def __init__(
         self,
         method,
@@ -1086,7 +1103,7 @@ class Response:
             and (self.content or self.headers or self.status)
             and cache
         ):
-            cacheWrite(self, base_dir, expires_override=headers.get("Expires",None))
+            cacheWrite(self, base_dir, expires_override=headers.get("Expires", None))
 
         self._charset = determine_charset(headers)
         self.history = history
@@ -1123,7 +1140,7 @@ class Response:
 
     @classmethod
     def plain(self):
-        return Response("",Status(b"000"), Headers({}), b"", [], "", False, b"")
+        return Response("", Status(b"000"), Headers({}), b"", [], "", False, b"")
 
     @property
     def charset(self):
@@ -1147,6 +1164,44 @@ class Response:
 
     def __repr__(self):
         return f"<Response {self.method} [{self.status} {self.reason}] ({self.url})>"
+
+
+def _async_rr(q, url, **kwargs):
+    resp = request(url, **kwargs)
+    q.put(resp)
+
+
+class PendingRequest:
+    def __init__(self, url, **kwargs):
+        if not kwargs.get("blocking", True):
+            del kwargs["blocking"]
+        self.queue = queue.Queue()
+        self.__data_loaded = None
+        self.thread = threading.Thread(
+            target=(lambda: _async_rr(self.queue, url, **kwargs))
+        )
+        self.thread.start()
+
+    @property
+    def empty(self):
+        return self.queue.empty()
+
+    def wait(self):
+        while not self.finished:
+            pass
+
+    @property
+    def finished(self):
+        return (not self.empty) or (self.__data_loaded is not None)
+
+    @property
+    def response(self):
+        if self.__data_loaded is not None:
+            return self.__data_loaded
+        if self.queue.empty():
+            return None
+        self.__data_loaded = self.queue.get_nowait()
+        return self.__data_loaded
 
 
 class WWW_Authenticate:
@@ -1271,7 +1326,6 @@ class NonceCounter:
         self.nonces = {}
 
     def __getitem__(self, item):
-
         if item not in self.nonces:
             debugger.info("Adding new nonce to nonce_counter")
             self.nonces[item] = 0
@@ -1350,7 +1404,6 @@ class ConnectionPool:
 
     def __getitem__(self, host):
         try:
-
             sock = self.connections[host].sock
         except ConnectionError:
             raise
@@ -1374,13 +1427,18 @@ class ConnectionPool:
         for conn in self.connections.values():
             conn.close()
 
+
 class ProtoVersion:
     def __init__(self):
         pass
-    def send_request(self,sock,*args):
+
+    def send_request(self, sock, *args):
         return self.sender(*args).send(sock)
-    def recv_response(self,sock,*args):
-        return self.recver(sock,*args)
+
+    def recv_response(self, sock, *args):
+        return self.recver(sock, *args)
+
+
 class KeepAlive:
     """Class for parsing keep-alive headers"""
 
@@ -1404,6 +1462,7 @@ def hashing_function(function_name):
     decorated.__qualname__ = function_name
     return decorated
 
+
 md5, sha256, sha512, sha1 = (
     hashing_function(i) for i in ("md5", "sha256", "sha512", "sha1")
 )
@@ -1424,15 +1483,15 @@ def cacheWrite(response, base_dir, expires_override=None):
     data += _binappendstr(response.method)
     if expires_override is not None:
         expires = time.mktime(email.utils.parsedate(expires_override))
-        if expires<time.time():
+        if expires < time.time():
             debugger.info("Expired Cache. Aborting cacheWrite.")
             return
-        data+=b"\xff"
-        expires_bin=_binappendfloat(expires)
-        data+=bytes([len(expires_bin)])
-        data+=expires_bin
+        data += b"\xff"
+        expires_bin = _binappendfloat(expires)
+        data += bytes([len(expires_bin)])
+        data += expires_bin
     else:
-        data+=b"\x00"
+        data += b"\x00"
 
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
@@ -1665,18 +1724,18 @@ def create_connection(host, port, last_response):
     except socket.gaierror as gai:
         debugger.warn("gaierror raised, getting errno")
         # Get errno using ctypes, check for  -2(-3)
-        if hasattr(ctypes,"pythonapi"):
-            #Not PyPy
-            
+        if hasattr(ctypes, "pythonapi"):
+            # Not PyPy
+
             errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
-           
+
         else:
-            #PyPy
+            # PyPy
             errno = -72
-            if str(gai).startswith("[Errno -2]")or str(gai).startswith("[Errno -3]"):
+            if str(gai).startswith("[Errno -2]") or str(gai).startswith("[Errno -3]"):
                 errno = 2
         if errno in [2, 3]:
-                raise ServerError(f"could not find server {host!r}")
+            raise ServerError(f"could not find server {host!r}")
 
         debugger.warn(f"unknown errno {errno!r}")
         raise  # Added in 1.1.1
@@ -1695,7 +1754,6 @@ def setup_session(sess_path, name):
             pickle.dump({}, f)
     if not os.path.exists(sess_path / "cj"):
         with open(sess_path / "cj", "wb") as f:
-
             f.write(b"")
 
     if not os.path.exists(sess_path / "meta.json"):
@@ -1741,9 +1799,11 @@ class HTTP11Sender:
         sock.send(self.request_data.encode())
         if self.body:
             sock.send(self.body)
+
+
 class HTTP11Recver:
-    def __call__(self,sock,debug,timeout):
-        file=sock.makefile('b')
+    def __call__(self, sock, debug, timeout):
+        file = sock.makefile("b")
         statusline = file.readline()
         _debugprint(debug, "\nresponse: ")
         _debugprint(debug, statusline)
@@ -1790,11 +1850,14 @@ class HTTP11Recver:
                 body += chunk
         content_encoding = headers.get("content-encoding", "identity")
         decoded_body = decode_content(body, content_encoding)
-        return status,headers,decoded_body,body
+        return status, headers, decoded_body, body
+
+
 class HTTP11(ProtoVersion):
-    version='1.1'
-    sender=HTTP11Sender
-    recver=HTTP11Recver()
+    version = "1.1"
+    sender = HTTP11Sender
+    recver = HTTP11Recver()
+
 
 class Session:
     def __init__(self, session_id=None, path=None, name=None):
@@ -1824,13 +1887,15 @@ class Session:
     def __repr__(self):
         return f"<Session {self.name} ( {self.session_id} ) at {self.path!r}>"
 
-def _dictrm(d,l):
+
+def _dictrm(d, l):
     for i in l:
         if i in d:
             debugger.info(f"dictrming {i}")
             del d[i]
         else:
             debugger.warn(f"dictrm {i} failed: not in dict")
+
 
 def _raw_request(
     host,
@@ -1853,7 +1918,7 @@ def _raw_request(
     http_version="1.1",
     disabled_headers=[],
 ):
-    method=method.upper()
+    method = method.upper()
     cache = Cache(base_dir / "sites")
     jar = CookieJar(base_dir / "cj")
     permanent_redirects = PickleFile(base_dir / "permredir.pickle")
@@ -1877,10 +1942,10 @@ def _raw_request(
 
     socket.setdefaulttimeout(timeout)
     if method not in HTTPY_CACHEABLE_METHODS:
-        enable_cache=False
+        enable_cache = False
     if enable_cache:
         debugger.info("Accessing cache.")
-        cf = cache[deslash(url),method]
+        cf = cache[deslash(url), method]
         if cf and not cf.expired:
             debugger.info("Not expired data in cache, loading from cache")
             return Response.cacheload(cf)
@@ -1889,13 +1954,14 @@ def _raw_request(
     else:
         debugger.info("Cache disabled.")
         cf = None
-    defhdr = CaseInsensitiveDict({
-        "Accept-Encoding": "gzip, deflate, identity",
-        "Host": makehost(host, port),
-        "User-Agent": "httpy/" + VERSION,
-        "Connection": "keep-alive",
+    defhdr = CaseInsensitiveDict(
+        {
+            "Accept-Encoding": "gzip, deflate, identity",
+            "Host": makehost(host, port),
+            "User-Agent": "httpy/" + VERSION,
+            "Connection": "keep-alive",
         }
-        )
+    )
 
     if data:
         debugger.info("Adding form data")
@@ -1921,7 +1987,7 @@ def _raw_request(
 
     defhdr.update(headers)
     debugger.info("Removing disabled headers")
-    _dictrm(defhdr,disabled_headers)
+    _dictrm(defhdr, disabled_headers)
     debugger.info("Establishing connection ")
     if history:
         last_response = history[-1]
@@ -1939,10 +2005,10 @@ def _raw_request(
             defhdr = headers
         if cf:
             cf.add_header(defhdr)
-        proto=proto_versions[http_version]
-        proto.send_request(sock,method,defhdr,data,path,debug)
-        status,headers,decoded_body,body=proto.recv_response(sock,debug,timeout)
-        if status==304:
+        proto = proto_versions[http_version]
+        proto.send_request(sock, method, defhdr, data, path, debug)
+        status, headers, decoded_body, body = proto.recv_response(sock, debug, timeout)
+        if status == 304:
             return Response.cacheload(cf)
         if "set-cookie" in headers:
             cookie = headers["set-cookie"]
@@ -1956,7 +2022,7 @@ def _raw_request(
                     domain.add_cookie(c)
             else:
                 domain.add_cookie(cookie)
-       
+
     except:
         del pool[host, port]
         raise
@@ -1967,7 +2033,7 @@ def _raw_request(
     )
     end_time = time.time()
     elapsed_time = end_time - start_time
-    
+
     return Response(
         method,
         status,
@@ -1981,7 +2047,6 @@ def _raw_request(
         enable_cache,
         base_dir,
     )
-
 
 
 def set_debug(d=True):
@@ -2020,12 +2085,13 @@ def request(
     enable_cache=True,
     base_dir=HTTPY_DIR / "default",
     http_version="1.1",
-    disabled_headers=[]
+    disabled_headers=[],
+    blocking=True,
 ):
     """
     Performs request.
-    _Note: all arguments but ``url`` are keyword-only_
-
+    `Note:` all arguments but ``url`` are keyword-only
+    
     :param url: url to request
     :type url: ``str``
     :param method: method to use, defaults to ``"GET"``
@@ -2044,11 +2110,13 @@ def request(
     :param throw_on_error: if throw_on_error is ``True`` , StatusError will be raised if server responded with 4xx or 5xx status code.
     :param debug: whether or not shall debug mode be used , defaults to ``False``
     :type debug: ``bool``
-    :param base_dir: HTTPy directory for request, default is `"~/.cache/httpy/default"`
+    :param base_dir: HTTPy directory for request, default is ``"~/.cache/httpy/default"``
     :type base_dir: ``pathlib.Path``
     :param http_version: HTTP version to use, MUST be "1.1" (meant for future implementation of more HTTP versions)
     :param disabled_headers: Disable selected headers.
     :type disabled_headers: ``list``
+    :param blocking: If ``False``, request is performed in a separate thread. Defaults to ``True``
+    :type blocking: ``bool``
     """
     global debugger
     debugger = _Debugger(debug)
@@ -2082,29 +2150,46 @@ def request(
     else:
         last_status = -1
     debugger.info(f"Sending request to {host} port {port} via {scheme}")
-    resp = _raw_request(
-        host,
-        port,
-        "/" + path,
-        scheme,
-        url=url,
-        history=history,
-        auth=auth,
-        data=body,
-        method=method,
-        headers=headers,
-        timeout=timeout,
-        content_type=content_type,
-        debug=debug,
-        last_status=last_status,
-        pure_headers=pure_headers,
-        enable_cache=enable_cache,
-        base_dir=base_dir,
-        http_version=http_version,
-        disabled_headers=disabled_headers
+    if blocking:  # normal raw request
+        resp = _raw_request(
+            host,
+            port,
+            "/" + path,
+            scheme,
+            url=url,
+            history=history,
+            auth=auth,
+            data=body,
+            method=method,
+            headers=headers,
+            timeout=timeout,
+            content_type=content_type,
+            debug=debug,
+            last_status=last_status,
+            pure_headers=pure_headers,
+            enable_cache=enable_cache,
+            base_dir=base_dir,
+            http_version=http_version,
+            disabled_headers=disabled_headers,
+        )
+    else:  # PendingRequest
+        return PendingRequest(
+            url,
+            auth=auth,
+            redirlimit=redirlimit,
+            timeout=timeout,
+            body=body,
+            headers=headers,
+            content_type=content_type,
+            history=history,
+            debug=debug,
+            pure_headers=pure_headers,
+            enable_cache=enable_cache,
+            base_dir=base_dir,
+            http_version=http_version,
+            blocking=False,
+        )
 
-    )
-    if resp.status == 301:
         debugger.info("Updating permanent redirects data file")
         permanent_redirects[host, port, "/" + path] = resp.headers["Location"]
     if 300 <= resp.status < 400:
@@ -2113,7 +2198,6 @@ def request(
             debugger.warn("too many redirects!")
             raise TooManyRedirectsError("too many redirects")
         if "Location" in resp.headers:
-
             return request(
                 absolute_path(
                     resp.headers["Location"], url, scheme, makehost(host, port)
@@ -2130,7 +2214,8 @@ def request(
                 enable_cache=enable_cache,
                 base_dir=base_dir,
                 http_version=http_version,
-                disabled_headers=disabled_headers
+                disabled_headers=disabled_headers,
+                blocking=blocking,
             )
     if resp.status == 401:
         if last_status == 401:
@@ -2149,7 +2234,8 @@ def request(
             pure_headers=pure_headers,
             enable_cache=enable_cache,
             base_dir=base_dir,
-            http_version=http_version
+            http_version=http_version,
+            blocking=blocking,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2532,6 +2618,7 @@ class WebSocket:
             f"Unsupported data type : {type(data).__name__!r}, please use either str or bytes."
         )
 
+
 debugger = _Debugger(False)
 
 encodings = {
@@ -2539,9 +2626,8 @@ encodings = {
     "deflate": _zlib_decompress,
     "gzip": _gzip_decompress,
 }
-proto_versions = {
-    "1.1":HTTP11()
-    }
+proto_versions = {"1.1": HTTP11()}
+
 jar = CookieJar()
 cache = Cache()
 nonce_counter = NonceCounter()
