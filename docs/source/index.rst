@@ -40,8 +40,6 @@ Pip
 Arch Linux
 ~~~~~~~~~~
   #. ``yay -S httpy``
-.. warning::
-        This is stuck on version 1.5.1 and probably won't be updated any time soon, because I am stupid and deleted my SSH key.
 Usage
 -----
 HTTP
@@ -88,7 +86,7 @@ Easy again...
    >>> sock.recv()
    "Hello, world!💥"
 
-`API Documentation <httpy>`_
+`REFERENCE <httpy.html>`_
 
 Examples
 --------
