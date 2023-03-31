@@ -37,7 +37,7 @@ def test_httpy_nonblocking():
         assert i.response.ok
 def test_httpy_redirect_limit():
     with pytest.raises(httpy.TooManyRedirectsError):
-        httpy.request('http://httpbin.org/redirect/8389382902',redirlimit=5,enable_cache=False)
+        httpy.request('http://httpbin.org/redirect/8',redirlimit=5,enable_cache=False)
 def test_httpy_cache():
     httpy.request("https://example.net/")
     assert httpy.request("https://example.net/").fromcache

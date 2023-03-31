@@ -46,7 +46,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.7.0"
+VERSION = "1.8.0"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -549,7 +549,6 @@ class _Debugger:
     warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
     error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
 
-
 def _find(key, d):
     for i in d:
         if i.lower() == key.lower():
@@ -691,10 +690,10 @@ class CacheFile:
             self.method = file.read(method_l).decode()
         has_expires = file.read(1)
         self.expires = None
-        if has_expires == "\xff":
+        if has_expires == b"\xff":
             expires_length = ord(file.read(1))
             self.expires = _unpk_float(file.read(expires_length))
-        elif has_expires != "\x00":
+        elif has_expires != b"\x00":
             file.seek(file.tell() - 1)
 
         self.content = file.read()
@@ -1023,7 +1022,7 @@ class Headers(CaseInsensitiveDict):
     """Class for HTTP headers"""
 
     def __init__(self, h):
-        h = filter(lambda x: x, h)
+        h = filter(lambda x: bool(x), h)
         self.headers = (
             [
                 force_string(a).split(": ", 1)[0].lower(),
@@ -1475,6 +1474,7 @@ def cacheWrite(response, base_dir, expires_override=None):
 
     :param response: response to save
     :type response: Response"""
+    debugger.info("cacheWrite  called")
     data = b""
     data += _binappendfloat(time.time())
     data += _binappendfloat(response._time_elapsed)
@@ -1482,14 +1482,18 @@ def cacheWrite(response, base_dir, expires_override=None):
     data += b"\150+"
     data += _binappendstr(response.method)
     if expires_override is not None:
-        expires = time.mktime(email.utils.parsedate(expires_override))
-        if expires < time.time():
-            debugger.info("Expired Cache. Aborting cacheWrite.")
-            return
-        data += b"\xff"
-        expires_bin = _binappendfloat(expires)
-        data += bytes([len(expires_bin)])
-        data += expires_bin
+        expires_tup=email.utils.parsedate(expires_override)
+        if expires_tup is None:
+            debugger.warn("wrong Expires header format!")
+            data+=b'\x00'
+        else:
+            expires = time.mktime(expires_tup)
+            if expires < time.time():
+                debugger.info("Expired Cache. Aborting cacheWrite.")
+                return
+            data += b"\xff"
+            expires_bin = _binappendfloat(expires)
+            data += expires_bin
     else:
         data += b"\x00"
 
@@ -1547,8 +1551,9 @@ def force_string(anything):
             return anything
         if isinstance(anything, bytes):
             return anything.decode()
-    except Exception as err:
+    except Exception:
         debugger.warn(f"Could not decode {anything}")
+        raise
     return str(anything)
 
 

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: httpy
-Version: 1.7.0
+Version: 1.8.0
 Summary: Lightweight socket-based HTTP(s) and WebSocket client.
 Home-page: https://github.com/jenca-adam/httpy
 Author: Adam Jenca
