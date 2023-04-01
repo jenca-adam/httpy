@@ -14,6 +14,5 @@ echo "========="
 echo "Use twine to upload [y*]?" -n
 read book
 if [ $book == "y" ];then clear;twine dist/*.whl "dist/httpy-$VER.tar.gz";fi
-clear
 echo "Goodbye!"
 
