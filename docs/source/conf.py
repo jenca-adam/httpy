@@ -22,7 +22,7 @@ copyright = '2022, Adam Jenca'
 author = 'Adam Jenca'
 
 # The full version, including alpha/beta/rc tags
-release = '1.8.0'
+release = '1.8.1'
 
 
 # -- General configuration ---------------------------------------------------

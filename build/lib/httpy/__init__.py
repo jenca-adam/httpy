@@ -46,7 +46,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.8.0"
+VERSION = "1.8.1"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -364,7 +364,6 @@ STATUS_CODES = {
 
 context = ssl._create_default_https_context()
 context.set_alpn_protocols(["http/1.1"])
-context.post_handshake_auth = True
 schemes = {"http": 80, "https": 443}
 
 
@@ -669,14 +668,14 @@ class CacheFile:
         sl = file.read(srl)
         self.status = Status(sl)
         if "\x01" in f:
+            self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
             warnings.warn(
                 DeprecationWarning(
                     f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
                 )
             )
-            self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
-
-        self.url = os.path.split(f)[-1].replace("\xfe", "://").replace("\xff", "/")
+        else:
+            self.url = os.path.split(f)[-1].replace("\xfe", "://").replace("\xff", "/")
         method_desc = file.read(2)
         if method_desc != b"\150+":
             warnings.warn(

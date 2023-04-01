@@ -32,7 +32,7 @@ setuptools.setup(
     author="Adam Jenca",
     description="Lightweight socket-based HTTP(s) and WebSocket client.",
     long_description=ld,
-    version="1.8.0",
+    version="1.8.1",
     long_description_content_type="text/markdown",
     packages=["httpy"],
     author_email="jenca.a@gjh.sk",
