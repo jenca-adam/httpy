@@ -46,7 +46,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.8.1"
+VERSION = "1.8.2"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -547,6 +547,7 @@ class _Debugger:
     ok = debugging_method("\033[92;1m[OK]", "\033[0m")
     warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
     error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
+
 
 def _find(key, d):
     for i in d:
@@ -1481,10 +1482,10 @@ def cacheWrite(response, base_dir, expires_override=None):
     data += b"\150+"
     data += _binappendstr(response.method)
     if expires_override is not None:
-        expires_tup=email.utils.parsedate(expires_override)
+        expires_tup = email.utils.parsedate(expires_override)
         if expires_tup is None:
             debugger.warn("wrong Expires header format!")
-            data+=b'\x00'
+            data += b"\x00"
         else:
             expires = time.mktime(expires_tup)
             if expires < time.time():
@@ -1921,6 +1922,7 @@ def _raw_request(
     base_dir=HTTPY_DIR,
     http_version="1.1",
     disabled_headers=[],
+    force_keep_alive=True,
 ):
     method = method.upper()
     cache = Cache(base_dir / "sites")
@@ -2011,11 +2013,13 @@ def _raw_request(
             cf.add_header(defhdr)
         proto = proto_versions[http_version]
         proto.send_request(sock, method, defhdr, data, path, debug)
-        status, headers, decoded_body, body = proto.recv_response(sock, debug, timeout)
+        status, resp_headers, decoded_body, body = proto.recv_response(
+            sock, debug, timeout
+        )
         if status == 304:
             return Response.cacheload(cf)
-        if "set-cookie" in headers:
-            cookie = headers["set-cookie"]
+        if "set-cookie" in resp_headers:
+            cookie = resp_headers["set-cookie"]
 
             h = makehost(host, port)
             if h not in jar:
@@ -2026,22 +2030,49 @@ def _raw_request(
                     domain.add_cookie(c)
             else:
                 domain.add_cookie(cookie)
-
+    except DeadConnectionError:
+        debugger.error("Connection closed")
+        del pool[host, port]
+        if not force_keep_alive:
+            debugger.info("Keep-Alive not forced, retrying")
+            return _raw_request(
+                host,
+                port,
+                path,
+                scheme,
+                url,
+                method,
+                data,
+                content_type,
+                timeout,
+                enable_cache,
+                headers,
+                auth,
+                history,
+                debug,
+                last_status,
+                pure_headers,
+                base_dir,
+                http_version,
+                disabled_headers,
+                force_keep_alive,
+            )
+        raise
     except:
         del pool[host, port]
         raise
-    pool.connections[
-        host, port
-    ]._sock = (
-        sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
-    )
+
+    if headers.get("connection") == "keep-alive":
+        pool.connections[
+            host, port
+        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
     end_time = time.time()
     elapsed_time = end_time - start_time
 
     return Response(
         method,
         status,
-        headers,
+        resp_headers,
         decoded_body,
         history,
         url,
@@ -2091,11 +2122,12 @@ def request(
     http_version="1.1",
     disabled_headers=[],
     blocking=True,
+    force_keep_alive=True,
 ):
     """
     Performs request.
     `Note:` all arguments but ``url`` are keyword-only
-    
+
     :param url: url to request
     :type url: ``str``
     :param method: method to use, defaults to ``"GET"``
@@ -2121,6 +2153,8 @@ def request(
     :type disabled_headers: ``list``
     :param blocking: If ``False``, request is performed in a separate thread. Defaults to ``True``
     :type blocking: ``bool``
+    :param force_keep_alive: If ``False``, request will be retried upon connection being closed if the connection is in keep-alive mode.
+    :type force_keep_alive:``bool``
     """
     global debugger
     debugger = _Debugger(debug)
@@ -2175,6 +2209,7 @@ def request(
             base_dir=base_dir,
             http_version=http_version,
             disabled_headers=disabled_headers,
+            force_keep_alive=force_keep_alive,
         )
     else:  # PendingRequest
         return PendingRequest(
@@ -2192,6 +2227,7 @@ def request(
             base_dir=base_dir,
             http_version=http_version,
             blocking=False,
+            force_keep_alive=force_keep_alive,
         )
 
         debugger.info("Updating permanent redirects data file")
