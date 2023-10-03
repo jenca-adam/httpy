@@ -15,7 +15,7 @@ def encode_int(i, n=8, return_int=False):
             i >>= 7
         bts.append(i)
     if return_int:
-        return int.from_bytes(bytes(bytearray(bts)),"little")
+        return int.from_bytes(bytes(bytearray(bts)),"big")
     return bytearray(bts)
 
 

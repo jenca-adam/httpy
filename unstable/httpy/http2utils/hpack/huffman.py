@@ -1,11 +1,15 @@
-from static import HUFFMAN_TABLE,HUFFMAN_TABLE_DICT
-from errors import *
-from integer import encode_int,decode_int
-from utils.bitarray import bytes2bits
+from .static import HUFFMAN_TABLE,HUFFMAN_TABLE_DICT
+from .errors import *
+from .integer import encode_int,decode_int
+from .utils.bitarray import bytes2bits
+from httpy import force_bytes
 import io
 def encode_huffman(inp):
     if not isinstance(inp,bytes):
-        raise HuffmanEncodingError("Can only encode bytes using huffman encoding")
+        inp=force_bytes(inp)
+        # warn! TODO
+        
+        #raise HuffmanEncodingError("Can only encode bytes using huffman encoding")
     result=0
     total_size=0
     for byte in inp:

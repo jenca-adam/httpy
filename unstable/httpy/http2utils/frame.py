@@ -18,20 +18,20 @@ class HTTP2Error(Exception): pass
 class PayloadOverflow(HTTP2Error):pass
 class InvalidStreamID(HTTP2Error):pass
 class HTTP2Frame:
-    def __init__(self,type,payload,flags,streamid=0x00):
+    def __init__(self,type,payload,flags,streamid=0x00,frame_size=16384):
         if streamid> 2**31-1:
             raise InvalidStreamID(
                     "invalid stream: stream IDs must be less than 2,147,483,647"
                     )
-        if len(payload)>2**14:
+        if len(payload)>frame_size:
             raise PayloadOverflow(
-                    "can't send payloads larger than 16,384 bytes, SETTINGS_MAX_FRAME_SIZE support will be added later."
+                    f"MAX_FRAME_SIZE exceeded"
                     )
         self.type=type
         self.payload=payload
         self.flags=flags
         self.streamid=streamid
-    def toio(self):
+    def tobytes(self):
         rio = io.BytesIO()
         pl= len(self.payload)
         rio.write(struct.pack(">I",pl)[2:])
@@ -39,8 +39,19 @@ class HTTP2Frame:
         rio.write(struct.pack("B",self.flags))
         rio.write(struct.pack("I",self.streamid))
         rio.write(self.payload)
-        return rio
-
-
+        return rio.getvalue()
+class SettingsFrame(HTTP2Frame):
+    def __init__(self,header_table_size=4096,enable_push=True,max_concurrent_streams=255,initial_window_size=65535,max_frame_size=16384,ack=False):
+        self.header_table_size,self.enable_push,self.max_concurrent_streams,self.initial_window_size,self.max_frame_size = header_table_size,enable_push,max_concurrent_streams,initial_window_size,max_frame_size
+        self.payload=self._generate_payload() if not ack else ""
+        self.flags=0x80 if ack else 0
+        self.type=0x4
+        super().__init__(self.type,self.payload,self.flags,0x00,max_frame_size)
+    def _generate_payload(self):
+        result=[]
+        for index,value in enumerate([self.header_table_size,self.enable_push,self.max_concurrent_streams,self.initial_window_size,self.max_frame_size]):
+            result.append(struct.pack("H",index))
+            result.append(struct.pack("I",int(value)))
+        return b''.join(result)
 
         

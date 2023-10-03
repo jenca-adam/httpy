@@ -4,3 +4,4 @@ docs/build
 *.template
 unstable/*.pickle
 localsetup.py
+__pycache__
