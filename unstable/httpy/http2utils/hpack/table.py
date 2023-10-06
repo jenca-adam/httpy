@@ -1,6 +1,7 @@
 from .static import STATIC_TABLE
 from httpy import force_string
 
+
 class Entry:
     def __init__(self, name, value=None):
         self.name = force_string(name)
@@ -9,12 +10,14 @@ class Entry:
         if value is not None:
             value = force_string(value)
         self.value = value
+
     def __eq__(self, i):
-        if isinstance(i,str):
-            return i.lower()==self.name.lower()
-        elif isinstance(i,self.__class__):
-            return i.name.lower()==self.name.lower() and i.value==self.value
+        if isinstance(i, str):
+            return i.lower() == self.name.lower()
+        elif isinstance(i, self.__class__):
+            return i.name.lower() == self.name.lower() and i.value == self.value
         return False
+
     @property
     def size(self):
         return len(self.name) + len(self.value or "") + 32
@@ -50,7 +53,7 @@ class Table:
         while self.size > self.max_size:
             self.size -= self.dynamic_table[-1].size
             del self.dynamic_table[-1]
-        self.dynamic_table.insert(0,entry)
+        self.dynamic_table.insert(0, entry)
 
     def change_size(self, new_size):
         while new_size < self.size:
@@ -59,16 +62,16 @@ class Table:
         self.max_size = new_size
 
     def find_item(self, item):
-        if not isinstance(item,Entry):
-            item=force_string(item)
+        if not isinstance(item, Entry):
+            item = force_string(item)
         if item in self.static_table:
             return self.static_table.index(item)
         elif item in self.dynamic_table:
             return self.dynamic_table.index(item) + len(self.static_table)
-        #else none
+        # else none
 
-    def __contains__(self,item):
-        item=force_string(item)
+    def __contains__(self, item):
+        item = force_string(item)
         return item in self.static_table or item in self.dynamic_table
 
     def __getitem__(self, index):

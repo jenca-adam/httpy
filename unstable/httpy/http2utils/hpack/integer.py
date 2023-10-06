@@ -15,7 +15,7 @@ def encode_int(i, n=8, return_int=False):
             i >>= 7
         bts.append(i)
     if return_int:
-        return int.from_bytes(bytes(bytearray(bts)),"big")
+        return int.from_bytes(bytes(bytearray(bts)), "big")
     return bytearray(bts)
 
 
@@ -23,7 +23,7 @@ def decode_int(barr, n=8):
     b = iter(barr)
     num = next(b) & 0xFF >> (8 - n)
     mbits = 2**n - 1
-    index=0
+    index = 0
     if num == mbits:
         for index, byte in enumerate(b):
             if byte >= 128:
@@ -34,4 +34,4 @@ def decode_int(barr, n=8):
         else:
             # Not Needed
             pass
-    return num, index+1
+    return num, index + 1
