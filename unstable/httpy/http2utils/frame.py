@@ -52,10 +52,10 @@ class HTTP2Frame:
     def tobytes(self):
         return b"".join(
             [
-                (struct.pack(">I", len(self.payload)[1:])),
-                (struct.pack("B", self.type)),
-                (struct.pack("B", self.flags)),
-                (struct.pack("I", self.streamid)),
+                (struct.pack("!I", len(self.payload))[1:]),
+                (struct.pack("!B", self.type)),
+                (struct.pack("!B", self.flags)),
+                (struct.pack("!I", self.streamid)),
                 (self.payload),
             ]
         )
@@ -70,27 +70,38 @@ class HTTP2Frame:
 class DataFrame(HTTP2Frame):
     frame_type = HTTP2_FRAME_DATA
 
-    def __init__(self, data, padding=0, **kwargs):
+    def __init__(self, data, padding=0, end_stream=False, **kwargs):
         self.data = data
         self.padding = padding
+        self.end_stream = end_stream
+        self.flags = 0 | (0x1 if end_stream else 0) | (0x8 if padding > 0 else 0)
         super().__init__(self, **kwargs)
 
     def _generate_payload(self):
         return b"".join(
-            [struct.pack("B", self.padding), self.data, b"\x00" * self.padding]
+            [
+                struct.pack("!B", self.padding) if self.padding > 0 else b"",
+                self.data,
+                b"\x00" * self.padding,
+            ]
         )
 
     @classmethod
-    def frombytes(cls, payload, payload_length, streamid, **kwargs):
+    def frombytes(cls, payload, payload_length, streamid, flags, **kwargs):
         if streamid == 0x0:
             raise PROTOCOL_ERROR("DATA frame sent without a stream id")
         pio = io.BytesIO(payload)
-        padding_length, *_ = struct.unpack("B", pio.read(1))
-        if padding_length >= payload_length:
-            raise PROTOCOL_ERROR(
-                "DATA frame padding too large", f"{padding_length}>={payload_length}"
-            )
-        data_length = payload_length - padding_length - 1
+        if flags & 0x8:  # padded
+            padding_length, *_ = struct.unpack("!B", pio.read(1))
+            if padding_length >= payload_length:
+                raise PROTOCOL_ERROR(
+                    "DATA frame padding too large",
+                    f"{padding_length}>={payload_length}",
+                )
+            data_length = payload_length - padding_length - 1
+        else:
+            data_length = payload_length
+            padding_length = 0
         data = pio.read(data_length)
         if len(data) != data_length:
             raise PROTOCOL_ERROR("Unexpected EOF while reading data from DATA frame")
@@ -101,7 +112,14 @@ class DataFrame(HTTP2Frame):
             raise PROTOCOL_ERROR(
                 "padding in DATA frame not set to zero", f"Padding: {padding!r}"
             )
-        return cls(data, padding_length, streamid=streamid, **kwargs)
+        return cls(
+            data,
+            padding_length,
+            bool(flags & 0x1),
+            streamid=streamid,
+            flags=flags,
+            **kwargs,
+        )
 
 
 class HeadersFrame(HTTP2Frame):
@@ -140,22 +158,19 @@ class HeadersFrame(HTTP2Frame):
             raise PROTOCOL_ERROR("HEADERS frame sent without a stream ID")
         pio = io.BytesIO(payload)
         if flags & 0x8:  # padded
-            pad_length, *_ = struct.unpack("B", pio.read(1))
+            pad_length, *_ = struct.unpack("!B", pio.read(1))
         else:
             pad_length = 0
         if flags & 0x20:  # priority
-            _sdint, *_ = struct.unpack("I", pio.read(4))
-            priority_weight, *_ = struct.unpack("B", pio.read(1))
+            _sdint, *_ = struct.unpack("!I", pio.read(4))
+            priority_weight, *_ = struct.unpack("!B", pio.read(1))
             stream_dependency = StreamDependency(
-                _sdint & 0x7FFFFFFF, bool(_sdint & 0x10000000)
+                _sdint & 0x7FFFFFFF, bool(_sdint & 0x80000000)
             )
 
         else:
             stream_dependency = None
             priority_weight = None
-            stream_dependency = StreamDependency(
-                _sdint & 0x7FFFFFFF, bool(_sdint & 0x10000000)
-            )
 
         fragment_length = payload_length - pad_length - pio.tell()
         header_fragment = pio.read(fragment_length)
@@ -185,15 +200,15 @@ class HeadersFrame(HTTP2Frame):
     def _generate_payload(self):
         return b"".join(
             [
-                struct.pack("B", self.pad_length) if self.pad_length > 0 else b"",
+                struct.pack("!B", self.pad_length) if self.pad_length > 0 else b"",
                 struct.pack(
-                    "I",
+                    "!I",
                     self.stream_dependency.stream
-                    | 0x10000000 * self.stream_dependency.exc,
+                    | 0x80000000 * self.stream_dependency.exc,
                 )
                 if self.stream_dependency is not None
                 else b"",
-                struct.pack("B", self.priority_weight)
+                struct.pack("!B", self.priority_weight)
                 if self.priority_weight is not None
                 else b"",
                 self.header_fragment,
@@ -213,9 +228,12 @@ class PriorityFrame(HTTP2Frame):
     def _generate_payload(self):
         return b"".join(
             [
-                struct.pack("I", self.stream_dependency.stream)
-                | 0x100000000 * self.stream_dependency.exc,
-                struct.pack("B", self.priority_weight),
+                struct.pack(
+                    "!I",
+                    self.stream_dependency.stream
+                    | 0x80000000 * self.stream_dependency.exc,
+                ),
+                struct.pack("!B", self.priority_weight),
             ]
         )
 
@@ -228,10 +246,10 @@ class PriorityFrame(HTTP2Frame):
             )
         if streamid == 0x0:
             raise PROTOCOL_ERROR("PRIORITY frame not associated with a stream")
-        _sdint, *_ = struct.unpack("I", pio.read(4))
-        priority_weight, *_ = struct.unpack("B", pio.read(1))
+        _sdint, *_ = struct.unpack("!I", pio.read(4))
+        priority_weight, *_ = struct.unpack("!B", pio.read(1))
         stream_dependency = StreamDependency(
-            _sdint & 0x7FFFFFFF, bool(_sdint & 0x10000000)
+            _sdint & 0x7FFFFFFF, bool(_sdint & 0x80000000)
         )
         return cls(stream_dependency, priority_weight, streamid=streamid, **kwargs)
 
@@ -241,10 +259,10 @@ class RstStreamFrame(HTTP2Frame):
 
     def __init__(self, errcode, **kwargs):
         self.errcode = errcode
-        super().__init__(**kwargs)
+        super().__init__(self, **kwargs)
 
     def _generate_payload(self):
-        return struct.pack("I", self.errcode)
+        return struct.pack("!I", self.errcode)
 
     @classmethod
     def frombytes(cls, payload, payload_length, **kwargs):
@@ -252,7 +270,7 @@ class RstStreamFrame(HTTP2Frame):
             raise FRAME_SIZE_ERROR(
                 "RST_STREAM frame size other than 4 octets", f"size: {payload_length}"
             )
-        return cls(struct.unpack("I", payload), **kwargs)
+        return cls(struct.unpack("!I", payload)[0], **kwargs)
 
 
 class SettingsFrame(HTTP2Frame):
@@ -303,8 +321,8 @@ class SettingsFrame(HTTP2Frame):
         ):
             if value is None:
                 continue
-            result.append(struct.pack("H", index))
-            result.append(struct.pack("I", int(value)))
+            result.append(struct.pack("!H", index + 1))
+            result.append(struct.pack("!I", int(value)))
         return b"".join(result)
 
     @classmethod
@@ -322,6 +340,7 @@ class SettingsFrame(HTTP2Frame):
         if ack and payload_length != 0:
             raise FRAME_SIZE_ERROR("SETTINGS frame with the ACK flag set not empty")
         names = [
+            None,
             "header_table_size",
             "enable_push",
             "max_concurrent_streams",
@@ -331,9 +350,13 @@ class SettingsFrame(HTTP2Frame):
         ]
         settings = {}
         for _ in range(payload_length // 6):
-            index = struct.unpack("H", pio.read(2))
-            value = struct.unpack("I", pio.read(4))
+            index, *_ = struct.unpack("!H", pio.read(2))
+            _v = pio.read(4)
+            print(_v)
+            value, *_ = struct.unpack("!I", _v)
+
             if index == 0x2:  # ENABLE_PUSH
+                print(value)
                 if value > 1:
                     raise PROTOCOL_ERROR("Invalid SETTINGS_ENABLE_PUSH value")
                 value = bool(value)
@@ -345,7 +368,7 @@ class SettingsFrame(HTTP2Frame):
             elif index == 0x5:  # MAX_FRAME_SIZE
                 if value not in range(0x4000, 0x1000000):
                     raise PROTOCOL_ERROR("Invalid SETTINGS_MAX_FRAME_SIZE value")
-            if index >= len(names):
+            if index >= len(names) or names[index] == None:
                 continue  # IGNORE
             settings[names[index]] = value
         return cls(ack=ack, flags=flags, streamid=streamid, **settings, **kwargs)
@@ -371,8 +394,8 @@ class PushPromiseFrame(HTTP2Frame):
     def _generate_payload(self):
         return b"".join(
             [
-                struct.pack("B", pad_length) if pad_length > 0 else b"",
-                struct.pack("I", self.promised_stream),
+                struct.pack("!B", pad_length) if pad_length > 0 else b"",
+                struct.pack("!I", self.promised_stream),
                 self.header_fragment,
                 b"\x00" * self.pad_length,
             ]
@@ -385,8 +408,8 @@ class PushPromiseFrame(HTTP2Frame):
 
         pio = io.BytesIO(payload)
         if flags & 0x8:
-            pad_length = struct.unpack("B", pio.read(1))
-        promised_stream = struct.unpack("I", pio.read(4))
+            pad_length, *_ = struct.unpack("!B", pio.read(1))
+        promised_stream, *_ = struct.unpack("!I", pio.read(4))
         fragment_length = payload_length - pad_length - pio.tell()
         header_fragment = pio.read(fragment_length)
         if len(header_fragment) != fragment_length:
@@ -449,8 +472,8 @@ class GoAwayFrame(HTTP2Frame):
     def _generate_payload(self):
         return b"".join(
             [
-                struct.pack("I", self.last_stream_id),
-                struct.pack("I", self.error_code),
+                struct.pack("!I", self.last_stream_id),
+                struct.pack("!I", self.error_code),
                 self.debugdata,
             ]
         )
@@ -462,8 +485,8 @@ class GoAwayFrame(HTTP2Frame):
                 "Stream ID for a GOAWAY frame not 0x0", f"streamid:{hex(streamid)}"
             )
         pio = BytesIO(payload)
-        last_stream_id = struct.unpack("I", pio.read(4))
-        error_code = struct.unpack("I", pio.read(4))
+        last_stream_id, *_ = struct.unpack("!I", pio.read(4))
+        error_code, *_ = struct.unpack("!I", pio.read(4))
         debugdata = pio.read()
         return cls(last_stream_id, error_code, debugdata, streamid=streamid, **kwargs)
 
@@ -476,7 +499,7 @@ class WindowUpdateFrame(HTTP2Frame):
         super().__init__(self, **kwargs)
 
     def _generate_payload(self):
-        return struct.pack("I", self.increment)
+        return struct.pack("!I", self.increment)
 
     @classmethod
     def frombytes(cls, payload, payload_length, **kwargs):
@@ -485,7 +508,7 @@ class WindowUpdateFrame(HTTP2Frame):
                 "WINDOW_UPDATE frame size other than 4 octets",
                 f"size: {payload_length}",
             )
-        increment = struct.unpack("I", payload)
+        increment, *_ = struct.unpack("!I", payload)
         if increment == 0:
             raise PROTOCOL_ERROR("WINDOW_UPDATE increment is zero")
         return cls(increment, **kwargs)
@@ -510,10 +533,10 @@ class ContinuationFrame(HTTP2Frame):
 
 
 def parse(stream):
-    payload_length = struct.unpack(">I", stream.read(3) + b"\x00")
-    frame_type = struct.unpack("B", stream.read(1))
-    flags = struct.unpack("B", stream.read(1))
-    streamid = struct.unpack("I", stream.read(4))
+    payload_length, *_ = struct.unpack("!I", b"\x00" + stream.read(3))
+    frame_type, *_ = struct.unpack("!B", stream.read(1))
+    flags, *_ = struct.unpack("!B", stream.read(1))
+    streamid, *_ = struct.unpack("!I", stream.read(4))
     payload = stream.read(payload_length)
     if frame_type not in FRAMES:
         return None
@@ -532,4 +555,5 @@ FRAMES = {
     HTTP2_FRAME_GOAWAY: GoAwayFrame,
     HTTP2_FRAME_WINDOW_UPDATE: WindowUpdateFrame,
     HTTP2_FRAME_CONTINUATION: ContinuationFrame,
+    HTTP2_FRAME_RST_STREAM: RstStreamFrame,
 }
