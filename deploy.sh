@@ -5,7 +5,7 @@ echo "building dist"
 python setup.py sdist bdist bdist_wheel
 echo "git stuff"
 git add --all -v
-git commit -m "$VER bump (automated commit)"
+git commit -m "v$VER bump (automated commit)"
 git push
 clear
 echo "========="
