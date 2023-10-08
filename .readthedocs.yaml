@@ -1,0 +1,8 @@
+version: "1.8.2"
+build:
+  os: "x86_64 Linux 6.3.8-arch1-1"
+  tools:
+    python: "3.11"
+formats: all
+sphinx:
+  configuration: docs/source/conf.py
