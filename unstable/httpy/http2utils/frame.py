@@ -146,9 +146,11 @@ class HeadersFrame(HTTP2Frame):
             | (0x1 if end_stream else 0)
             | (0x4 if end_headers else 0)
             | (0x8 if pad_length > 0 else 0)
-            | (0x20
-            if stream_dependency is not None or priority_weight is not None
-            else 0)
+            | (
+                0x20
+                if stream_dependency is not None or priority_weight is not None
+                else 0
+            )
         )
         super().__init__(self, **kwargs)
 
@@ -303,13 +305,13 @@ class SettingsFrame(HTTP2Frame):
             max_header_list_size,
         )
         self.dict = {
-                "header_table_size":self.header_table_size,
-                "enable_push":self.enable_push,
-                "max_concurrent_streams":self.max_concurrent_streams,
-                "initial_window_size":self.initial_window_size,
-                "max_frame_size":self.max_frame_size,
-                "max_header_list_size":self.max_header_list_size
-                }
+            "header_table_size": self.header_table_size,
+            "enable_push": self.enable_push,
+            "max_concurrent_streams": self.max_concurrent_streams,
+            "initial_window_size": self.initial_window_size,
+            "max_frame_size": self.max_frame_size,
+            "max_header_list_size": self.max_header_list_size,
+        }
         self.payload = self._generate_payload() if not ack else ""
         self.flags = 0x80 if ack else 0
         self.type = 0x4
@@ -492,7 +494,7 @@ class GoAwayFrame(HTTP2Frame):
             raise PROTOCOL_ERROR(
                 "Stream ID for a GOAWAY frame not 0x0", f"streamid:{hex(streamid)}"
             )
-        pio = BytesIO(payload)
+        pio = io.BytesIO(payload)
         last_stream_id, *_ = struct.unpack("!I", pio.read(4))
         error_code, *_ = struct.unpack("!I", pio.read(4))
         debugdata = pio.read()

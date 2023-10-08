@@ -22,7 +22,7 @@ class Stream:
         self.framequeue = queue.Queue()
 
     def process(self, f):
-        
+        pass
 
     def send_frame(self, f):
         errmsg = None
@@ -52,9 +52,7 @@ class Stream:
                 frame.HTTP2_FRAME_PRIORITY,
                 frame.HTTP2_FRAME_WINDOW_UPDATE,
             ):
-                errmsg = (
-                    f"refusing to send a {f.__class__.__name__} on a reserved(remote) stream"
-                )
+                errmsg = f"refusing to send a {f.__class__.__name__} on a reserved(remote) stream"
         elif self.state == StreamState.OPEN:
             if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
                 self.state = StreamState.CLOSED
@@ -67,9 +65,7 @@ class Stream:
                 frame.HTTP2_FRAME_PRIORITY,
                 frame.HTTP2_FRAME_WINDOW_UPDATE,
             ):
-                errmsg = (
-                    f"refusing to send a {f.__class__.__name__} on a half-closed(local) stream"
-                )
+                errmsg = f"refusing to send a {f.__class__.__name__} on a half-closed(local) stream"
         elif self.state == StreamState.HALF_CLOSED_REMOTE:
             if f.frame_type == frame.HTTP2_FRAME_RST_STREAM or f.flags & 0x1:
                 self.state = StreamState.CLOSED
