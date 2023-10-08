@@ -363,7 +363,7 @@ STATUS_CODES = {
 }
 
 context = ssl._create_default_https_context()
-context.set_alpn_protocols(["http/1.1"])
+#context.set_alpn_protocols(["http/1.1"])
 schemes = {"http": 80, "https": 443}
 
 
@@ -1839,7 +1839,7 @@ class HTTP11Recver:
                         b = file.read(1)  # recv 1 byte
                         if not b:
                             break
-                    except socket.timeout:  # end of response??
+                    except sopcket.timeout:  # end of response??
                         break
                     body += b
                 sock.settimeout(timeout)

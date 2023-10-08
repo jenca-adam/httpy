@@ -21,8 +21,8 @@ class Stream:
         self.state = StreamState.IDLE
         self.framequeue = queue.Queue()
 
-    def _recv_frame(self, f):
-        pass
+    def process(self, f):
+        
 
     def send_frame(self, f):
         errmsg = None
@@ -36,7 +36,7 @@ class Stream:
             elif f.frame_type == frame.HTTP2_FRAME_PUSH_PROMISE:
                 self.state = StreamState.RESERVED_LOCAL
             elif f.frame_type != frame.HTTP2_FRAME_PRIORITY:
-                errmsg = f"refusing to send a {f.__class__} on an idle stream"
+                errmsg = f"refusing to send a {f.__class__.__name__} on an idle stream"
 
         elif self.state == StreamState.RESERVED_LOCAL:
             if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
@@ -44,7 +44,7 @@ class Stream:
             elif f.frame_type == frame.HTTP2_FRAME_HEADERS:
                 self.state = StreamState.HALF_CLOSED_REMOTE
             elif f.frame_type != frame.HTTP2_FRAME_PRIORITY:
-                errmsg = f"refusing to send a {f.__class__} on a reserved(local) stream"
+                errmsg = f"refusing to send a {f.__class__.__name__} on a reserved(local) stream"
         elif self.state == StreamState.RESERVED_REMOTE:
             if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
                 self.state = StreamState.CLOSED
@@ -53,7 +53,7 @@ class Stream:
                 frame.HTTP2_FRAME_WINDOW_UPDATE,
             ):
                 errmsg = (
-                    f"refusing to send a {f.__class__} on a reserved(remote) stream"
+                    f"refusing to send a {f.__class__.__name__} on a reserved(remote) stream"
                 )
         elif self.state == StreamState.OPEN:
             if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
@@ -68,15 +68,15 @@ class Stream:
                 frame.HTTP2_FRAME_WINDOW_UPDATE,
             ):
                 errmsg = (
-                    f"refusing to send a {f.__class__} on a half-closed(local) stream"
+                    f"refusing to send a {f.__class__.__name__} on a half-closed(local) stream"
                 )
         elif self.state == StreamState.HALF_CLOSED_REMOTE:
             if f.frame_type == frame.HTTP2_FRAME_RST_STREAM or f.flags & 0x1:
                 self.state = StreamState.CLOSED
         elif self.state == StreamState.CLOSED:
             if f.frame_type != frame.HTTP2_FRAME_PRIORITY:
-                errmsg = f"refusing to send a {f.__class__} on a closed stream"
-
+                errmsg = f"refusing to send a {f.__class__.__name__} on a closed stream"
+        if errmsg is not None:
+            raise Refuse(errmsg)
         f.streamid = self.streamid
-        return f
-        # self.conn.send_frame(f)
+        self.conn.send_frame(f)
