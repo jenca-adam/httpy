@@ -4,5 +4,8 @@ build:
   tools:
     python: "3.11"
 formats: all
+python:
+  install:
+    - requirements: docs/REQUIRES
 sphinx:
   configuration: docs/source/conf.py
