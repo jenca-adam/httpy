@@ -6,7 +6,7 @@ class FrameQueue:
         self.streams = streams
 
     def add_stream(self, stream):
-        self.streams.append(stream)
+        self.streams.add_stream(stream)
 
-    def send_frame(self, frame):
-        self.stream
+    def process(self, frame):
+        self.streams[frame.streamid].framequeue.put(frame)

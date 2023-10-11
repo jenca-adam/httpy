@@ -6,6 +6,8 @@ import stream
 import hpack
 import queue
 import threading
+from streams import Streams
+from frame_queue import FrameQueue
 from error import *
 
 PREFACE = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
@@ -41,7 +43,7 @@ class Connection:
         self.server_settings = None
         self.started = False
         self.out_queue = queue.Queue()
-
+        self.processing_queue = FrameQueue(self.streams) 
     def _after_start(fun):
         def wrapper(self, *args, **kwargs):
             if not self.started:
@@ -58,6 +60,7 @@ class Connection:
         self.highest_id += 2
         s = stream.Stream(new_stream_id, self)
         self.streams.add_stream(s)
+        self.processing_queue.add_stream(s)
         return s
 
     def start(self):
@@ -70,11 +73,12 @@ class Connection:
         self.settings = settings.merge_settings(self.server_settings, self.settings)
         self.sockfile = self.socket.makefile("b")
         return True, self.socket
+    def run_loop(self):
 
     @_after_start
-    def send_frame(self, frame):
+    def _send_frame(self, frame):
         self.socket.send(frame.tobytes())
 
     @_after_start
-    def recv_frame(self):
+    def _recv_frame(self):
         return frame.parse(self.sockfile)

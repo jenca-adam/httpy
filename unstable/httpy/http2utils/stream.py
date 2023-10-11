@@ -20,10 +20,15 @@ class Stream:
         self.conn = conn
         self.state = StreamState.IDLE
         self.framequeue = queue.Queue()
-
-    def process(self, f):
-        pass
-
+    def recv_frame(self, f):
+        frame=self.framequeue.get()
+        err = None
+        if self.state == StreamState.IDLE:
+            if f.frame_type != frame.HTTP2_FRAME_PRIORITY:
+                err = 
+                
+    def __eq__(self,s):
+        return s.streamid==self.streamid
     def send_frame(self, f):
         errmsg = None
         ## BLOCK: State changes

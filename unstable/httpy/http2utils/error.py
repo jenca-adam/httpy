@@ -9,7 +9,7 @@ class Refuse(Exception):
     pass
 
 
-class HTTP2ConnectionError(HTTP2Error, ConnectionError):
+class HTTP2(HTTP2Error):
     def __init__(self, *args):
         if args:
             args = list(args)
@@ -33,7 +33,7 @@ class InvalidStreamID(HTTP2Error):
     pass
 
 
-CONNECTION_ERRORS = [
+ERRORS = [
     "NO_ERROR",
     "PROTOCOL_ERROR",
     "INTERNAL_ERROR",
@@ -51,7 +51,7 @@ CONNECTION_ERRORS = [
 ]
 ERROR_INSTANCES = []
 __module__ = sys.modules[__name__]
-for index, err in enumerate(CONNECTION_ERRORS):
+for index, err in enumerate(ERRORS):
 
     class UNKNOWN_ERROR(HTTP2ConnectionError):
         __qualname__ = err
