@@ -136,3 +136,8 @@ class Decoder:
                 break
             headers_list.append(self._decode_header(first, si))
         return dict(headers_list)
+
+
+class HPACK(Encoder, Decoder):
+    def __init__(self):
+        self.table = Table()
