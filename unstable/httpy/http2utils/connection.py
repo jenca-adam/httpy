@@ -73,8 +73,10 @@ class Connection:
         self.settings = settings.merge_settings(self.server_settings, self.settings)
         self.sockfile = self.socket.makefile("b")
         return True, self.socket
+    @_after_start
     def run_loop(self):
-
+        while True:
+            pass
     @_after_start
     def _send_frame(self, frame):
         self.socket.send(frame.tobytes())

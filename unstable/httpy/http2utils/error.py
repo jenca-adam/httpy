@@ -1,16 +1,20 @@
 import sys
-
-
-class HTTP2Error(Exception):
-    pass
-
-
+import enum
+import warnings
+class ErrType(enum.Enum):
+    CONNECTION=0
+    STREAM=1
 class Refuse(Exception):
     pass
 
-
-class HTTP2(HTTP2Error):
-    def __init__(self, *args):
+class HTTP2Error(Exception):
+    def __init__(self, *args,errtype=None,send=True):
+        self.errtype = self.errtype or errtype
+        self.send = send
+        if self.errtype is None and send:
+            warnings.warn(
+                Warning("errtype is None. error message will not reach the peer")
+                )
         if args:
             args = list(args)
             args[0] = f"(ERR{hex(self.code)}): " + args[0]
@@ -23,6 +27,7 @@ class HTTP2(HTTP2Error):
 
     name = NotImplemented
     code = NotImplemented
+    errtype = None
 
 
 class PayloadOverflow(HTTP2Error):
@@ -32,32 +37,47 @@ class PayloadOverflow(HTTP2Error):
 class InvalidStreamID(HTTP2Error):
     pass
 
+def throw(frame):
+    from frame import HTTP2_FRAME_RST_STREAM,HTTP2_FRAME_GOAWAY
+    errcode=frame.errcode
+    if frame.frame_type not in (HTTP2_FRAME_RST_STREAM,HTTP2_FRAME_GOAWAY):
+        return
+    if errcode>0:
+        message = f"Received a RST_STREAM frame: {ERRORS[errcode][0]}" if f.frame_type == HTTP2_FRAME_RST_STREAM else f"Received a GOAWAY frame: {ERRORS[errcode][0]}: {frame.debugdata}"
+    else:
+        message = "Stream closed" if f.frame_type == HTTP2_FRAME_RST_STREAM else "Connection closed: {frame.debugdata}"
+    try:
+        err = ERROR_INSTANCES[errcode](message,send=False)
+    except IndexError:
+        raise PROTOCOL_ERROR("unknown error code",errtype=ErrType.CONNECTION)
+    raise err
 
 ERRORS = [
-    "NO_ERROR",
-    "PROTOCOL_ERROR",
-    "INTERNAL_ERROR",
-    "FLOW_CONTROL_ERROR",
-    "SETTINGS_TIMEOUT",
-    "STREAM_CLOSED",
-    "FRAME_SIZE_ERROR",
-    "REFUSED_STREAM",
-    "CANCEL",
-    "COMPRESSION_ERROR",
-    "CONNECT_ERROR",
-    "ENHANCE_YOUR_CALM",
-    "INADEQUATE_SECURITY",
-    "HTTP_1_1_REQUIRED",
+    ("NO_ERROR",None),
+    ("PROTOCOL_ERROR",ErrType.STREAM),
+    ("INTERNAL_ERROR",None),
+    ("FLOW_CONTROL_ERROR", ErrType.CONNECTION),
+    ("SETTINGS_TIMEOUT",ErrType.CONNECTION),
+    ("STREAM_CLOSED", ErrType.STREAM),
+    ("FRAME_SIZE_ERROR", ErrType.STREAM),
+    ("REFUSED_STREAM", ErrType.STREAM),
+    ("CANCEL", ErrType.STREAM),
+    ("COMPRESSION_ERROR", ErrType.CONNECTION),
+    ("CONNECT_ERROR", ErrType.CONNECTION),
+    ("ENHANCE_YOUR_CALM", ErrType.CONNECTION),
+    ("INADEQUATE_SECURITY", ErrType.CONNECTION),
+    ("HTTP_1_1_REQUIRED", ErrType.CONNECTION),
 ]
 ERROR_INSTANCES = []
 __module__ = sys.modules[__name__]
-for index, err in enumerate(ERRORS):
+for index, (err, type) in enumerate(ERRORS):
 
-    class UNKNOWN_ERROR(HTTP2ConnectionError):
+    class UNKNOWN_ERROR(HTTP2Error):
         __qualname__ = err
         __name__ = err
         name = err
         code = index
+        errtype = type
 
     setattr(__module__, err, UNKNOWN_ERROR)
     ERROR_INSTANCES.append(UNKNOWN_ERROR)

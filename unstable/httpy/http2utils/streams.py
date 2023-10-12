@@ -11,13 +11,12 @@ class Streams:
             self.outbound.append(stream)
         else:
             self.inbound.append(stream)
-        self.streams.append(stream)
     
-    def __delitem__(self,streamid):
-        streamlist=self.outbound if streamid%2 else self.inbound:
+    def close_stream(self,streamid):
+        streamlist=(self.outbound if (streamid%2) else self.inbound)
         try:
             stream=next(filter(lambda x:x.streamid == streamid,streamlist))
-            if stream.state=StreamState.CLOSED:
+            if stream.state==StreamState.CLOSED:
                 raise IndexError("Stream alredy closed")
         except (StopIteration,IndexError):
             raise IndexError(

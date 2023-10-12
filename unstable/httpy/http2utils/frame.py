@@ -475,7 +475,7 @@ class GoAwayFrame(HTTP2Frame):
 
     def __init__(self, last_stream_id, error_code, debugdata=b"", **kwargs):
         self.last_stream_id = last_stream_id
-        self.error_code = error_code
+        self.errcode = error_code
         self.debugdata = debugdata
         super().__init__(self, **kwargs)
 
@@ -483,7 +483,7 @@ class GoAwayFrame(HTTP2Frame):
         return b"".join(
             [
                 struct.pack("!I", self.last_stream_id),
-                struct.pack("!I", self.error_code),
+                struct.pack("!I", self.errcode),
                 self.debugdata,
             ]
         )
