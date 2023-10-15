@@ -15,27 +15,91 @@ class StreamState(enum.Enum):
 
 
 class Stream:
-    def __init__(self, streamid, conn):
+    def __init__(self, streamid, conn, weight=0, dependency=0):
         self.streamid = streamid
         self.conn = conn
+        self.weight = weight
+        self.dependency = dependency
         self.state = StreamState.IDLE
         self.framequeue = queue.Queue()
-    def recv_frame(self, f):
-        frame=self.framequeue.get()
+
+    def _recv_priority_frame(self, f):
+        self.weight = f.priority_weight
+        self.dependency = f.stream_dependency
+
+    def set_priority(self, weight=None, dep=None):
+        if weight is None and dep is None:
+            return
+        weight = weight or self.weight
+        if p > 256:
+            raise Refuse("refusing to set priority weight to an int over 256")
+        d = d or self.dependency
+        self.weight = p
+        self.dependency = d
+        self.send_frame(frame.PriorityFrame(self.dependency, self.weight))
+
+    def error_check(self, f):
         err = None
         if self.state == StreamState.IDLE:
             if f.frame_type != frame.HTTP2_FRAME_PRIORITY:
-                err = PROTOCOL_ERROR("Frame other than PRIORITY received on an idle stream","@ Stream.recv_frame()") 
-        elif self.state == StreamState.RESERVED_LOCAL:
+                err = PROTOCOL_ERROR(
+                    "Frame other than PRIORITY received on an idle stream",
+                    "@ Stream.recv_frame()",
+                )
+        elif (
+            self.state == StreamState.RESERVED_LOCAL
+        ):  # all this is likely not needed, keeping in case we ever decide to enable server push
             if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
-                self.streamstate=StreamState.CLOSED
+                self.state = StreamState.CLOSED
                 throw(f)
             if f.frame_type != frame.HTTP2_FRAME_PRIORITY:
-                err = PROTOCOL_ERROR("Frame other than PRIORITY or RST_STREAM received on an reserved(local) stream")
+                err = PROTOCOL_ERROR(
+                    "Frame other than PRIORITY or RST_STREAM received on an reserved(local) stream",
+                    "@ Stream.recv_frame()",
+                )
         elif self.state == StreamState.RESERVED_REMOTE:
-            #TODO
-    def __eq__(self,s):
-        return s.streamid==self.streamid
+            if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
+                self.state = StreamState.CLOSED
+                throw(f)
+            if f.frame_type != frame.HTTP2_FRAME_PRIORITY:
+                err = PROTOCOL_ERROR(
+                    "Frame other than PRIORITY or RST_STREAM received on an reserved(remote) stream",
+                    "@ Stream.recv_frame()",
+                )
+        elif self.state == StreamState.OPEN:
+            if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
+                self.state = StreamState.CLOSED
+                throw(f)
+            elif f.flags & 0x1:
+                self.state = StreamState.HALF_CLOSED_REMOTE
+        elif self.state == StreamState.HALF_CLOSED_LOCAL:
+            if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
+                self.state = StreamState.CLOSED
+                throw(f)
+            elif f.flags & 0x1:
+                self.state = StreamState.CLOSED
+        elif self.state == StreamState.HALF_CLOSED_REMOTE:
+            if f.frame_type == frame.HTTP2_FRAME_RST_STREAM:
+                self.state = StreamState.CLOSED
+            elif f.frame_type not in (
+                frame.HTTP2_FRAME_PRIORITY,
+                frame.HTTP2_FRAME_WINDOW_UPDATE,
+            ):
+                err = STREAM_CLOSED(
+                    "Frame other than PRIORITY, WINDOW_UPDATE or RST_STREAM received on an reserved(remote) stream",
+                    "@ Stream.recv_frame()",
+                )
+        elif self.state == StreamState.CLOSED:
+            return None, True
+
+        return err, False
+
+    def recv_frame(self):
+        return self.framequeue.get()
+
+    def __eq__(self, s):
+        return s.streamid == self.streamid
+
     def send_frame(self, f):
         errmsg = None
         ## BLOCK: State changes
@@ -45,8 +109,6 @@ class Stream:
                     self.state = StreamState.HALF_CLOSED_LOCAL
                 else:
                     self.state = StreamState.OPEN
-            elif f.frame_type == frame.HTTP2_FRAME_PUSH_PROMISE:
-                self.state = StreamState.RESERVED_LOCAL
             elif f.frame_type != frame.HTTP2_FRAME_PRIORITY:
                 errmsg = f"refusing to send a {f.__class__.__name__} on an idle stream"
 
@@ -87,4 +149,4 @@ class Stream:
         if errmsg is not None:
             raise Refuse(errmsg)
         f.streamid = self.streamid
-        self.conn._send_frame(f)
+        self.conn.send_frame(f)

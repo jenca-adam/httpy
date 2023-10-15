@@ -1,20 +1,25 @@
 import sys
 import enum
 import warnings
+
+
 class ErrType(enum.Enum):
-    CONNECTION=0
-    STREAM=1
+    CONNECTION = 0
+    STREAM = 1
+
+
 class Refuse(Exception):
     pass
 
+
 class HTTP2Error(Exception):
-    def __init__(self, *args,errtype=None,send=True):
+    def __init__(self, *args, errtype=None, send=True):
         self.errtype = self.errtype or errtype
         self.send = send
         if self.errtype is None and send:
             warnings.warn(
                 Warning("errtype is None. error message will not reach the peer")
-                )
+            )
         if args:
             args = list(args)
             args[0] = f"(ERR{hex(self.code)}): " + args[0]
@@ -37,27 +42,40 @@ class PayloadOverflow(HTTP2Error):
 class InvalidStreamID(HTTP2Error):
     pass
 
-def throw(frame):
-    from frame import HTTP2_FRAME_RST_STREAM,HTTP2_FRAME_GOAWAY
-    errcode=frame.errcode
-    if frame.frame_type not in (HTTP2_FRAME_RST_STREAM,HTTP2_FRAME_GOAWAY):
+
+def throw(frame, send):
+    from frame import HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY
+
+    errcode = frame.errcode
+    if frame.frame_type not in (HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY):
         return
-    if errcode>0:
-        message = f"Received a RST_STREAM frame: {ERRORS[errcode][0]}" if f.frame_type == HTTP2_FRAME_RST_STREAM else f"Received a GOAWAY frame: {ERRORS[errcode][0]}: {frame.debugdata}"
+    if errcode > 0:
+        message = (
+            f"Received a RST_STREAM frame: {ERRORS[errcode][0]}"
+            if f.frame_type == HTTP2_FRAME_RST_STREAM
+            else f"Received a GOAWAY frame: {ERRORS[errcode][0]}: {frame.debugdata}"
+        )
     else:
-        message = "Stream closed" if f.frame_type == HTTP2_FRAME_RST_STREAM else "Connection closed: {frame.debugdata}"
+        message = (
+            "Stream closed"
+            if f.frame_type == HTTP2_FRAME_RST_STREAM
+            else "Connection closed: {frame.debugdata}"
+        )
+        # some kind of a debug log ??
+        return
     try:
-        err = ERROR_INSTANCES[errcode](message,send=False)
+        err = ERROR_INSTANCES[errcode](message, send=send)
     except IndexError:
-        raise PROTOCOL_ERROR("unknown error code",errtype=ErrType.CONNECTION)
+        raise PROTOCOL_ERROR("unknown error code", errtype=ErrType.CONNECTION)
     raise err
 
+
 ERRORS = [
-    ("NO_ERROR",None),
-    ("PROTOCOL_ERROR",ErrType.STREAM),
-    ("INTERNAL_ERROR",None),
+    ("NO_ERROR", None),
+    ("PROTOCOL_ERROR", ErrType.CONNECTION),
+    ("INTERNAL_ERROR", None),
     ("FLOW_CONTROL_ERROR", ErrType.CONNECTION),
-    ("SETTINGS_TIMEOUT",ErrType.CONNECTION),
+    ("SETTINGS_TIMEOUT", ErrType.CONNECTION),
     ("STREAM_CLOSED", ErrType.STREAM),
     ("FRAME_SIZE_ERROR", ErrType.STREAM),
     ("REFUSED_STREAM", ErrType.STREAM),

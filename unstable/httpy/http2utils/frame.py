@@ -267,12 +267,15 @@ class RstStreamFrame(HTTP2Frame):
         return struct.pack("!I", self.errcode)
 
     @classmethod
-    def frombytes(cls, payload, payload_length, **kwargs):
+    def frombytes(cls, payload, payload_length, streamid, **kwargs):
+        if streamid == 0x0:
+            raise PROTOCOL_ERROR("CONTINUATION frame sent without a stream ID")
+
         if payload_length != 4:
             raise FRAME_SIZE_ERROR(
                 "RST_STREAM frame size other than 4 octets", f"size: {payload_length}"
             )
-        return cls(struct.unpack("!I", payload)[0], **kwargs)
+        return cls(struct.unpack("!I", payload)[0], **kwargs, streamid=streamid)
 
 
 class SettingsFrame(HTTP2Frame):
@@ -315,6 +318,7 @@ class SettingsFrame(HTTP2Frame):
         self.payload = self._generate_payload() if not ack else ""
         self.flags = 0x80 if ack else 0
         self.type = 0x4
+        self.ack = ack
         super().__init__(self, frame_size=max_frame_size or 16384, **kwargs)
 
     def _generate_payload(self):
@@ -538,7 +542,7 @@ class ContinuationFrame(HTTP2Frame):
     @classmethod
     def frombytes(cls, payload, streamid, flags, **kwargs):
         if streamid == 0x0:
-            raise PROTOCOL_ERROR("PUSH_PROMISE frame sent without a stream ID")
+            raise PROTOCOL_ERROR("CONTINUATION frame sent without a stream ID")
         return cls(payload, bool(flags & 0x4), flags=flags, streamid=streamid, **kwargs)
 
 
