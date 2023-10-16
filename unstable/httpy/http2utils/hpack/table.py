@@ -75,7 +75,6 @@ class Table:
         return item in self.static_table or item in self.dynamic_table
 
     def __getitem__(self, index):
-        print(index)
         if index < len(self.static_table):
             table = self.static_table
             qtab = "static"

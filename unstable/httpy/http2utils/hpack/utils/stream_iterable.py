@@ -10,7 +10,6 @@ class StreamIterable:
 
     def __next__(self):
         n = self.stream.read(self.chunksize)
-        print(n)
         if not n:
             raise StopIteration
         self.pos += 1

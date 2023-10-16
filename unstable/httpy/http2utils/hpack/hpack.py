@@ -99,7 +99,6 @@ class Decoder:
         return self.table[index], NO
 
     def _decode_literal_header_field(self, first, si):
-        print(first)
         if first & 0x40:
             index_mode = YES
             prefix = 6

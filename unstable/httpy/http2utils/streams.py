@@ -1,5 +1,4 @@
-from stream import StreamState
-import stream
+from stream import StreamState,Stream
 
 
 class Streams:
@@ -9,11 +8,11 @@ class Streams:
         self.conn = conn
         self.outbound = []
 
-    def add_stream(self, stream):
-        if stream.streamid % 2:
-            self.outbound.append(stream)
+    def add_stream(self, s):
+        if s.streamid % 2:
+            self.outbound.append(s)
         else:
-            self.inbound.append(stream)
+            self.inbound.append(s)
 
     def close_stream(self, streamid):
         streamlist = self.outbound if (streamid % 2) else self.inbound
@@ -30,7 +29,7 @@ class Streams:
     def __getitem__(self, streamid):
         for s in self.outbound if streamid % 2 else self.inbound:
             if s.streamid == streamid:
-                return stream
-        s = stream.Stream(streamid, self.conn)
+                return s
+        s = Stream(streamid, self.conn)
         self.add_stream(s)
         return s

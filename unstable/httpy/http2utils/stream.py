@@ -95,8 +95,12 @@ class Stream:
         return err, False
 
     def recv_frame(self):
-        return self.framequeue.get()
-
+        n = self.framequeue.get()
+        if isinstance(n,tuple):
+            print(n)
+            _,err,tb = n
+            raise err.with_traceback(tb)
+        return n
     def __eq__(self, s):
         return s.streamid == self.streamid
 

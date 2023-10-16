@@ -2,7 +2,6 @@ import sys
 import enum
 import warnings
 
-
 class ErrType(enum.Enum):
     CONNECTION = 0
     STREAM = 1
@@ -43,7 +42,7 @@ class InvalidStreamID(HTTP2Error):
     pass
 
 
-def throw(frame, send):
+def throw(frame, send=False):
     from frame import HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY
 
     errcode = frame.errcode
@@ -52,13 +51,13 @@ def throw(frame, send):
     if errcode > 0:
         message = (
             f"Received a RST_STREAM frame: {ERRORS[errcode][0]}"
-            if f.frame_type == HTTP2_FRAME_RST_STREAM
+            if frame.frame_type == HTTP2_FRAME_RST_STREAM
             else f"Received a GOAWAY frame: {ERRORS[errcode][0]}: {frame.debugdata}"
         )
     else:
         message = (
             "Stream closed"
-            if f.frame_type == HTTP2_FRAME_RST_STREAM
+            if frame.frame_type == HTTP2_FRAME_RST_STREAM
             else "Connection closed: {frame.debugdata}"
         )
         # some kind of a debug log ??

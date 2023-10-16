@@ -10,6 +10,7 @@ import traceback
 import sys
 from streams import Streams
 from frame_queue import FrameQueue
+from httpy import force_bytes
 from error import *
 
 PREFACE = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
@@ -25,7 +26,6 @@ def start_connection(host, port, client_settings, alpn=True):
     if sock.selected_alpn_protocol() != "h2":
         return False, sock, None
     sf = sock.makefile("b")
-    sock.settimeout(10)
     sock.send(PREFACE)
     server_settings = settings.Settings(frame.parse(sf).dict)
     sock.send(frame.SettingsFrame(ack=True).tobytes())
@@ -49,6 +49,7 @@ class Connection:
         self.sending_thread = None
         self.receiving_thread = None
         self.errorqueue = queue.Queue()
+        self._last_stream_id = 0x0
         self.processing_queue = FrameQueue(self.streams, self)
 
     def _after_start(fun):
@@ -83,13 +84,28 @@ class Connection:
         self.sockfile = self.socket.makefile("b")
         self.run_loops()
         return True, self.socket
-
+    @_after_start
+    def close(self,errcode=0x0,debug=b''):
+        fr = frame.GoAwayFrame(self._last_stream_id,errcode,force_bytes(debug))
+        self._send_frame(fr)
+        self.close_socket()
+    @_after_start
+    def close_on_error(self,err):
+        self.close(err.code,str(err))
+    @_after_start
+    def close_socket(self):
+        self.socket.shutdown(socket.SHUT_RDWR)
+        self.socket.close()
+        self.open=False
+    @_after_start
+    def close_on_internal_error(self,e):
+        self.close_on_error(INTERNAL_ERROR(f"{e.__class__.__name__}: {str(e)}"))
     def run_loops(self):
         self.sending_thread = threading.Thread(
-            target=self._sending_loop, args=(self.errorqueue,)
+            target=self._sending_loop, args=(self.errorqueue,), daemon=True
         )
         self.receiving_thread = threading.Thread(
-            target=self._receiving_loop, args=(self.errorqueue,)
+            target=self._receiving_loop, daemon=True
         )
         self.sending_thread.start()
         self.receiving_thread.start()
@@ -99,6 +115,8 @@ class Connection:
         while True:
             try:
                 next_frame = self.out_queue.get()
+                if next_frame is None:
+                    break 
                 print("send", next_frame)
                 self._send_frame(next_frame)
 
@@ -108,37 +126,48 @@ class Connection:
                 errq.put(e)
 
     @_after_start
-    def _receiving_loop(self, errq):
+    def _receiving_loop(self):
         while True:
-            try:
-                next_frame = frame.parse(self.sockfile)
-                print("recv", next_frame)
-                to_send = self.processing_queue.process(next_frame)
-                if to_send:
-                    self.send_frame(to_send)
-                ## No error?
-                errq.put(0)
-            except Exception as e:
-                errq.put(e)
+                try:
+                    next_frame_data = frame.parse_data(self.sockfile)
+                    self._last_stream_id = next_frame_data[2]
+                    next_frame = frame._parse(next_frame_data)
+                    print("recv", next_frame)
+                    to_send = self.processing_queue.process(next_frame)
 
+                    if to_send:
+                        print("ts",to_send)
+                        self.send_frame(to_send)
+
+                except HTTP2Error as e:
+                    if e.send:
+                        self.close_on_error(e)
+                    else:
+                        self.close_socket()
+                    self.processing_queue.throw(sys.exc_info())
+                except Exception as e:
+                    self.close_on_internal_error(e)
+                    self.processing_queue.throw(sys.exc_info())
+                
     @_after_start
     def _send_frame(self, frame):
         self.socket.send(frame.tobytes())
 
     @_after_start
     def _recv_frame(self):
-        return frame.parse(self.sockfile)
-        while not self.errorqueue.empty():
-            next_error = self.errorqueue.get()
-            if next_error == 0:
-                continue
-            sys.stderr.write(traceback.format_tb(next_error))
+        q=frame.parse(self.sockfile)
+        return q
 
     @_after_start
     def send_frame(self, frame):
         self.out_queue.put(frame)
+        err=False
         while not self.errorqueue.empty():
             next_error = self.errorqueue.get()
             if next_error == 0:
                 continue
+            else:
+                err=True
             sys.stderr.write(traceback.format_tb(next_error))
+        if err:
+            raise Exception()
