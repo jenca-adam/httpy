@@ -1,7 +1,7 @@
 import enum
 import queue
-import frame
-from error import *
+from . import frame
+from .error import *
 
 
 class StreamState(enum.Enum):

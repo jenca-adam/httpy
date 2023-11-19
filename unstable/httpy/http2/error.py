@@ -43,7 +43,7 @@ class InvalidStreamID(HTTP2Error):
 
 
 def throw(frame, send=False):
-    from frame import HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY
+    from .frame import HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY
 
     errcode = frame.errcode
     if frame.frame_type not in (HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY):

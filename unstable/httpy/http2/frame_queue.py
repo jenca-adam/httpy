@@ -1,6 +1,4 @@
-import frame
-import error
-import stream
+from . import stream,frame,error
 
 
 class FrameQueue:
@@ -13,6 +11,7 @@ class FrameQueue:
         for stream in self.streams:
             stream.framequeue.put(err)
     def process(self, f):
+        print("proc",f)
         if f.frame_type == frame.HTTP2_FRAME_HEADERS:
             f.decode_headers(self.conn.hpack)
         if f.streamid == 0:

@@ -1,4 +1,4 @@
-from stream import StreamState,Stream
+from .stream import StreamState,Stream
 
 
 class Streams:

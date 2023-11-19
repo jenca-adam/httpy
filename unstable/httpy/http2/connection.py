@@ -1,18 +1,15 @@
 import socket
 import ssl
-import frame
-import settings
-import stream
-import hpack
 import queue
 import threading
 import traceback
 import sys
-from streams import Streams
-from frame_queue import FrameQueue
 from httpy import force_bytes
-from error import *
-
+from . import hpack,frame,stream,settings
+from .streams import Streams
+from .frame_queue import FrameQueue
+from .error import *
+from .window import Window
 PREFACE = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
 
 
@@ -51,7 +48,7 @@ class Connection:
         self.errorqueue = queue.Queue()
         self._last_stream_id = 0x0
         self.processing_queue = FrameQueue(self.streams, self)
-
+        self.window=Window()
     def _after_start(fun):
         def _wrapper(self, *args, **kwargs):
             if not self.open:
@@ -130,6 +127,7 @@ class Connection:
         while True:
                 try:
                     next_frame_data = frame.parse_data(self.sockfile)
+
                     self._last_stream_id = next_frame_data[2]
                     next_frame = frame._parse(next_frame_data)
                     print("recv", next_frame)

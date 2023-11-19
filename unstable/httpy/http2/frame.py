@@ -1,7 +1,7 @@
 import io
 import struct
-from error import *
-from priority import StreamDependency
+from .error import *
+from .priority import StreamDependency
 HTTP2_FRAME_DATA = 0x00
 HTTP2_FRAME_HEADERS = 0x01
 HTTP2_FRAME_PRIORITY = 0x02
