@@ -2,6 +2,7 @@ import io
 import struct
 from .error import *
 from .priority import StreamDependency
+
 HTTP2_FRAME_DATA = 0x00
 HTTP2_FRAME_HEADERS = 0x01
 HTTP2_FRAME_PRIORITY = 0x02
@@ -39,6 +40,7 @@ class HTTP2Frame:
                 lambda *x: None,
             )
         )()
+        self.payload_length = len(self.payload)
         self.flags = flags or getattr(instance, "flags", 0x0)
         self.streamid = streamid
         if self.streamid > 2**31 - 1:
@@ -153,8 +155,10 @@ class HeadersFrame(HTTP2Frame):
             )
         )
         super().__init__(self, **kwargs)
-    def decode_headers(self,hpack):
-        self.decoded_headers=hpack.decode_headers(self.header_fragment)
+
+    def decode_headers(self, hpack):
+        self.decoded_headers = hpack.decode_headers(self.header_fragment)
+
     @classmethod
     def frombytes(cls, payload, payload_length, flags, streamid, **kwargs):
         if streamid == 0x0:
@@ -270,7 +274,7 @@ class RstStreamFrame(HTTP2Frame):
     @classmethod
     def frombytes(cls, payload, payload_length, streamid, **kwargs):
         if streamid == 0x0:
-            raise PROTOCOL_ERROR("CONTINUATION frame sent without a stream ID")
+            raise PROTOCOL_ERROR("RST_STREAM frame sent without a stream ID")
 
         if payload_length != 4:
             raise FRAME_SIZE_ERROR(
@@ -544,7 +548,10 @@ class ContinuationFrame(HTTP2Frame):
             raise PROTOCOL_ERROR("CONTINUATION frame sent without a stream ID")
         return cls(payload, bool(flags & 0x4), flags=flags, streamid=streamid, **kwargs)
 
+
 def parse_data(stream):
+    if stream.closed:
+        return None
     payload_length, *_ = struct.unpack("!I", b"\x00" + stream.read(3))
     frame_type, *_ = struct.unpack("!B", stream.read(1))
     flags, *_ = struct.unpack("!B", stream.read(1))
@@ -553,10 +560,16 @@ def parse_data(stream):
     if frame_type not in FRAMES:
         return None
     return payload, payload_length, streamid, flags, frame_type
+
+
 def parse(stream):
     return _parse(parse_data(stream))
+
+
 def _parse(data):
-    payload, payload_length, streamid, flags,frame_type = data
+    if data is None:
+        return None
+    payload, payload_length, streamid, flags, frame_type = data
 
     return FRAMES[frame_type].frombytes(
         payload=payload, payload_length=payload_length, streamid=streamid, flags=flags

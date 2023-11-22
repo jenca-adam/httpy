@@ -8,13 +8,18 @@ DEFAULT_SETTINGS = {
 
 
 class Settings:
-    def __init__(self, sd):
+    def __init__(self, sd, client, server):
+        self.client_settings = client
+        self.server_settings = server
         self.settings = getattr(sd, "dict", sd)
         self.__dict__.update(sd)
+
+    def __getitem__(self, s):
+        return self.settings[s]
 
 
 def merge_settings(server, client):
     sett = dict(DEFAULT_SETTINGS)
     sett.update(server.settings)
     sett.update(client.settings)
-    return Settings(sett)
+    return Settings(sett, client.settings, server.settings)

@@ -2,6 +2,7 @@ import sys
 import enum
 import warnings
 
+
 class ErrType(enum.Enum):
     CONNECTION = 0
     STREAM = 1
@@ -42,9 +43,10 @@ class InvalidStreamID(HTTP2Error):
     pass
 
 
-def throw(frame, send=False):
+def throw(frame, send=False, conn=None):
     from .frame import HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY
 
+    print("threw")
     errcode = frame.errcode
     if frame.frame_type not in (HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY):
         return
@@ -60,7 +62,9 @@ def throw(frame, send=False):
             if frame.frame_type == HTTP2_FRAME_RST_STREAM
             else "Connection closed: {frame.debugdata}"
         )
-        # some kind of a debug log ??
+        if frame.frame_type == HTTP2_FRAME_GOAWAY and conn is not None:
+            conn.close_socket()
+
         return
     try:
         err = ERROR_INSTANCES[errcode](message, send=send)
@@ -72,7 +76,7 @@ def throw(frame, send=False):
 ERRORS = [
     ("NO_ERROR", None),
     ("PROTOCOL_ERROR", ErrType.CONNECTION),
-    ("INTERNAL_ERROR", None),
+    ("INTERNAL_ERROR", ErrType.CONNECTION),
     ("FLOW_CONTROL_ERROR", ErrType.CONNECTION),
     ("SETTINGS_TIMEOUT", ErrType.CONNECTION),
     ("STREAM_CLOSED", ErrType.STREAM),

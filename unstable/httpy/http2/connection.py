@@ -5,11 +5,12 @@ import threading
 import traceback
 import sys
 from httpy import force_bytes
-from . import hpack,frame,stream,settings
+from . import hpack, frame, stream, settings
 from .streams import Streams
 from .frame_queue import FrameQueue
 from .error import *
 from .window import Window
+
 PREFACE = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
 
 
@@ -24,7 +25,8 @@ def start_connection(host, port, client_settings, alpn=True):
         return False, sock, None
     sf = sock.makefile("b")
     sock.send(PREFACE)
-    server_settings = settings.Settings(frame.parse(sf).dict)
+    sett = frame.parse(sf).dict
+    server_settings = settings.Settings(sett, {}, sett)
     sock.send(frame.SettingsFrame(ack=True).tobytes())
     sock.send(frame.SettingsFrame(**client_settings.settings).tobytes())
     return True, sock, server_settings
@@ -35,7 +37,7 @@ class Connection:
         self.host = host
         self.port = port
         self.hpack = hpack.HPACK()
-        self.settings = settings.Settings(client_settings)
+        self.settings = settings.Settings(client_settings, client_settings, {})
         self.streams = Streams(128, self)
         self.highest_id = -1
         self.sockfile = None
@@ -48,7 +50,9 @@ class Connection:
         self.errorqueue = queue.Queue()
         self._last_stream_id = 0x0
         self.processing_queue = FrameQueue(self.streams, self)
-        self.window=Window()
+        self.window = None
+        self.outbound_window = None
+
     def _after_start(fun):
         def _wrapper(self, *args, **kwargs):
             if not self.open:
@@ -65,7 +69,7 @@ class Connection:
     def create_stream(self):
         new_stream_id = self.highest_id + 2
         self.highest_id += 2
-        s = stream.Stream(new_stream_id, self)
+        s = stream.Stream(new_stream_id, self, self.settings["initial_window_size"])
         self.streams.add_stream(s)
         self.processing_queue.add_stream(s)
         return s
@@ -79,24 +83,36 @@ class Connection:
         self.open = True
         self.settings = settings.merge_settings(self.server_settings, self.settings)
         self.sockfile = self.socket.makefile("b")
+        self.window = Window(self.settings["initial_window_size"])
+        self.outbound_window = self.settings.server_settings["initial_window_size"]
         self.run_loops()
+
         return True, self.socket
+
     @_after_start
-    def close(self,errcode=0x0,debug=b''):
-        fr = frame.GoAwayFrame(self._last_stream_id,errcode,force_bytes(debug))
+    def close(self, errcode=0x0, debug=b""):
+        fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
         self._send_frame(fr)
-        self.close_socket()
+        self.close_socket(errcode == 0x0)
+
     @_after_start
-    def close_on_error(self,err):
-        self.close(err.code,str(err))
+    def close_on_error(self, err):
+        self.close(err.code, str(err))
+
     @_after_start
-    def close_socket(self):
+    def close_socket(self, quit=True):
+        print("went away")
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
-        self.open=False
+        self.sockfile.close()
+        self.open = False
+        if quit:
+            self.processing_queue.quit()
+
     @_after_start
-    def close_on_internal_error(self,e):
+    def close_on_internal_error(self, e):
         self.close_on_error(INTERNAL_ERROR(f"{e.__class__.__name__}: {str(e)}"))
+
     def run_loops(self):
         self.sending_thread = threading.Thread(
             target=self._sending_loop, args=(self.errorqueue,), daemon=True
@@ -113,8 +129,10 @@ class Connection:
             try:
                 next_frame = self.out_queue.get()
                 if next_frame is None:
-                    break 
+                    break
                 print("send", next_frame)
+                if next_frame.frame_type == frame.HTTP2_FRAME_DATA:
+                    self.outbound_window -= frame.payload_length
                 self._send_frame(next_frame)
 
                 ## No error?
@@ -125,47 +143,66 @@ class Connection:
     @_after_start
     def _receiving_loop(self):
         while True:
-                try:
-                    next_frame_data = frame.parse_data(self.sockfile)
+            if self.sockfile.closed:
+                break
+            try:
+                dt = frame.parse_data(self.sockfile)
+                if dt is None:
+                    continue
+                *next_frame_data, frame_type = dt
+                self._last_stream_id = next_frame_data[2]
+                if frame_type == frame.HTTP2_FRAME_DATA:
+                    print(next_frame_data, frame_type)
+                    self.window.received_frame(next_frame_data[1])
+                    window_increment = self.window.process(next_frame_data[1])
+                    window_update = (
+                        None
+                        if window_increment == 0
+                        else frame.WindowUpdateFrame(window_increment, streamid=0x0)
+                    )
+                else:
+                    window_update = None
+                next_frame = frame._parse(next_frame_data + [frame_type])
 
-                    self._last_stream_id = next_frame_data[2]
-                    next_frame = frame._parse(next_frame_data)
-                    print("recv", next_frame)
-                    to_send = self.processing_queue.process(next_frame)
+                print("recv", next_frame)
+                to_send = (self.processing_queue.process(next_frame), window_update)
+                for fr in to_send:
+                    if fr is not None:
+                        print("ts", fr)
+                        self.send_frame(fr)
 
-                    if to_send:
-                        print("ts",to_send)
-                        self.send_frame(to_send)
+            except HTTP2Error as e:
+                if e.send:
+                    self.close_on_error(e)
+                else:
+                    self.close_socket(False)
+                self.processing_queue.throw(sys.exc_info())
+            except Exception as e:
+                self.close_on_internal_error(e)
+                self.processing_queue.throw(sys.exc_info())
 
-                except HTTP2Error as e:
-                    if e.send:
-                        self.close_on_error(e)
-                    else:
-                        self.close_socket()
-                    self.processing_queue.throw(sys.exc_info())
-                except Exception as e:
-                    self.close_on_internal_error(e)
-                    self.processing_queue.throw(sys.exc_info())
-                
     @_after_start
     def _send_frame(self, frame):
+        print(frame)
         self.socket.send(frame.tobytes())
 
     @_after_start
     def _recv_frame(self):
-        q=frame.parse(self.sockfile)
+        q = frame.parse(self.sockfile)
         return q
 
     @_after_start
     def send_frame(self, frame):
+        if frame.payload_length > self.outbound_window:
+            raise Refuse("refusing to send the frame: not enough space in window")
         self.out_queue.put(frame)
-        err=False
+        err = False
         while not self.errorqueue.empty():
             next_error = self.errorqueue.get()
             if next_error == 0:
                 continue
             else:
-                err=True
+                err = True
             sys.stderr.write(traceback.format_tb(next_error))
         if err:
             raise Exception()

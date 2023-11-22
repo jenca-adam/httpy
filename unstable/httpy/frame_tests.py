@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import frame
+import http2.frame as frame
 import os
 import random
-import error
+import http2.error as error
 import timeit
 
 print("-FRAME TESTING-")
@@ -67,7 +67,7 @@ h = frame.parse(d._toio())
 assert h.__dict__ == d.__dict__
 print("ok")
 print("3:RstStream Frame")
-d = frame.RstStreamFrame(random.randrange(0x420))
+d = frame.RstStreamFrame(random.randrange(0x420),streamid=1)
 h = frame.parse(d._toio())
 assert d.__dict__ == h.__dict__
 print("ok")

@@ -1,4 +1,4 @@
-from .stream import StreamState,Stream
+from .stream import StreamState, Stream
 
 
 class Streams:
@@ -30,6 +30,6 @@ class Streams:
         for s in self.outbound if streamid % 2 else self.inbound:
             if s.streamid == streamid:
                 return s
-        s = Stream(streamid, self.conn)
+        s = Stream(streamid, self.conn, self.conn.settings["initial_window_size"])
         self.add_stream(s)
         return s

@@ -2,6 +2,13 @@ import enum
 import queue
 from . import frame
 from .error import *
+from .window import Window
+
+
+class StreamToken(enum.Enum):
+    CLOSE_TOKEN = 0
+    FRAME_TOKEN = 1
+    ERROR_TOKEN = 2
 
 
 class StreamState(enum.Enum):
@@ -14,13 +21,21 @@ class StreamState(enum.Enum):
     CLOSED = 6
 
 
+class StreamEvent:
+    def __init__(self, token, value):
+        self.token = token
+        self.value = value
+
+
 class Stream:
-    def __init__(self, streamid, conn, weight=0, dependency=0):
+    def __init__(self, streamid, conn, window_size, weight=0, dependency=0):
         self.streamid = streamid
         self.conn = conn
         self.weight = weight
         self.dependency = dependency
         self.state = StreamState.IDLE
+        self.window = Window(window_size)
+        self.outbound_window = conn.settings.server_settings["initial_window_size"]
         self.framequeue = queue.Queue()
 
     def _recv_priority_frame(self, f):
@@ -94,13 +109,17 @@ class Stream:
 
         return err, False
 
-    def recv_frame(self):
+    def recv_frame(self, enable_closed=False):
+        if not enable_closed and self.state == StreamState.CLOSED:
+            raise Refuse("refusing to receive a frame on a closed stream")
         n = self.framequeue.get()
-        if isinstance(n,tuple):
-            print(n)
-            _,err,tb = n
+        if n.token == StreamToken.CLOSE_TOKEN:
+            self.state = StreamState.CLOSED
+        elif n.token == StreamToken.ERROR_TOKEN:
+            _, err, tb = n.value
             raise err.with_traceback(tb)
-        return n
+        return n.value
+
     def __eq__(self, s):
         return s.streamid == self.streamid
 
@@ -153,4 +172,6 @@ class Stream:
         if errmsg is not None:
             raise Refuse(errmsg)
         f.streamid = self.streamid
+        print(f.streamid)
+        print(f.tobytes())
         self.conn.send_frame(f)
