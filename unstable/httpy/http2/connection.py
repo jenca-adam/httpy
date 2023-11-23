@@ -64,7 +64,8 @@ class Connection:
     @_after_start
     def close(self, errcode=0x0, debugdata=b""):
         self.send_frame(frame.GoAwayFrame(errcode, debugdata))
-
+    def __del__(self):
+        self.close()
     @_after_start
     def create_stream(self):
         new_stream_id = self.highest_id + 2
