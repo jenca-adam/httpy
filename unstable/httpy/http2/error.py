@@ -1,7 +1,7 @@
 import sys
 import enum
 import warnings
-
+from ssl import SSLError
 
 class ErrType(enum.Enum):
     CONNECTION = 0
@@ -48,6 +48,7 @@ def throw(frame, send=False, conn=None):
 
     print("threw")
     errcode = frame.errcode
+    print("errcode", errcode)
     if frame.frame_type not in (HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY):
         return
     if errcode > 0:

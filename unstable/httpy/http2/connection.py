@@ -4,6 +4,7 @@ import queue
 import threading
 import traceback
 import sys
+import inspect
 from httpy import force_bytes
 from . import hpack, frame, stream, settings
 from .streams import Streams
@@ -36,7 +37,7 @@ class Connection:
     def __init__(self, host, port, client_settings={}):
         self.host = host
         self.port = port
-        self.hpack = hpack.HPACK()
+        self.client_hpack, self.server_hpack = hpack.HPACK(), hpack.HPACK()
         self.settings = settings.Settings(client_settings, client_settings, {})
         self.streams = Streams(128, self)
         self.highest_id = -1
@@ -64,8 +65,11 @@ class Connection:
     @_after_start
     def close(self, errcode=0x0, debugdata=b""):
         self.send_frame(frame.GoAwayFrame(errcode, debugdata))
+
     def __del__(self):
-        self.close()
+        if self.open:
+            self.close()
+
     @_after_start
     def create_stream(self):
         new_stream_id = self.highest_id + 2
@@ -102,11 +106,12 @@ class Connection:
 
     @_after_start
     def close_socket(self, quit=True):
-        print("went away")
+        print("went away from", inspect.currentframe().f_back.f_back.f_back.f_back)
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         self.sockfile.close()
         self.open = False
+        self.out_queue.put(None)
         if quit:
             self.processing_queue.quit()
 
@@ -116,11 +121,11 @@ class Connection:
 
     def run_loops(self):
         self.sending_thread = threading.Thread(
-            target=self._sending_loop, args=(self.errorqueue,), daemon=True
+            target=self._sending_loop, args=(self.errorqueue,), 
         )
         self.receiving_thread = threading.Thread(
-            target=self._receiving_loop, daemon=True
-        )
+                target=self._receiving_loop,        
+                )
         self.sending_thread.start()
         self.receiving_thread.start()
 
@@ -130,6 +135,7 @@ class Connection:
             try:
                 next_frame = self.out_queue.get()
                 if next_frame is None:
+                    print("sending_loop broken")
                     break
                 print("send", next_frame)
                 if next_frame.frame_type == frame.HTTP2_FRAME_DATA:
@@ -144,12 +150,16 @@ class Connection:
     @_after_start
     def _receiving_loop(self):
         while True:
-            if self.sockfile.closed:
+            if self.sockfile.closed or (not self.open):
                 break
             try:
+                print(self.sockfile,self.socket)
                 dt = frame.parse_data(self.sockfile)
                 if dt is None:
                     continue
+                if dt == frame.ConnectionToken.CONNECTION_CLOSE:
+                    print("broken")
+                    break
                 *next_frame_data, frame_type = dt
                 self._last_stream_id = next_frame_data[2]
                 if frame_type == frame.HTTP2_FRAME_DATA:
@@ -170,7 +180,7 @@ class Connection:
                 for fr in to_send:
                     if fr is not None:
                         print("ts", fr)
-                        self.send_frame(fr)
+                        self.out_queue.put(fr)
 
             except HTTP2Error as e:
                 if e.send:

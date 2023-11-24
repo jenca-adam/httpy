@@ -67,7 +67,7 @@ h = frame.parse(d._toio())
 assert h.__dict__ == d.__dict__
 print("ok")
 print("3:RstStream Frame")
-d = frame.RstStreamFrame(random.randrange(0x420),streamid=1)
+d = frame.RstStreamFrame(random.randrange(0x420), streamid=1)
 h = frame.parse(d._toio())
 assert d.__dict__ == h.__dict__
 print("ok")

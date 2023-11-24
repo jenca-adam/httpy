@@ -22,7 +22,7 @@ class FrameQueue:
     def process(self, f):
         print("proc", f)
         if f.frame_type == frame.HTTP2_FRAME_HEADERS:
-            f.decode_headers(self.conn.hpack)
+            f.decode_headers(self.conn.server_hpack)
         if f.frame_type == frame.HTTP2_FRAME_WINDOW_UPDATE:
             if f.streamid == 0:
                 self.conn.outbound_window += f.increment

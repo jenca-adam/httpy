@@ -109,7 +109,7 @@ class Stream:
 
         return err, False
 
-    def recv_frame(self, enable_closed=False):
+    def recv_frame(self, enable_closed=False, frame_filter=None):
         if not enable_closed and self.state == StreamState.CLOSED:
             raise Refuse("refusing to receive a frame on a closed stream")
         n = self.framequeue.get()
@@ -118,6 +118,8 @@ class Stream:
         elif n.token == StreamToken.ERROR_TOKEN:
             _, err, tb = n.value
             raise err.with_traceback(tb)
+        if frame_filter is not None and (n.value.__class__ not in frame_filter):
+            return self.recv_frame(enable_closed, frame_filter)
         return n.value
 
     def __eq__(self, s):

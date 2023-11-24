@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import http2.connection
 import http2.frame
-test_goaway=False
-#test_goaway=True
+
+test_goaway = False
+# test_goaway=True
 a = http2.connection.Connection("www.google.com", 443)
 a.start()
 st = a.create_stream()
@@ -13,21 +14,22 @@ hf = http2.frame.HeadersFrame(
             ":path": "/search?q=en+passant",
             ":method": "GET",
             ":scheme": "http",
-            ":authority":"www.google.com",
+            ":authority": "www.google.com",
         }
     ),
     end_headers=True,
     end_stream=True,
 )
 st.send_frame(hf)
-if test_goaway:a.socket.sendall(b'\x00'*60)
+if test_goaway:
+    a.socket.sendall(b"\x00" * 60)
 while True:
-    n=st.recv_frame(True)
-    print("recv on s1:",n)
+    n = st.recv_frame(True)
+    print("recv on s1:", n)
 
-    if isinstance(n,http2.frame.HeadersFrame):
+    if isinstance(n, http2.frame.HeadersFrame):
         print(n.decoded_headers)
-    elif isinstance(n,http2.frame.DataFrame):
+    elif isinstance(n, http2.frame.DataFrame):
         print(n.payload)
-    elif isinstance(n,http2.frame.GoAwayFrame) or (n is None):
+    elif isinstance(n, http2.frame.GoAwayFrame) or (n is None):
         break

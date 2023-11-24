@@ -13,18 +13,4 @@ def bytes2bits(bytes, endian="big", nbits=None):
     return bits
 
 
-# Zombie code
-"""
-def bits2bytes_align(bits):
-    barr=bytearray()
-    buff=io.StringIO(bits)
-    while True:
-        next=buff.read(8)
-        if not next:
-            break
-        elif len(next)<8:
-            barr.append(int(next,2)<<(8-len(next)))
-            break
-        else:
-            barr.append(int(next,2))
-    return barr"""
+

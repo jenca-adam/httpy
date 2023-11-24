@@ -15,6 +15,8 @@ class Settings:
         self.__dict__.update(sd)
 
     def __getitem__(self, s):
+        if self.settings[s] is None and s in DEFAULT_SETTINGS:
+            return DEFAULT_SETTINGS[s]
         return self.settings[s]
 
 
@@ -22,4 +24,4 @@ def merge_settings(server, client):
     sett = dict(DEFAULT_SETTINGS)
     sett.update(server.settings)
     sett.update(client.settings)
-    return Settings(sett, client.settings, server.settings)
+    return Settings(sett, Settings(client.settings,{},{}), Settings(server.settings,{},{}))
