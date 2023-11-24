@@ -41,14 +41,16 @@ class Encoder:
     def encode_headers(self, headers, huffman=True):
         if isinstance(headers, dict):
             headers = headers.items()
+        headers=sorted(headers,key=lambda a:not a[0].startswith(':'))#Put pseudo-header fields first
         result = [self.encode_header(header, huffman) for header in headers]
         return b"".join(result)
 
     def encode_header(self, header, huffman=True):
         name, value, *index_mode = header
         if not index_mode:  # Default
-            index_mode = [YES]
-        index_mode, *_ = index_mode
+            index_mode = YES
+        else:
+            index_mode, *_ = index_mode
         entry = Entry(name, value)
         complete_match_index = self.table.find_item(entry)
         if complete_match_index:  # already in the table, no need to add

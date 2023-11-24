@@ -112,7 +112,10 @@ class Stream:
     def recv_frame(self, enable_closed=False, frame_filter=None):
         if not enable_closed and self.state == StreamState.CLOSED:
             raise Refuse("refusing to receive a frame on a closed stream")
-        n = self.framequeue.get()
+        try:
+            n = self.framequeue.get()
+        except KeyboardInterrupt:
+            n = self.framequeue.get_nowait()
         if n.token == StreamToken.CLOSE_TOKEN:
             self.state = StreamState.CLOSED
         elif n.token == StreamToken.ERROR_TOKEN:

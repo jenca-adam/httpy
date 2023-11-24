@@ -67,7 +67,6 @@ class Table:
         if item in self.static_table:
             return self.static_table.index(item)
         elif item in self.dynamic_table:
-            print(item,f"in dyntab({self.dynamic_table}) @",self.dynamic_table.index(item))
             return self.dynamic_table.index(item) + len(self.static_table)
         # else none
 

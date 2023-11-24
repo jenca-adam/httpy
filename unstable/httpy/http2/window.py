@@ -23,6 +23,7 @@ class Window:
         # return self.window_update()
 
     def process(self, nbytes):
+        print("PROC", nbytes)
         if nbytes == 0:
             return 0
         max_increment = self.max_window_size - self.size
@@ -30,8 +31,9 @@ class Window:
         increment = 0
 
         if ((self.size == 0) and (nbytes > self.max_window_size // 4)) or (
-            nbytes >= self.max_window_size // 2
-        ):
-            increment = min(nbytes, max_increment)
-
+            nbytes >= self.max_window_size // 4
+        ) or (self.size <= self.max_window_size//4):
+            increment = max_increment
+            print("INCR",increment)
+        self.increase_size(increment)
         return increment

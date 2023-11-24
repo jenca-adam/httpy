@@ -93,7 +93,13 @@ class Connection:
         self.run_loops()
 
         return True, self.socket
-
+    def update_server_settings(self,new_settings):
+        self.server_settings.settings.update(new_settings)
+        self.settings = settings.merge_settings(new_settings,self.settings)
+    def update_settings(self,**new_settings):
+        self.settings = settings.merge_client_settings(new_settings,self.settings)
+        self.send_frame(frame.SettingsFrame(**new_settings))
+    
     @_after_start
     def close(self, errcode=0x0, debug=b""):
         fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))

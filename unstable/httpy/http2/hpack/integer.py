@@ -1,7 +1,7 @@
 import math
 
 
-def encode_int(i, n=8, return_int=False):
+def encode_int(i, n=7, return_int=False):
     mbits = 2**n - 1
     if i < mbits:
         if return_int:
@@ -19,7 +19,7 @@ def encode_int(i, n=8, return_int=False):
     return bytearray(bts)
 
 
-def decode_int(barr, n=8):
+def decode_int(barr, n=7):
     b = iter(barr)
     num = next(b) & 0xFF >> (8 - n)
     mbits = 2**n - 1

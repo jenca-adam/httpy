@@ -82,6 +82,7 @@ class HTTP2Recver:
         headers = {}
         body = b""
         stream = connection.streams[streamid]
+        print("RCV",stream)
         while True:
             next_frame = stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
