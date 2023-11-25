@@ -93,13 +93,19 @@ class Connection:
         self.run_loops()
 
         return True, self.socket
-    def update_server_settings(self,new_settings):
+
+    def update_server_settings(self, new_settings):
+        new_window_size = new_settings.get("max_window_size", None)  # can't use walrus
+        if new_window_size is not None:
+            self.window.update_max_window_size(new_window_size)
+
         self.server_settings.settings.update(new_settings)
-        self.settings = settings.merge_settings(new_settings,self.settings)
-    def update_settings(self,**new_settings):
-        self.settings = settings.merge_client_settings(new_settings,self.settings)
+        self.settings = settings.merge_settings(new_settings, self.settings)
+
+    def update_settings(self, **new_settings):
+        self.settings = settings.merge_client_settings(new_settings, self.settings)
         self.send_frame(frame.SettingsFrame(**new_settings))
-    
+
     @_after_start
     def close(self, errcode=0x0, debug=b""):
         fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
@@ -127,23 +133,26 @@ class Connection:
 
     def run_loops(self):
         self.sending_thread = threading.Thread(
-            target=self._sending_loop, args=(self.errorqueue,), 
+            target=self._sending_loop,
+            args=(
+                self.out_queue,
+                self.errorqueue,
+            ),
         )
         self.receiving_thread = threading.Thread(
-                target=self._receiving_loop,        
-                )
+            target=self._receiving_loop,
+            args=(self.processing_queue, self.out_queue),
+        )
         self.sending_thread.start()
         self.receiving_thread.start()
 
     @_after_start
-    def _sending_loop(self, errq):
+    def _sending_loop(self, out_queue, errq):
         while True:
             try:
                 next_frame = self.out_queue.get()
                 if next_frame is None:
-                    print("sending_loop broken")
                     break
-                print("send", next_frame)
                 if next_frame.frame_type == frame.HTTP2_FRAME_DATA:
                     self.outbound_window -= frame.payload_length
                 self._send_frame(next_frame)
@@ -154,22 +163,19 @@ class Connection:
                 errq.put(e)
 
     @_after_start
-    def _receiving_loop(self):
+    def _receiving_loop(self, processing_queue, out_queue):
         while True:
             if self.sockfile.closed or (not self.open):
                 break
             try:
-                print(self.sockfile,self.socket)
                 dt = frame.parse_data(self.sockfile)
                 if dt is None:
                     continue
                 if dt == frame.ConnectionToken.CONNECTION_CLOSE:
-                    print("broken")
                     break
                 *next_frame_data, frame_type = dt
                 self._last_stream_id = next_frame_data[2]
                 if frame_type == frame.HTTP2_FRAME_DATA:
-                    print(next_frame_data, frame_type)
                     self.window.received_frame(next_frame_data[1])
                     window_increment = self.window.process(next_frame_data[1])
                     window_update = (
@@ -181,12 +187,10 @@ class Connection:
                     window_update = None
                 next_frame = frame._parse(next_frame_data + [frame_type])
 
-                print("recv", next_frame)
-                to_send = (self.processing_queue.process(next_frame), window_update)
+                to_send = (processing_queue.process(next_frame), window_update)
                 for fr in to_send:
                     if fr is not None:
-                        print("ts", fr)
-                        self.out_queue.put(fr)
+                        out_queue.put(fr)
 
             except HTTP2Error as e:
                 if e.send:
@@ -200,7 +204,6 @@ class Connection:
 
     @_after_start
     def _send_frame(self, frame):
-        print(frame)
         self.socket.send(frame.tobytes())
 
     @_after_start

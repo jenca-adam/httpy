@@ -11,6 +11,3 @@ def bytes2bits(bytes, endian="big", nbits=None):
     if nbits is not None:
         bits = "0" * (nbits - len(bits)) + bits
     return bits
-
-
-

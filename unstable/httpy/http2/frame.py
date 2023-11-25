@@ -19,8 +19,11 @@ HTTP2_FRAME_ALTSVC = 0x0A
 HTTP2_FRAME_ORIGIN = 0x0C
 HTTP2_FRAME_PRIORITY_UPDATE = 0x10
 
+
 class ConnectionToken(enum.Enum):
     CONNECTION_CLOSE = 0
+
+
 class HTTP2Frame:
     frame_type = -1
 
@@ -553,7 +556,6 @@ class ContinuationFrame(HTTP2Frame):
 
 
 def parse_data(stream):
-    print("stream",stream)
     if stream.closed:
         return ConnectionToken.CONNECTION_CLOSE
     try:
@@ -562,11 +564,11 @@ def parse_data(stream):
         flags, *_ = struct.unpack("!B", stream.read(1))
         streamid, *_ = struct.unpack("!I", stream.read(4))
         payload = stream.read(payload_length)
-    except (struct.error,SSLError):# read fail
+    except (struct.error, SSLError):  # read fail
         raise
         return ConnectionToken.CONNECTION_CLOSE
     except ValueError as e:
-        if "PyMemoryView_FromBuffer(): info->buf must not be NULL" in str(e):
+        if "PyMemoryView_FromBuffer(): info->buf must not be NULL" in str(e): # read fail #2
             return ConnectionToken.CONNECTION_CLOSE
         raise
     if frame_type not in FRAMES:

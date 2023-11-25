@@ -20,7 +20,6 @@ class FrameQueue:
             )
 
     def process(self, f):
-        print("proc", f)
         if f.frame_type == frame.HTTP2_FRAME_HEADERS:
             f.decode_headers(self.conn.server_hpack)
         if f.frame_type == frame.HTTP2_FRAME_SETTINGS:
@@ -51,7 +50,7 @@ class FrameQueue:
                     token = stream.StreamToken.CLOSE_TOKEN
                 else:
                     token = stream.StreamToken.FRAME_TOKEN
-                print("put",stream.StreamEvent(token, f),token,f,"to",target_stream,target_stream.streamid)
+                target_stream.framequeue.put(stream.StreamEvent(token, f))
                 target_stream.framequeue.put(stream.StreamEvent(token, f))
                 if f.frame_type == frame.HTTP2_FRAME_DATA:
                     target_stream.window.received_frame(f.payload_length)

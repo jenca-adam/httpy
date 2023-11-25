@@ -13,8 +13,10 @@ class Streams:
             self.outbound.append(s)
         else:
             self.inbound.append(s)
+
     def __iter__(self):
         return iter(self.outbound)
+
     def close_stream(self, streamid):
         streamlist = self.outbound if (streamid % 2) else self.inbound
         try:

@@ -41,7 +41,9 @@ class Encoder:
     def encode_headers(self, headers, huffman=True):
         if isinstance(headers, dict):
             headers = headers.items()
-        headers=sorted(headers,key=lambda a:not a[0].startswith(':'))#Put pseudo-header fields first
+        headers = sorted(
+            headers, key=lambda a: not a[0].startswith(":")
+        )  # Put pseudo-header fields first
         result = [self.encode_header(header, huffman) for header in headers]
         return b"".join(result)
 

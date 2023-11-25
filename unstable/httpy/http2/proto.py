@@ -19,7 +19,6 @@ def serialize_data(data, max_frame_size):
 
 def serialize_headers(headers, connection, end_stream, max_frame_size):
     to_serialize = memoryview(connection.client_hpack.encode_headers(headers))
-    print(headers,to_serialize)
     end_headers = len(to_serialize) <= max_frame_size
     frames = [
         frame.HeadersFrame(
@@ -68,7 +67,7 @@ class HTTP2Sender:
             not body,
             connection.settings.server_settings["max_frame_size"],
         )
-        print([x.__dict__ for x in self.header_frames])
+
     def send(self):
         """Creates a new stream and sends the frames to it"""
         self.stream = self.connection.create_stream()
@@ -82,14 +81,12 @@ class HTTP2Recver:
         headers = {}
         body = b""
         stream = connection.streams[streamid]
-        print("RCV",stream)
         while True:
             next_frame = stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
                 enable_closed=True,
             )
-            print(next_frame,next_frame.__dict__)
-            #next_frame.decode_headers(connection.hpack)
+            # next_frame.decode_headers(connection.hpack)
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
                 return int(headers[":status"]), headers, b"", b""
