@@ -35,10 +35,8 @@ class Window:
 
         increment = 0
 
-        if (
-            (self._processed_since_update >  min(self.max_window_size // 2, 8192))
-            ):
+        if self._processed_since_update > min(self.max_window_size // 2, 8192):
             increment = max_increment
-            self._processed_since_update=0
+            self._processed_since_update = 0
         self.increase_size(increment)
         return increment

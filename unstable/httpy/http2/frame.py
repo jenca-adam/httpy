@@ -54,7 +54,7 @@ class HTTP2Frame:
                 "invalid stream: stream IDs must be less than 2,147,483,647"
             )
         if len(self.payload) > frame_size:
-            raise PayloadOverflow(f"MAX_FRAME_SIZE exceeded")
+            raise PayloadOverflow("MAX_FRAME_SIZE exceeded")
 
     def tobytes(self):
         return b"".join(
@@ -391,7 +391,7 @@ class SettingsFrame(HTTP2Frame):
             elif index == 0x5:  # MAX_FRAME_SIZE
                 if value not in range(0x4000, 0x1000000):
                     raise PROTOCOL_ERROR("Invalid SETTINGS_MAX_FRAME_SIZE value")
-            if index >= len(names) or names[index] == None:
+            if index >= len(names) or names[index] is None:
                 continue  # IGNORE
             settings[names[index]] = value
         return cls(ack=ack, flags=flags, streamid=streamid, **settings, **kwargs)
@@ -568,7 +568,9 @@ def parse_data(stream):
         raise
         return ConnectionToken.CONNECTION_CLOSE
     except ValueError as e:
-        if "PyMemoryView_FromBuffer(): info->buf must not be NULL" in str(e): # read fail #2
+        if "PyMemoryView_FromBuffer(): info->buf must not be NULL" in str(
+            e
+        ):  # read fail #2
             return ConnectionToken.CONNECTION_CLOSE
         raise
     if frame_type not in FRAMES:

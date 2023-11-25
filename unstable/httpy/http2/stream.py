@@ -46,10 +46,10 @@ class Stream:
         if weight is None and dep is None:
             return
         weight = weight or self.weight
-        if p > 256:
+        if weight > 256:
             raise Refuse("refusing to set priority weight to an int over 256")
-        d = d or self.dependency
-        self.weight = p
+        d = dep or self.dependency
+        self.weight = weight
         self.dependency = d
         self.send_frame(frame.PriorityFrame(self.dependency, self.weight))
 

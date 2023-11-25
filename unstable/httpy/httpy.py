@@ -2065,7 +2065,9 @@ def _raw_request(
     if headers.get("connection") == "keep-alive":
         pool.connections[
             host, port
-        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        ]._sock = (
+            sock
+        )  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
     end_time = time.time()
     elapsed_time = end_time - start_time
 

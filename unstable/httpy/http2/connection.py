@@ -62,10 +62,6 @@ class Connection:
 
         return _wrapper
 
-    @_after_start
-    def close(self, errcode=0x0, debugdata=b""):
-        self.send_frame(frame.GoAwayFrame(errcode, debugdata))
-
     def __del__(self):
         if self.open:
             self.close()

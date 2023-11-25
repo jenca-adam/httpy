@@ -1,6 +1,5 @@
 from .static import HUFFMAN_TABLE, HUFFMAN_TABLE_DICT
 from .errors import *
-from .integer import encode_int, decode_int
 from .utils.bitarray import bytes2bits
 from httpy import force_bytes
 import io

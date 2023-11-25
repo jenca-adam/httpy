@@ -69,7 +69,9 @@ def throw(frame, send=False, conn=None):
     try:
         err = ERROR_INSTANCES[errcode](message, send=send)
     except IndexError:
-        raise PROTOCOL_ERROR("unknown error code", errtype=ErrType.CONNECTION)
+        raise ERROR_INSTANCES[1](
+            "unknown error code", errtype=ErrType.CONNECTION
+        )  # Protocol error
     raise err
 
 

@@ -1,6 +1,3 @@
-import math
-
-
 def encode_int(i, n=7, return_int=False):
     mbits = 2**n - 1
     if i < mbits:
