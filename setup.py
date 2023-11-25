@@ -1,7 +1,8 @@
-'''setup.py module'''
+"""setup.py module"""
 import sys
 import setuptools
-ld="""A lightweight socket-based library to create HTTP(s) and WebSocket connections.
+
+ld = """A lightweight socket-based library to create HTTP(s) and WebSocket connections.
 ## Features
    * Cookies support
    * Caching support
@@ -13,12 +14,14 @@ ld="""A lightweight socket-based library to create HTTP(s) and WebSocket connect
 ## License
     GPLv3
 Docs at <https://httpy.readthedocs.io/>"""
-try :
+try:
     ld = open("README.md").read()
 except:
-    pass    
+    pass
+
+
 class VersionError(Exception):
-    '''Raised if vrong wersion'''
+    """Raised if vrong wersion"""
 
 
 if sys.hexversion < 0x3060000:
