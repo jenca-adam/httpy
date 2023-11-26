@@ -1,7 +1,7 @@
 from .static import HUFFMAN_TABLE, HUFFMAN_TABLE_DICT
 from .errors import *
 from .utils.bitarray import bytes2bits
-from httpy import force_bytes
+from httpy.utils import force_bytes
 import io
 
 

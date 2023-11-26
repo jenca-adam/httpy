@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-import http2, http2.proto
+from httpy import http2
+import httpy.httpy
 import time
 import uuid
 import hashlib
 
-conn = http2.Connection("httpbin.org", 443)
+conn = http2.Connection("httpbin.org", 443, httpy.httpy._Debugger(True))
 
 print(conn.start())
 print(conn.settings.server_settings)
@@ -15,9 +16,8 @@ while True:
         b"",
         "/get",
         "httpbin.org",
-        conn,
     )
-    streamid = sender.send()
+    streamid = sender.send(conn)
     print("STREAMID", streamid)
     print("WINDOW", conn.window.size)
     status, headers, body, _ = http2.proto.HTTP2Recver()(conn, streamid)

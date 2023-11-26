@@ -2,7 +2,7 @@ from .huffman import encode_huffman, decode_huffman
 from .integer import encode_int, decode_int
 from .const import YES, NO, NEVER
 from .table import Table, Entry
-from httpy import force_bytes
+from httpy.utils import force_bytes
 from .utils.stream_iterable import StreamIterable
 import io
 
@@ -39,6 +39,7 @@ class Encoder:
         self.table = Table()
 
     def encode_headers(self, headers, huffman=True):
+        print(headers)
         if isinstance(headers, dict):
             headers = headers.items()
         headers = sorted(

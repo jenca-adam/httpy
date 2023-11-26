@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import http2.connection
-import http2.frame
+from httpy import http2
+
 
 test_goaway = False
 # test_goaway=True

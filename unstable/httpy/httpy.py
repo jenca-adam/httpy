@@ -37,7 +37,9 @@ import sys  # for debugging
 import pickle  # to save data
 import threading  # to create threads
 import queue  # to communicate between threads
-
+from . import http2
+from .utils import *
+from .errors import *
 try:
     import chardet  # to detect charsets
 except ImportError:
@@ -367,60 +369,6 @@ context.set_alpn_protocols(["http/1.1"])
 schemes = {"http": 80, "https": 443}
 
 
-class HTTPyError(Exception):
-    """A metaclass for all HTTPy Exceptions."""
-
-
-class ContentTypeError(HTTPyError):
-    """Raised if content type of resource does not match  the desired operation"""
-
-
-class StatusError(HTTPyError):
-    """Metaclass for ClientError and Server Error"""
-
-
-class AuthError(HTTPyError):
-    """Error in authentication"""
-
-
-class DeadConnectionError(HTTPyError, ConnectionError):
-    """Raised if the server didn't respond to the request"""
-
-
-class ConnectionClosedError(HTTPyError, ConnectionError):
-    """Connection Closed"""
-
-
-class ConnectionLimitError(HTTPyError, ConnectionError):
-    """Connection Limit reached"""
-
-
-class ConnectionExpiredError(HTTPyError, ConnectionError, TimeoutError):
-    """Connection Expired"""
-
-
-class ServerError(StatusError):
-    """Raised if server is not found or if it responded with 5xx code"""
-
-
-class TooManyRedirectsError(HTTPyError):
-    """Raised if server  responded with too many redirects (over redirection limit)"""
-
-
-class ClientError(StatusError):
-    """Raised if server responded with 4xx status code"""
-
-
-class WebSocketError(HTTPyError):
-    """Metaclass for exceptions in websockets"""
-
-
-class WebSocketClientError(WebSocketError):
-    """Raised on erroneous close code"""
-
-
-class WebSocketHandshakeError(WebSocketError):
-    """Error in handshake"""
 
 
 def _mk2l(original):
@@ -1366,16 +1314,19 @@ class PickleFile(dict):
 class Connection:
     """Class for connnections"""
 
-    def __init__(self, sock, timeout=math.inf, max=math.inf):
+    def __init__(self, sock, timeout=math.inf, max=math.inf, http2=False):
         debugger.info(f"Created new Connection upon {sock}")
         self._sock = sock
         self.timeout = timeout
-        self.max = math.inf
+        self.max = max
+        self.http2 = http2
         self.requests = 0
         self.time_started = time.time()
 
     @property
     def sock(self):
+        if self.http2:
+            return self._sock
         self.requests += 1
         if self.time_started + self.timeout < time.time():
             debugger.warn(f"Connection expired")
@@ -1397,7 +1348,7 @@ class ConnectionPool:
 
     def __setitem__(self, host, connection):
         host, port = host
-        if connection._sock.fileno() == -1:
+        if (connection.http2 and connection._sock.sock.fileno()==-1) or( not connection.http2 and connection._sock.fileno() == -1):
             raise ConnectionClosedError("Connection closed by host")
         self.connections[host, port] = connection
 
@@ -1544,28 +1495,6 @@ def _generate_boundary():
     )
 
 
-def force_string(anything):
-    """Converts string or bytes to string"""
-    try:
-        if isinstance(anything, str):
-            return anything
-        if isinstance(anything, bytes):
-            return anything.decode()
-    except Exception:
-        debugger.warn(f"Could not decode {anything}")
-        raise
-    return str(anything)
-
-
-def force_bytes(anything):
-    """Converts bytes or string to bytes"""
-    if isinstance(anything, bytes):
-        return anything
-    if isinstance(anything, str):
-        return anything.encode()
-    if isinstance(anything, int):
-        return force_bytes(str(anything))
-    return bytes(anything)
 
 
 def get_content_type(data):
@@ -1715,7 +1644,7 @@ def _debugprint(debug, what, *args, **kwargs):
         print(force_string(what), *args, **kwargs)
 
 
-def create_connection(host, port, last_response):
+def create_connection(host, port, last_response, is_http2):
     keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
     if (host, port) in pool:
         debugger.info("Connection already in pool")
@@ -1724,8 +1653,13 @@ def create_connection(host, port, last_response):
         except ConnectionClosedError:
             debugger.warn("Connection already expired.")
     try:
-        debugger.info("calling socket.create_connection")
-        conn = socket.create_connection((host, port))
+        if is_http2:
+            debugger.info("instancing http2 connection")
+            conn = http2.Connection(host,port,debugger)
+            conn.start()
+        else:
+            debugger.info("calling socket.create_connection")
+            conn = socket.create_connection((host, port))
     except socket.gaierror as gai:
         debugger.warn("gaierror raised, getting errno")
         # Get errno using ctypes, check for  -2(-3)
@@ -1736,7 +1670,7 @@ def create_connection(host, port, last_response):
 
         else:
             # PyPy
-            errno = -72
+            errno = None
             if str(gai).startswith("[Errno -2]") or str(gai).startswith("[Errno -3]"):
                 errno = 2
         if errno in [2, 3]:
@@ -1744,10 +1678,8 @@ def create_connection(host, port, last_response):
 
         debugger.warn(f"unknown errno {errno!r}")
         raise  # Added in 1.1.1
-    pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max)
+    pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
     return conn, False
-
-
 def generate_session_id():
     return "".join(random.choices(string.hexdigits, k=16))
 
@@ -1863,6 +1795,10 @@ class HTTP11(ProtoVersion):
     sender = HTTP11Sender
     recver = HTTP11Recver()
 
+class HTTP2(ProtoVersion):
+    version = "2"
+    sender = http2.proto.HTTP2Sender
+    recver = http2.proto.HTTP2Recver()
 
 class Session:
     def __init__(self, session_id=None, path=None, name=None):
@@ -1919,11 +1855,12 @@ def _raw_request(
     debug=False,
     last_status=-1,
     pure_headers=False,
-    base_dir=HTTPY_DIR,
-    http_version="1.1",
+    base_dir=HTTPY_DIR / "default",
+    http_version="2",
     disabled_headers=[],
     force_keep_alive=True,
 ):
+    is_http2 = http_version=="2"
     method = method.upper()
     cache = Cache(base_dir / "sites")
     jar = CookieJar(base_dir / "cj")
@@ -1968,7 +1905,6 @@ def _raw_request(
             "Connection": "keep-alive",
         }
     )
-
     if data:
         debugger.info("Adding form data")
         data, cth = encode_form_data(data, content_type)
@@ -1999,11 +1935,11 @@ def _raw_request(
         last_response = history[-1]
     else:
         last_response = Response.plain()
-    sock, from_pool = create_connection(host, port, last_response)
+    sock, from_pool = create_connection(host, port, last_response, is_http2)
     start_time = time.time()
 
     try:
-        if scheme == "https" and not from_pool:
+        if scheme == "https" and not from_pool and not http2:
             sock = context.wrap_socket(sock, server_hostname=host)
 
         defhdr.update(headers)
@@ -2668,7 +2604,7 @@ encodings = {
     "deflate": _zlib_decompress,
     "gzip": _gzip_decompress,
 }
-proto_versions = {"1.1": HTTP11()}
+proto_versions = {"1.1": HTTP11(), "2": HTTP2()}
 
 jar = CookieJar()
 cache = Cache()

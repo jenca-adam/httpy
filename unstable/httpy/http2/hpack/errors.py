@@ -1,4 +1,4 @@
-from httpy import HTTPyError
+from httpy.errors import HTTPyError
 
 
 class HPackError(HTTPyError):

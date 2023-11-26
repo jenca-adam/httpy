@@ -1,7 +1,7 @@
-from httpy import ProtoVersion
 import itertools
 from . import frame
 
+CONNECTION_SPECIFIC = ["connection", "proxy-connection", "keep-alive", "transfer-encoding","upgrade", "host"]
 
 def serialize_data(data, max_frame_size):
     to_serialize = memoryview(data)
@@ -18,6 +18,8 @@ def serialize_data(data, max_frame_size):
 
 
 def serialize_headers(headers, connection, end_stream, max_frame_size):
+    print("ser",headers)
+    #to_serialize = memoryview(connection.client_hpack.encode_headers(filter((lambda x: x[0].lower() not in CONNECTION_SPECIFIC),headers.items()))) # skip connection-specific headers DON'T THROW AN ERROR
     to_serialize = memoryview(connection.client_hpack.encode_headers(headers))
     end_headers = len(to_serialize) <= max_frame_size
     frames = [
@@ -42,45 +44,46 @@ def serialize_headers(headers, connection, end_stream, max_frame_size):
 
 
 class HTTP2Sender:
-    def __init__(self, method, headers, body, path, authority, connection, **_):
+    def __init__(self, method, headers, body, path, debugger, authority=None, *_, **__):
         self.method = method
+        self.deugger = debugger
         self.path = path
-        self.authority = authority
+        self.authority = authority or headers.get("Host",headers.get("host"))
         self.body = body
         self.headers = headers
-        self.connection = connection
-        self.stream = None
         self.headers.update(
             {
                 ":path": path,
                 ":method": method,
-                ":authority": authority,
+                ":authority": self.authority,
                 ":scheme": "https",
             }
         )
+        
+    def send(self, connection):
+        """Creates a new stream and sends the frames to it"""
         self.data_frames = serialize_data(
-            body, connection.settings.server_settings["max_frame_size"]
+            self.body, connection.settings.server_settings["max_frame_size"]
         )
         self.header_frames = serialize_headers(
             self.headers,
             connection,
-            not body,
+            not self.body,
             connection.settings.server_settings["max_frame_size"],
         )
 
-    def send(self):
-        """Creates a new stream and sends the frames to it"""
-        self.stream = self.connection.create_stream()
+        stream = connection.create_stream()
         for frm in itertools.chain(self.header_frames, self.data_frames):
-            self.stream.send_frame(frm)
-        return self.stream.streamid
+            stream.send_frame(frm)
+        return stream.streamid
 
 
 class HTTP2Recver:
-    def __call__(self, connection, streamid, **_):
+    def __call__(self, connection, streamid, *_, **__):
         headers = {}
         body = b""
         stream = connection.streams[streamid]
+        connection.debugger.info("Listening on {streamid}")
         while True:
             next_frame = stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
@@ -89,6 +92,7 @@ class HTTP2Recver:
             # next_frame.decode_headers(connection.hpack)
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
+                connection.debuger.ok("Response fully received (no body)")
                 return int(headers[":status"]), headers, b"", b""
             if next_frame.end_headers:
                 break
@@ -98,4 +102,5 @@ class HTTP2Recver:
             )
             body += next_frame.data
             if next_frame.end_stream:
+                connection.debugger.ok("Response fully received (with body)")
                 return int(headers[":status"]), headers, body, body

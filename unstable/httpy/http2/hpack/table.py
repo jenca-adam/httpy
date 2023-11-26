@@ -1,5 +1,5 @@
 from .static import STATIC_TABLE
-from httpy import force_string
+from httpy.utils import force_string
 
 
 class Entry:
