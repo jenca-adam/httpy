@@ -223,6 +223,7 @@ class Connection:
 
     @_after_start
     def send_frame(self, frame):
+        print(frame.payload)
         if frame.payload_length > self.outbound_window:
             raise Refuse("refusing to send the frame: not enough space in window")
         self.debugger.info(f"sending {frame}")

@@ -15,6 +15,7 @@ while True:
         {uuid.uuid4().hex: uuid.uuid4().hex},
         b"",
         "/get",
+        httpy.httpy._Debugger(True),
         "httpbin.org",
     )
     streamid = sender.send(conn)

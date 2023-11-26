@@ -46,8 +46,9 @@ def serialize_headers(headers, connection, end_stream, max_frame_size):
 class HTTP2Sender:
     def __init__(self, method, headers, body, path, debugger, authority=None, *_, **__):
         self.method = method
-        self.deugger = debugger
+        self.debugger = debugger
         self.path = path
+
         self.authority = authority or headers.get("Host",headers.get("host"))
         self.body = body
         self.headers = headers
