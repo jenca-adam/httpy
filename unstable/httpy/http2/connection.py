@@ -5,6 +5,8 @@ import threading
 import traceback
 import sys
 import inspect
+import atexit # dirty fix
+
 from httpy.utils import force_bytes
 from . import hpack, frame, stream, settings
 from .streams import Streams
@@ -55,6 +57,8 @@ class Connection:
         self.window = None
         self.outbound_window = None
 
+        atexit.register(self.__del__) # TODO: fix this this is fucking ugly
+
     def _after_start(fun):
         def _wrapper(self, *args, **kwargs):
             if not self.open:
@@ -62,12 +66,18 @@ class Connection:
             return fun(self, *args, **kwargs)
 
         return _wrapper
+
     @property
     def _sock(self):
         return self.sock
+
     def __del__(self):
         if self.open:
             self.close()
+        else:
+            self.close_socket()
+        self.out_queue.put(None)
+        self.processing_queue.quit()
 
     @_after_start
     def create_stream(self):
@@ -114,7 +124,7 @@ class Connection:
         self.debugger.info("Sending GOAWAY frame")
         fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
         self._send_frame(fr)
-        self.close_socket(errcode == 0x0)
+        self.close_socket()
 
     @_after_start
     def close_on_error(self, err):
@@ -129,8 +139,7 @@ class Connection:
         self.sockfile.close()
         self.open = False
         self.out_queue.put(None)
-        if quit:
-            self.processing_queue.quit()
+        self.processing_queue.quit()
 
     @_after_start
     def close_on_internal_error(self, e):
@@ -175,7 +184,7 @@ class Connection:
             if self.sockfile.closed or (not self.open):
                 break
             try:
-                dt = frame.parse_data(self.sockfile)
+                dt = frame.parse_data(self.sock)
                 if dt is None:
                     continue
                 if dt == frame.ConnectionToken.CONNECTION_CLOSE:
@@ -223,7 +232,6 @@ class Connection:
 
     @_after_start
     def send_frame(self, frame):
-        print(frame.payload)
         if frame.payload_length > self.outbound_window:
             raise Refuse("refusing to send the frame: not enough space in window")
         self.debugger.info(f"sending {frame}")

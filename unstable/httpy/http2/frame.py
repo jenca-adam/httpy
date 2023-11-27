@@ -1,9 +1,11 @@
 import io
 import struct
 import enum
+import socket
 
 from .error import *
 from .priority import StreamDependency
+from .socket_reader import SocketReader
 
 HTTP2_FRAME_DATA = 0x00
 HTTP2_FRAME_HEADERS = 0x01
@@ -556,6 +558,8 @@ class ContinuationFrame(HTTP2Frame):
 
 
 def parse_data(stream):
+    if isinstance(stream, socket.socket):
+        stream = SocketReader(stream)
     if stream.closed:
         return ConnectionToken.CONNECTION_CLOSE
     try:

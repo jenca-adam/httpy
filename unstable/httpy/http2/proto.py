@@ -1,7 +1,17 @@
 import itertools
 from . import frame
+from httpy.status import status_from_int
+from httpy.utils import CaseInsensitiveDict
 
-CONNECTION_SPECIFIC = ["connection", "proxy-connection", "keep-alive", "transfer-encoding","upgrade", "host"]
+CONNECTION_SPECIFIC = [
+    "connection",
+    "proxy-connection",
+    "keep-alive",
+    "transfer-encoding",
+    "upgrade",
+    "host",
+]
+
 
 def serialize_data(data, max_frame_size):
     to_serialize = memoryview(data)
@@ -18,9 +28,12 @@ def serialize_data(data, max_frame_size):
 
 
 def serialize_headers(headers, connection, end_stream, max_frame_size):
-    print("ser",headers)
-    #to_serialize = memoryview(connection.client_hpack.encode_headers(filter((lambda x: x[0].lower() not in CONNECTION_SPECIFIC),headers.items()))) # skip connection-specific headers DON'T THROW AN ERROR
-    to_serialize = memoryview(connection.client_hpack.encode_headers(headers))
+    to_serialize = memoryview(
+        connection.client_hpack.encode_headers(
+            filter((lambda x: x[0].lower() not in CONNECTION_SPECIFIC), headers.items())
+        )
+    )  # skip connection-specific headers DON'T THROW AN ERROR
+    # to_serialize = memoryview(connection.client_hpack.encode_headers(headers))
     end_headers = len(to_serialize) <= max_frame_size
     frames = [
         frame.HeadersFrame(
@@ -43,13 +56,19 @@ def serialize_headers(headers, connection, end_stream, max_frame_size):
     return frames
 
 
+class HTTP2Headers(CaseInsensitiveDict):
+    def __init__(self, headers):
+        self.headers = headers
+        super().__init__(headers)
+
+
 class HTTP2Sender:
     def __init__(self, method, headers, body, path, debugger, authority=None, *_, **__):
         self.method = method
         self.debugger = debugger
         self.path = path
 
-        self.authority = authority or headers.get("Host",headers.get("host"))
+        self.authority = authority or headers.get("Host", headers.get("host"))
         self.body = body
         self.headers = headers
         self.headers.update(
@@ -60,7 +79,7 @@ class HTTP2Sender:
                 ":scheme": "https",
             }
         )
-        
+
     def send(self, connection):
         """Creates a new stream and sends the frames to it"""
         self.data_frames = serialize_data(
@@ -104,4 +123,9 @@ class HTTP2Recver:
             body += next_frame.data
             if next_frame.end_stream:
                 connection.debugger.ok("Response fully received (with body)")
-                return int(headers[":status"]), headers, body, body
+                return (
+                    status_from_int(int(headers[":status"])),
+                    HTTP2Headers(headers),
+                    body,
+                    body,
+                )
