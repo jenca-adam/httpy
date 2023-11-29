@@ -103,7 +103,7 @@ class HTTP2Recver:
         headers = {}
         body = b""
         stream = connection.streams[streamid]
-        connection.debugger.info("Listening on {streamid}")
+        connection.debugger.info(f"Listening on {streamid}")
         while True:
             next_frame = stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],

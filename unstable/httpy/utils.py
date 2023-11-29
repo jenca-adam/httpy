@@ -55,6 +55,10 @@ class CaseInsensitiveDict(dict):
         self.original[_find(item, self.original)] = val
         super().__init__(self.original)  # remake??
 
+    def __delitem__(self, item):
+        del self.lowercase[force_string(item).lower()]
+        del self.original[_find(item, self.original)]
+
     def get(self, key, default=None):
         if key in self:
             return self[key]

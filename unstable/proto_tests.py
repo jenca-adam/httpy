@@ -5,7 +5,7 @@ import time
 import uuid
 import hashlib
 
-conn = http2.Connection("httpbin.org", 443, httpy.httpy._Debugger(True))
+conn = http2.Connection("google.com", 443, httpy.httpy._Debugger(True))
 
 print(conn.start())
 print(conn.settings.server_settings)
@@ -14,9 +14,9 @@ while True:
         b"GET",
         {uuid.uuid4().hex: uuid.uuid4().hex},
         b"",
-        "/get",
+        "/",
         httpy.httpy._Debugger(True),
-        "httpbin.org",
+        "google.com",
     )
     streamid = sender.send(conn)
     print("STREAMID", streamid)

@@ -611,8 +611,8 @@ class Headers(CaseInsensitiveDict):
         h = filter(lambda x: bool(x), h)
         self.headers = (
             [
-                force_string(a).split(": ", 1)[0].lower(),
-                force_string(a).split(": ", 1)[1].strip(),
+                force_string(a).split(":", 1)[0].strip().lower(),
+                force_string(a).split(":", 1)[1].strip(),
             ]
             for a in h
         )
@@ -997,12 +997,15 @@ class ConnectionPool:
             sock = self.connections[host].sock
         except ConnectionError:
             raise
-            del self.connections[host]
-
-        if getattr(sock, "fileno", sock.sock.fileno)() == -1:
+        if (
+            getattr(
+                sock, "fileno", getattr(getattr(sock, "sock", None), "fileno", None)
+            )()
+            == -1
+        ):
             del self.connections[host]
             raise ConnectionClosedError("Connection closed by host")
-        return sock
+        return sock, self.connections[host].is_http2
 
     def __contains__(self, host):
         return host in self.connections
@@ -1284,11 +1287,12 @@ def _debugprint(debug, what, *args, **kwargs):
 def create_connection(host, port, last_response, is_http2):
     keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
     if (host, port) in pool:
-        debugger.info("Connection already in pool")
-        try:
-            return pool[host, port], True
-        except ConnectionClosedError:
-            debugger.warn("Connection already expired.")
+        if pool[host, port][1] == is_http2:
+            debugger.info("Connection already in pool")
+            try:
+                return pool[host, port][0], True
+            except ConnectionClosedError:
+                debugger.warn("Connection already expired.")
     try:
         if is_http2:
             debugger.info("instancing http2 connection")
@@ -1472,7 +1476,10 @@ class Session:
 
 def _dictrm(d, l):
     for i in l:
-        if i in d:
+        if i.lower() in d:  # caseInsensitiveDict
+            debugger.info(f"dictrming {i}")
+            del d[i.lower()]
+        elif i in d:
             debugger.info(f"dictrming {i}")
             del d[i]
         else:
@@ -1580,7 +1587,7 @@ def _raw_request(
     start_time = time.time()
 
     try:
-        if scheme == "https" and not from_pool and not http2:
+        if scheme == "https" and not from_pool and not is_http2:
             sock = context.wrap_socket(sock, server_hostname=host)
 
         defhdr.update(headers)

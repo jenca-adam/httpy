@@ -4,8 +4,6 @@ import queue
 import threading
 import traceback
 import sys
-import inspect
-import atexit # dirty fix
 
 from httpy.utils import force_bytes
 from . import hpack, frame, stream, settings
@@ -49,15 +47,11 @@ class Connection:
         self.server_settings = None
         self.open = False
         self.out_queue = queue.Queue()
-        self.sending_thread = None
-        self.receiving_thread = None
         self.errorqueue = queue.Queue()
         self._last_stream_id = 0x0
         self.processing_queue = FrameQueue(self.streams, self)
         self.window = None
         self.outbound_window = None
-
-        atexit.register(self.__del__) # TODO: fix this this is fucking ugly
 
     def _after_start(fun):
         def _wrapper(self, *args, **kwargs):
@@ -70,14 +64,6 @@ class Connection:
     @property
     def _sock(self):
         return self.sock
-
-    def __del__(self):
-        if self.open:
-            self.close()
-        else:
-            self.close_socket()
-        self.out_queue.put(None)
-        self.processing_queue.quit()
 
     @_after_start
     def create_stream(self):
@@ -103,7 +89,6 @@ class Connection:
         self.sockfile = self.sock.makefile("b")
         self.window = Window(self.settings["initial_window_size"])
         self.outbound_window = self.settings.server_settings["initial_window_size"]
-        self.run_loops()
 
         return True, self.sock
 
@@ -123,7 +108,10 @@ class Connection:
     def close(self, errcode=0x0, debug=b""):
         self.debugger.info("Sending GOAWAY frame")
         fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
-        self._send_frame(fr)
+        try:
+            self._send_frame(fr)
+        except ssl.SSLError:
+            pass
         self.close_socket()
 
     @_after_start
@@ -145,81 +133,64 @@ class Connection:
     def close_on_internal_error(self, e):
         self.close_on_error(INTERNAL_ERROR(f"{e.__class__.__name__}: {str(e)}"))
 
-    def run_loops(self):
-        self.debugger.info("running loops")
-        self.sending_thread = threading.Thread(
-            target=self._sending_loop,
-            args=(
-                self.out_queue,
-                self.errorqueue,
-            ),
-        )
-        self.receiving_thread = threading.Thread(
-            target=self._receiving_loop,
-            args=(self.processing_queue, self.out_queue),
-        )
-        self.sending_thread.start()
-        self.receiving_thread.start()
+    @_after_start
+    def _send_frame_from_queue(self, out_queue, errq):
+        try:
+            next_frame = self.out_queue.get()
+
+            if next_frame is None:
+                return
+            if next_frame.frame_type == frame.HTTP2_FRAME_DATA:
+                self.outbound_window -= frame.payload_length
+            self.debugger.info(f"to send: {next_frame}")
+            self._send_frame(next_frame)
+
+            ## No error?
+            errq.put(0)
+        except Exception as e:
+            errq.put(e)
 
     @_after_start
-    def _sending_loop(self, out_queue, errq):
-        while True:
-            try:
-                next_frame = self.out_queue.get()
-                self.debugger.info(f"to send: {next_frame}")
-                if next_frame is None:
-                    break
-                if next_frame.frame_type == frame.HTTP2_FRAME_DATA:
-                    self.outbound_window -= frame.payload_length
-                self._send_frame(next_frame)
+    def process_next_frame(self):
+        if self.sockfile.closed or (not self.open):
+            return
+        try:
+            dt = frame.parse_data(self.sock)
+            if dt is None:
+                return self.process_next_frame
+            if dt == frame.ConnectionToken.CONNECTION_CLOSE:
+                return
+            *next_frame_data, frame_type = dt
+            self._last_stream_id = next_frame_data[2]
 
-                ## No error?
-                errq.put(0)
-            except Exception as e:
-                errq.put(e)
+            if frame_type == frame.HTTP2_FRAME_DATA:
+                self.debugger.info("Received a data frame, updating window")
+                self.window.received_frame(next_frame_data[1])
+                window_increment = self.window.process(next_frame_data[1])
+                window_update = (
+                    None
+                    if window_increment == 0
+                    else frame.WindowUpdateFrame(window_increment, streamid=0x0)
+                )
+            else:
+                window_update = None
+            next_frame = frame._parse(next_frame_data + [frame_type])
+            self.debugger.info(f"Received: {next_frame}")
+            to_send = (self.processing_queue.process(next_frame), window_update)
+            for fr in to_send:
+                if fr is not None:
+                    self.debugger.info(f"Sending back: {fr}")
+                    self.send_frame(fr)
 
-    @_after_start
-    def _receiving_loop(self, processing_queue, out_queue):
-        while True:
-            if self.sockfile.closed or (not self.open):
-                break
-            try:
-                dt = frame.parse_data(self.sock)
-                if dt is None:
-                    continue
-                if dt == frame.ConnectionToken.CONNECTION_CLOSE:
-                    break
-                *next_frame_data, frame_type = dt
-                self._last_stream_id = next_frame_data[2]
-
-                if frame_type == frame.HTTP2_FRAME_DATA:
-                    self.debugger.info("Received a data frame, updating window")
-                    self.window.received_frame(next_frame_data[1])
-                    window_increment = self.window.process(next_frame_data[1])
-                    window_update = (
-                        None
-                        if window_increment == 0
-                        else frame.WindowUpdateFrame(window_increment, streamid=0x0)
-                    )
-                else:
-                    window_update = None
-                next_frame = frame._parse(next_frame_data + [frame_type])
-                self.debugger.info(f"Received: {next_frame}")
-                to_send = (processing_queue.process(next_frame), window_update)
-                for fr in to_send:
-                    if fr is not None:
-                        self.debugger.info(f"Sending back: {fr}")
-                        out_queue.put(fr)
-
-            except HTTP2Error as e:
-                if e.send:
-                    self.close_on_error(e)
-                else:
-                    self.close_socket(False)
-                self.processing_queue.throw(sys.exc_info())
-            except Exception as e:
-                self.close_on_internal_error(e)
-                self.processing_queue.throw(sys.exc_info())
+        except HTTP2Error as e:
+            if e.send:
+                self.close_on_error(e)
+            else:
+                self.close_socket(False)
+            self.processing_queue.throw(sys.exc_info())
+        except Exception as e:
+            self.close_on_internal_error(e)
+            self.processing_queue.throw(sys.exc_info())
 
     @_after_start
     def _send_frame(self, frame):
@@ -236,6 +207,7 @@ class Connection:
             raise Refuse("refusing to send the frame: not enough space in window")
         self.debugger.info(f"sending {frame}")
         self.out_queue.put(frame)
+        self._send_frame_from_queue(self.out_queue, self.errorqueue)
         err = False
         while not self.errorqueue.empty():
             next_error = self.errorqueue.get()
