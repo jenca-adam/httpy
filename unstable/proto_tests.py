@@ -12,7 +12,7 @@ print(conn.settings.server_settings)
 while True:
     sender = http2.proto.HTTP2Sender(
         b"GET",
-        {uuid.uuid4().hex: uuid.uuid4().hex, "accept-encoding":"gzip"},
+        {uuid.uuid4().hex: uuid.uuid4().hex, "accept-encoding": "gzip"},
         b"",
         "/",
         httpy.httpy._Debugger(True),

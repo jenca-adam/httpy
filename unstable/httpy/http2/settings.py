@@ -2,7 +2,7 @@ DEFAULT_SETTINGS = {
     "header_table_size": 4096,
     "enable_push": 0,  # disable by default
     "max_concurrent_streams": 128,
-    "initial_window_size": 65535,
+    "initial_window_size": 1048560,
     "max_frame_size": 524280,
 }
 

@@ -39,7 +39,6 @@ class Encoder:
         self.table = Table()
 
     def encode_headers(self, headers, huffman=True):
-        print(headers)
         if isinstance(headers, dict):
             headers = headers.items()
         headers = sorted(

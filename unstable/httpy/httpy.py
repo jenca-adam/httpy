@@ -31,18 +31,19 @@ import time  # to measure time
 import ctypes  # to get errno
 import struct  # to pack floats
 import hashlib  # for Digest auth
-import builtins  # for debugging
-import inspect  # for debugging
-import sys  # for debugging
 import pickle  # to save data
 import threading  # to create threads
 import queue  # to communicate between threads
+import builtins  # for debugging
+import inspect  # for debugging
+import sys  # for debugging
 from . import http2
 from .utils import *
 from .errors import *
 from .status import *
 from .alpn import alpn_negotiate
-
+from .patterns import *
+from .debugger import _Debugger
 try:
     import chardet  # to detect charsets
 except ImportError:
@@ -52,13 +53,7 @@ HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
 VERSION = "2.0.0"
-URLPATTERN = re.compile(
-    r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
-)
-STATUSPATTERN = re.compile(
-    rb"(?P<VERSION>.*)\s*(?P<status>\d{3})\s*(?P<reason>[^\r\n]*)"
-)
-STRTIME_PATTERN = "%a, %d %b% Y, %H:%M:%S%Z"
+
 HTTPY_CACHEABLE_METHODS = ["GET", "HEAD"]
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 WEBSOCKET_CONTINUATION_FRAME = 0x0
@@ -90,103 +85,6 @@ default_context.set_alpn_protocols(["http/1.1", "h2"])
 schemes = {"http": 80, "https": 443}
 
 
-def _mk2l(original):
-    if len(original) == 1:
-        original.append(True)
-    return original
-
-
-def get_host(url):
-    return URLPATTERN.search(url).group("host")
-
-
-def capitalize(string):
-    return string[0].upper() + string[1:]
-
-
-def byte_length(i):
-    if i == 0:
-        return 1
-    return math.ceil(i.bit_length() / 8)
-
-
-def mkbits(i, pad=None):
-    j = bin(i)[2:]
-    if pad is None:
-        return j
-    return "0" * (pad - len(j)) + j
-
-
-def int2bytes(i, bl=None):
-    if bl is None:
-        bl = byte_length(i)
-    return i.to_bytes(bl, "big")
-
-
-def getbytes(bits):
-    return int2bytes(int(bits, 2))
-
-
-def _int16unpk(b):
-    return struct.unpack("!H", b)[0]
-
-
-def mask(data, mask):
-    r = bytearray()
-    for ix, i in enumerate(data):
-        b = mask[ix % len(mask)]
-        r.append(b ^ i)
-    return r
-
-
-class _Debugger:
-    """
-    Debugger
-    """
-
-    def __init__(self, do_debug=None):
-        self._debug = do_debug
-
-    def frame_class_name(self, fr):
-        args, _, _, value_dict = inspect.getargvalues(fr)
-        if len(args) and args[0] == "self":
-            instance = value_dict.get("self", None)
-            if instance:
-                return getattr(getattr(instance, "__class__", None), "__name__", None)
-        return None
-
-    @property
-    def debug(self):
-        if self._debug is not None:
-            return self._debug
-        return getattr(builtins, "debug", False)
-
-    def debugging_method(self, suffix):
-        def decorated(a, data):
-            if a.debug:
-                fr = inspect.currentframe().f_back
-                class_name = a.frame_class_name(fr)
-
-                sys.stdout.write(self)
-                if class_name:
-                    sys.stdout.write(class_name)
-                sys.stdout.write("[")
-                sys.stdout.write(fr.f_code.co_name)
-                sys.stdout.write("]")
-                sys.stdout.write("(")
-                sys.stdout.write(str(inspect.getframeinfo(fr).lineno))
-                sys.stdout.write(")")
-                sys.stdout.write(": ")
-                sys.stdout.write(data)
-                sys.stdout.write(suffix)
-                sys.stdout.write("\r\n")
-
-        return decorated
-
-    info = debugging_method("\033[94;1m[INFO]", "\033[0m")
-    ok = debugging_method("\033[92;1m[OK]", "\033[0m")
-    warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
-    error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
 
 
 def _binappendstr(s):
@@ -1289,7 +1187,7 @@ def create_connection(host, port, last_response, http_version, scheme):
     elif scheme == "https":
         context = ssl._create_default_https_context()
         context.set_alpn_protocols([ALPN_PROTOCOLS[http_version]])
-        conn = context.wrap_socket(conn)
+        conn = context.wrap_socket(conn, server_hostname=host)
     debugger.info(f"http version: {http_version}")
     is_http2 = http_version == "2"
     keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
@@ -1491,7 +1389,7 @@ def _raw_request(
     base_dir=HTTPY_DIR / "default",
     http_version="2",
     disabled_headers=[],
-    force_keep_alive=True,
+    force_keep_alive=False,
 ):
     method = method.upper()
     cache = Cache(base_dir / "sites")
@@ -1694,7 +1592,7 @@ def request(
     http_version=None,
     disabled_headers=[],
     blocking=True,
-    force_keep_alive=True,
+    force_keep_alive=False,
 ):
     """
     Performs request.
@@ -1866,6 +1764,11 @@ def request(
     return resp
 
 
+debugger = _Debugger(False)
+
+from .debugger import _Debugger
+import warnings
+import base64
 def generate_websocket_key():
     """Generates a websocket key"""
     return base64.b64encode(
@@ -2229,9 +2132,6 @@ class WebSocket:
         raise TypeError(
             f"Unsupported data type : {type(data).__name__!r}, please use either str or bytes."
         )
-
-
-debugger = _Debugger(False)
 
 
 proto_versions = {"1.1": HTTP11(), "2": HTTP2()}

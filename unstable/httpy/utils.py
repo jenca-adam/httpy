@@ -1,4 +1,71 @@
-import gzip, zlib, io
+import gzip, zlib, io, struct
+from .patterns import URLPATTERN
+
+__all__ = [
+    "_mk2l",
+    "get_host",
+    "capitalize",
+    "byte_length",
+    "mkbits",
+    "int2bytes",
+    "getbytes",
+    "_int16unpk",
+    "mask",
+    "force_string",
+    "force_bytes",
+    "_find",
+    "CaseInsensitiveDict",
+    "decode_content",
+]
+
+
+def _mk2l(original):
+    if len(original) == 1:
+        original.append(True)
+    return original
+
+
+def get_host(url):
+    return URLPATTERN.search(url).group("host")
+
+
+def capitalize(string):
+    return string[0].upper() + string[1:]
+
+
+def byte_length(i):
+    if i == 0:
+        return 1
+    return math.ceil(i.bit_length() / 8)
+
+
+def mkbits(i, pad=None):
+    j = bin(i)[2:]
+    if pad is None:
+        return j
+    return "0" * (pad - len(j)) + j
+
+
+def int2bytes(i, bl=None):
+    if bl is None:
+        bl = byte_length(i)
+    return i.to_bytes(bl, "big")
+
+
+def getbytes(bits):
+    return int2bytes(int(bits, 2))
+
+
+def _int16unpk(b):
+    return struct.unpack("!H", b)[0]
+
+
+def mask(data, mask):
+    r = bytearray()
+    for ix, i in enumerate(data):
+        b = mask[ix % len(mask)]
+        r.append(b ^ i)
+    return r
 
 
 def force_string(anything):
