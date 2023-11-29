@@ -1,3 +1,6 @@
+import gzip, zlib, io
+
+
 def force_string(anything):
     """Converts string or bytes to string"""
     try:
@@ -79,3 +82,44 @@ class CaseInsensitiveDict(dict):
 
     def items(self):
         return self.original.items()
+
+
+def chain_functions(funs):
+    """Chains functions . Called by get_encoding_chain()"""
+
+    def chained(r):
+        for fun in funs:
+            r = fun(r)
+        return r
+
+    return chained
+
+
+def get_encoding_chain(encoding):
+    """Gets decoding chain from Content-Encoding"""
+    encds = encoding.split(",")
+    return chain_functions(encodings[enc.strip()] for enc in encds)
+
+
+def decode_content(content, encoding):
+    """Decodes content with get_encoding_chain()"""
+    try:
+        return get_encoding_chain(encoding)(content)
+    except:
+        raise
+        return content
+
+
+def _gzip_decompress(data):
+    return gzip.GzipFile(fileobj=io.BytesIO(data)).read()
+
+
+def _zlib_decompress(data):
+    return zlib.decompress(data, -zlib.MAX_WBITS)
+
+
+encodings = {
+    "identity": lambda x: x,
+    "deflate": _zlib_decompress,
+    "gzip": _gzip_decompress,
+}

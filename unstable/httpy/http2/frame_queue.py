@@ -51,7 +51,6 @@ class FrameQueue:
                 else:
                     token = stream.StreamToken.FRAME_TOKEN
                 target_stream.framequeue.put(stream.StreamEvent(token, f))
-                target_stream.framequeue.put(stream.StreamEvent(token, f))
                 if f.frame_type == frame.HTTP2_FRAME_DATA:
                     target_stream.window.received_frame(f.payload_length)
                     increment = target_stream.window.process(f.payload_length)

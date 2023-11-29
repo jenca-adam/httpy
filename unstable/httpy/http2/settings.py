@@ -3,7 +3,7 @@ DEFAULT_SETTINGS = {
     "enable_push": 0,  # disable by default
     "max_concurrent_streams": 128,
     "initial_window_size": 65535,
-    "max_frame_size": 16384,
+    "max_frame_size": 524280,
 }
 
 

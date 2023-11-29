@@ -5,18 +5,18 @@ import time
 import uuid
 import hashlib
 
-conn = http2.Connection("google.com", 443, httpy.httpy._Debugger(True))
+conn = http2.Connection("www.google.com", 443, httpy.httpy._Debugger(True))
 
 print(conn.start())
 print(conn.settings.server_settings)
 while True:
     sender = http2.proto.HTTP2Sender(
         b"GET",
-        {uuid.uuid4().hex: uuid.uuid4().hex},
+        {uuid.uuid4().hex: uuid.uuid4().hex, "accept-encoding":"gzip"},
         b"",
         "/",
         httpy.httpy._Debugger(True),
-        "google.com",
+        "www.google.com",
     )
     streamid = sender.send(conn)
     print("STREAMID", streamid)

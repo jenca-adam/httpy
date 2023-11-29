@@ -15,15 +15,7 @@ from .window import Window
 PREFACE = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
 
 
-def start_connection(host, port, client_settings, alpn=True):
-    context = ssl.create_default_context()
-    if alpn:
-        context.set_alpn_protocols(["h2"])
-    sock = context.wrap_socket(
-        socket.create_connection((host, port)), server_hostname=host
-    )
-    if sock.selected_alpn_protocol() != "h2":
-        return False, sock, None
+def initiate_connection(sock, client_settings):
     sf = sock.makefile("b")
     sock.send(PREFACE)
     sett = frame.parse(sf).dict
@@ -33,8 +25,20 @@ def start_connection(host, port, client_settings, alpn=True):
     return True, sock, server_settings
 
 
+def start_connection(host, port, client_settings, alpn=True):
+    context = ssl.create_default_context()
+    if alpn:
+        context.set_alpn_protocols(["h2"])
+    sock = context.wrap_socket(
+        socket.create_connection((host, port)), server_hostname=host
+    )
+    if sock.selected_alpn_protocol() != "h2":
+        return False, sock, None
+    return initiate_connection(sock, client_settings)
+
+
 class Connection:
-    def __init__(self, host, port, debugger, client_settings={}):
+    def __init__(self, host, port, debugger, client_settings={}, sock=None):
         self.debugger = debugger
         self.host = host
         self.port = port
@@ -43,7 +47,7 @@ class Connection:
         self.streams = Streams(128, self)
         self.highest_id = -1
         self.sockfile = None
-        self.sock = None
+        self.sock = sock
         self.server_settings = None
         self.open = False
         self.out_queue = queue.Queue()
@@ -52,6 +56,7 @@ class Connection:
         self.processing_queue = FrameQueue(self.streams, self)
         self.window = None
         self.outbound_window = None
+        self.from_socket = self.sock is not None
 
     def _after_start(fun):
         def _wrapper(self, *args, **kwargs):
@@ -60,6 +65,10 @@ class Connection:
             return fun(self, *args, **kwargs)
 
         return _wrapper
+
+    @classmethod
+    def from_socket(self, socket, debugger, host, port, client_settings={}):
+        return self(host, port, debugger, client_settings, socket)
 
     @property
     def _sock(self):
@@ -76,13 +85,21 @@ class Connection:
         return s
 
     def start(self):
-        self.debugger.info("starting connection")
-        success, self.sock, self.server_settings = start_connection(
-            self.host, self.port, self.settings
-        )
-        if not success:
-            self.debugger.warn("no h2 in ALPN")
-            raise ConnectionError("failed to connect: server does not support http2")
+        if self.from_socket:
+            self.debugger.info("Initiating h2 connection")
+            success, self.sock, self.server_settings = initiate_connection(
+                self.sock, self.settings
+            )
+        else:
+            self.debugger.info("starting connection")
+            success, self.sock, self.server_settings = start_connection(
+                self.host, self.port, self.settings
+            )
+            if not success:
+                self.debugger.warn("no h2 in ALPN")
+                raise ConnectionError(
+                    "failed to connect: server does not support http2"
+                )
         self.debugger.ok("connection started successfully")
         self.open = True
         self.settings = settings.merge_settings(self.server_settings, self.settings)
@@ -157,7 +174,7 @@ class Connection:
         try:
             dt = frame.parse_data(self.sock)
             if dt is None:
-                return self.process_next_frame
+                return self.process_next_frame()
             if dt == frame.ConnectionToken.CONNECTION_CLOSE:
                 return
             *next_frame_data, frame_type = dt

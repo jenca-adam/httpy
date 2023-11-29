@@ -41,6 +41,7 @@ from . import http2
 from .utils import *
 from .errors import *
 from .status import *
+from .alpn import alpn_negotiate
 
 try:
     import chardet  # to detect charsets
@@ -50,7 +51,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "1.8.2"
+VERSION = "2.0.0"
 URLPATTERN = re.compile(
     r"^(?P<scheme>[a-z]+)://(?P<host>[^/:]*)(:(?P<port>(\d+)?))?/?(?P<path>.*)$"
 )
@@ -83,9 +84,9 @@ WEBSOCKET_CLOSE_CODES = {
     1014: "Bad Gateway",
     1015: "TLS handshake",
 }
-
-context = ssl._create_default_https_context()
-context.set_alpn_protocols(["http/1.1"])
+ALPN_PROTOCOLS = {"1.1": "http/1.1", "2": "h2"}
+default_context = ssl._create_default_https_context()
+default_context.set_alpn_protocols(["http/1.1", "h2"])
 schemes = {"http": 80, "https": 443}
 
 
@@ -952,18 +953,18 @@ class PickleFile(dict):
 class Connection:
     """Class for connnections"""
 
-    def __init__(self, sock, timeout=math.inf, max=math.inf, http2=False):
+    def __init__(self, sock, timeout=math.inf, max=math.inf, is_http2=False):
         debugger.info(f"Created new Connection upon {sock}")
         self._sock = sock
         self.timeout = timeout
         self.max = max
-        self.http2 = http2
+        self.is_http2 = is_http2
         self.requests = 0
         self.time_started = time.time()
 
     @property
     def sock(self):
-        if self.http2:
+        if self.is_http2:
             return self._sock
         self.requests += 1
         if self.time_started + self.timeout < time.time():
@@ -986,8 +987,8 @@ class ConnectionPool:
 
     def __setitem__(self, host, connection):
         host, port = host
-        if (connection.http2 and connection._sock.sock.fileno() == -1) or (
-            not connection.http2 and connection._sock.fileno() == -1
+        if (connection.is_http2 and connection._sock.sock.fileno() == -1) or (
+            not connection.is_http2 and connection._sock.fileno() == -1
         ):
             raise ConnectionClosedError("Connection closed by host")
         self.connections[host, port] = connection
@@ -1121,14 +1122,6 @@ def urlencode(data):
     return b"&".join(b"=".join(force_bytes(i) for i in x) for x in data.items())
 
 
-def _gzip_decompress(data):
-    return gzip.GzipFile(fileobj=io.BytesIO(data)).read()
-
-
-def _zlib_decompress(data):
-    return zlib.decompress(data, -zlib.MAX_WBITS)
-
-
 def _generate_boundary():
     return (
         b"--"
@@ -1216,31 +1209,6 @@ def determine_charset(headers):
     return None
 
 
-def chain_functions(funs):
-    """Chains functions . Called by get_encoding_chain()"""
-
-    def chained(r):
-        for fun in funs:
-            r = fun(r)
-        return r
-
-    return chained
-
-
-def get_encoding_chain(encoding):
-    """Gets decoding chain from Content-Encoding"""
-    encds = encoding.split(",")
-    return chain_functions(encodings[enc.strip()] for enc in encds)
-
-
-def decode_content(content, encoding):
-    """Decodes content with get_encoding_chain()"""
-    try:
-        return get_encoding_chain(encoding)(content)
-    except:
-        return content
-
-
 def makehost(host, port):
     """Creates hostname from host and port"""
     if int(port) in [443, 80]:
@@ -1284,23 +1252,9 @@ def _debugprint(debug, what, *args, **kwargs):
         print(force_string(what), *args, **kwargs)
 
 
-def create_connection(host, port, last_response, is_http2):
-    keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
-    if (host, port) in pool:
-        if pool[host, port][1] == is_http2:
-            debugger.info("Connection already in pool")
-            try:
-                return pool[host, port][0], True
-            except ConnectionClosedError:
-                debugger.warn("Connection already expired.")
+def _create_connection_and_handle_errors(address):
     try:
-        if is_http2:
-            debugger.info("instancing http2 connection")
-            conn = http2.Connection(host, port, debugger)
-            conn.start()
-        else:
-            debugger.info("calling socket.create_connection")
-            conn = socket.create_connection((host, port))
+        return socket.create_connection(address)
     except socket.gaierror as gai:
         debugger.warn("gaierror raised, getting errno")
         # Get errno using ctypes, check for  -2(-3)
@@ -1311,7 +1265,7 @@ def create_connection(host, port, last_response, is_http2):
 
         else:
             # PyPy
-            errno = None
+            errno = -72
             if str(gai).startswith("[Errno -2]") or str(gai).startswith("[Errno -3]"):
                 errno = 2
         if errno in [2, 3]:
@@ -1319,8 +1273,39 @@ def create_connection(host, port, last_response, is_http2):
 
         debugger.warn(f"unknown errno {errno!r}")
         raise  # Added in 1.1.1
+
+
+def create_connection(host, port, last_response, http_version, scheme):
+    debugger.info("calling socket.create_connection")
+    conn = _create_connection_and_handle_errors((host, port))
+    if scheme == "http":
+        http_version = "1.1"
+    if http_version is None:
+        debugger.info("running ALPN")
+        protocol, conn = alpn_negotiate(conn, default_context, host)  # wraps socket too
+        http_version = {"http/1.1": "1.1", "h2": "2"}.get(protocol, None)
+        if http_version is None:
+            raise HTTPyError("server doesn't support http")
+    elif scheme == "https":
+        context = ssl._create_default_https_context()
+        context.set_alpn_protocols([ALPN_PROTOCOLS[http_version]])
+        conn = context.wrap_socket(conn)
+    debugger.info(f"http version: {http_version}")
+    is_http2 = http_version == "2"
+    keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
+    if (host, port) in pool:
+        if pool[host, port][1] == is_http2:
+            debugger.info("Connection already in pool")
+            try:
+                return pool[host, port][0], True, http_version
+            except ConnectionClosedError:
+                debugger.warn("Connection already expired.")
+    if is_http2:
+        debugger.info("instancing http2 connection")
+        conn = http2.Connection.from_socket(conn, debugger, host, port)
+        conn.start()
     pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
-    return conn, False
+    return conn, False, http_version
 
 
 def generate_session_id():
@@ -1508,7 +1493,6 @@ def _raw_request(
     disabled_headers=[],
     force_keep_alive=True,
 ):
-    is_http2 = http_version == "2"
     method = method.upper()
     cache = Cache(base_dir / "sites")
     jar = CookieJar(base_dir / "cj")
@@ -1583,13 +1567,13 @@ def _raw_request(
         last_response = history[-1]
     else:
         last_response = Response.plain()
-    sock, from_pool = create_connection(host, port, last_response, is_http2)
+    sock, from_pool, http_version = create_connection(
+        host, port, last_response, http_version, scheme
+    )
+    is_http2 = http_version == "2"
     start_time = time.time()
 
     try:
-        if scheme == "https" and not from_pool and not is_http2:
-            sock = context.wrap_socket(sock, server_hostname=host)
-
         defhdr.update(headers)
         if pure_headers:
             defhdr = headers
@@ -1707,7 +1691,7 @@ def request(
     pure_headers=False,
     enable_cache=True,
     base_dir=HTTPY_DIR / "default",
-    http_version="1.1",
+    http_version=None,
     disabled_headers=[],
     blocking=True,
     force_keep_alive=True,
@@ -1734,9 +1718,9 @@ def request(
     :param throw_on_error: if throw_on_error is ``True`` , StatusError will be raised if server responded with 4xx or 5xx status code.
     :param debug: whether or not shall debug mode be used , defaults to ``False``
     :type debug: ``bool``
-    :param base_dir: HTTPy directory for request, default is ``"~/.cache/httpy/default"``
+    :param base_dir: HTTPy cache directory to use for request, default is ``"~/.cache/httpy/default"``
     :type base_dir: ``pathlib.Path``
-    :param http_version: HTTP version to use, MUST be "1.1" (meant for future implementation of more HTTP versions)
+    :param http_version: HTTP version to use, MUST be "1.1" or "2" or None. If None the HTTP version will be automatically detected via ALPN.
     :param disabled_headers: Disable selected headers.
     :type disabled_headers: ``list``
     :param blocking: If ``False``, request is performed in a separate thread. Defaults to ``True``
@@ -2249,11 +2233,7 @@ class WebSocket:
 
 debugger = _Debugger(False)
 
-encodings = {
-    "identity": lambda x: x,
-    "deflate": _zlib_decompress,
-    "gzip": _gzip_decompress,
-}
+
 proto_versions = {"1.1": HTTP11(), "2": HTTP2()}
 
 jar = CookieJar()

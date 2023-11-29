@@ -1,7 +1,7 @@
 import itertools
 from . import frame
 from httpy.status import status_from_int
-from httpy.utils import CaseInsensitiveDict
+from httpy.utils import CaseInsensitiveDict, decode_content
 
 CONNECTION_SPECIFIC = [
     "connection",
@@ -58,7 +58,7 @@ def serialize_headers(headers, connection, end_stream, max_frame_size):
 
 class HTTP2Headers(CaseInsensitiveDict):
     def __init__(self, headers):
-        self.headers = headers
+        self.headers = dict(filter(lambda x: not x[0].startswith(":"), headers.items()))
         super().__init__(headers)
 
 
@@ -113,7 +113,12 @@ class HTTP2Recver:
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
                 connection.debuger.ok("Response fully received (no body)")
-                return int(headers[":status"]), headers, b"", b""
+                return (
+                    status_from_int(headers[":status"]),
+                    HTTP2Headers(headers),
+                    b"",
+                    b"",
+                )
             if next_frame.end_headers:
                 break
         while True:
@@ -123,9 +128,9 @@ class HTTP2Recver:
             body += next_frame.data
             if next_frame.end_stream:
                 connection.debugger.ok("Response fully received (with body)")
-                return (
-                    status_from_int(int(headers[":status"])),
-                    HTTP2Headers(headers),
-                    body,
-                    body,
-                )
+                break
+        headers_object = HTTP2Headers(headers)
+        content_encoding = headers_object.get("content-encoding", "identity")
+        decoded_body = decode_content(body, content_encoding)
+
+        return status_from_int(headers[":status"]), headers_object, decoded_body, body

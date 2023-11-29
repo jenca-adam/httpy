@@ -315,4 +315,4 @@ class Status(int):
 
 
 def status_from_int(stat):
-    return Status(str(stat).encode())
+    return Status(" ".join((str(stat), STATUS_CODES[str(stat)]["message"])).encode())
