@@ -4,6 +4,7 @@ import queue
 import threading
 import traceback
 import sys
+import asyncio
 
 from httpy.utils import force_bytes
 from . import hpack, frame, stream, settings
@@ -26,7 +27,8 @@ def initiate_connection(sock, client_settings):
 
 
 def start_connection(host, port, client_settings, alpn=True):
-    context = ssl.create_default_context()
+    context = ssl._create_default_https_context()
+    context.check_hostname = False
     if alpn:
         context.set_alpn_protocols(["h2"])
     sock = context.wrap_socket(
@@ -35,6 +37,30 @@ def start_connection(host, port, client_settings, alpn=True):
     if sock.selected_alpn_protocol() != "h2":
         return False, sock, None
     return initiate_connection(sock, client_settings)
+
+
+async def async_initiate_connection(reader, writer, client_settings):
+    writer.write(PREFACE)
+    await writer.drain()
+    settings = await frame.async_parse(reader).dict
+    server_settings = settings.Settings(sett, {}, sett)
+    writer.write(frame.SettingsFrame(ack=True).tobytes())
+    writer.write(frame.SettingsFrame(**client_settings.settings).tobytes())
+    await writer.drain()
+    return True, (reader, writer), server_settings
+
+
+async def async_start_connection(host, port, client_settings, alpn=True):
+    context = ssl._create_default_https_context()
+    context.check_hostname = False
+    if alpn:
+        context.set_alpn_protocols(["h2"])
+    reader, writer = asyncio.open_connection(
+        host, port, ssl=context, server_hostname=host
+    )
+    if reader._transport._ssl_protocol._sslobj.selected_alpn_protocol():
+        return False, (reader, writer), None
+    return await async_initiate_connection(reader, writer, client_settings)
 
 
 class Connection:
@@ -56,6 +82,7 @@ class Connection:
         self.processing_queue = FrameQueue(self.streams, self)
         self.window = None
         self.outbound_window = None
+        self._processing = False
         self.from_socket = self.sock is not None
 
     def _after_start(fun):
@@ -169,8 +196,9 @@ class Connection:
 
     @_after_start
     def process_next_frame(self):
-        if self.sockfile.closed or (not self.open):
+        if self._processing or self.sockfile.closed or (not self.open):
             return
+        self._processing = True
         try:
             dt = frame.parse_data(self.sock)
             if dt is None:
@@ -208,6 +236,8 @@ class Connection:
         except Exception as e:
             self.close_on_internal_error(e)
             self.processing_queue.throw(sys.exc_info())
+        finally:
+            self._processing = False
 
     @_after_start
     def _send_frame(self, frame):
@@ -228,6 +258,213 @@ class Connection:
         err = False
         while not self.errorqueue.empty():
             next_error = self.errorqueue.get()
+            if next_error == 0:
+                continue
+            else:
+                err = True
+            sys.stderr.write(traceback.format_tb(next_error))
+        if err:
+            raise err
+
+
+class AsyncConnection:
+    def __init__(self, host, port, debugger, client_settings={}, sock=None):
+        self.debugger = debugger
+        self.host = host
+        self.port = port
+        self.client_hpack, self.server_hpack = hpack.HPACK(), hpack.HPACK()
+        self.settings = settings.Settings(client_settings, client_settings, {})
+        self.streams = Streams(128, self)
+        self.highest_id = -1
+        self.sockfile = None
+        self.sock = sock
+        self.server_settings = None
+        self.open = False
+        self.out_queue = asyncio.Queue()
+        self.errorqueue = asyncio.Queue()
+        self._last_stream_id = 0x0
+        self.processing_queue = AsyncFrameQueue(self.streams, self)
+        self.window = None
+        self.outbound_window = None
+        self._processing = False
+        self.from_socket = self.sock is not None
+
+    def _after_start(fun):
+        def _wrapper(self, *args, **kwargs):
+            if not self.open:
+                raise RuntimeError(f"Can't run {fun.__name__}: Connection closed.")
+            return fun(self, *args, **kwargs)
+
+        return _wrapper
+
+    @classmethod
+    def from_socket(self, socket, debugger, host, port, client_settings={}):
+        return self(host, port, debugger, client_settings, socket)
+
+    @property
+    def _sock(self):
+        return self.sock
+
+    @_after_start
+    def create_stream(self):
+        new_stream_id = self.highest_id + 2
+        self.highest_id += 2
+        s = stream.AsyncStream(
+            new_stream_id, self, self.settings["initial_window_size"]
+        )
+        self.debugger.info(f"starting a new stream {new_stream_id}")
+        self.streams.add_stream(s)
+        self.processing_queue.add_stream(s)
+        return s
+
+    async def start(self):
+        if self.from_socket:
+            self.debugger.info("Initiating h2 connection")
+            success, self.sock, self.server_settings = await async_initiate_connection(
+                self.sock, self.settings
+            )
+        else:
+            self.debugger.info("starting connection")
+            success, self.sock, self.server_settings = await async_start_connection(
+                self.host, self.port, self.settings
+            )
+            if not success:
+                self.debugger.warn("no h2 in ALPN")
+                raise ConnectionError(
+                    "failed to connect: server does not support http2"
+                )
+        self.debugger.ok("connection started successfully")
+        self.open = True
+        self.settings = settings.merge_settings(self.server_settings, self.settings)
+        self.sockfile = self.sock.makefile("b")
+        self.window = Window(self.settings["initial_window_size"])
+        self.outbound_window = self.settings.server_settings["initial_window_size"]
+
+        return True, self.sock
+
+    def update_server_settings(self, new_settings):
+        new_window_size = new_settings.get("max_window_size", None)  # can't use walrus
+        if new_window_size is not None:
+            self.window.update_max_window_size(new_window_size)
+
+        self.server_settings.settings.update(new_settings)
+        self.settings = settings.merge_settings(new_settings, self.settings)
+
+    def update_settings(self, **new_settings):
+        self.settings = settings.merge_client_settings(new_settings, self.settings)
+        self.send_frame(frame.SettingsFrame(**new_settings))
+
+    @_after_start
+    async def close(self, errcode=0x0, debug=b""):
+        self.debugger.info("Sending GOAWAY frame")
+        fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
+        try:
+            await self._send_frame(fr)
+        except ssl.SSLError:
+            pass
+        await self.close_socket()
+
+    @_after_start
+    async def close_on_error(self, err):
+        self.debugger.error(f"{err}: closing connection")
+        await self.close(err.code, str(err))
+
+    @_after_start
+    async def close_socket(self, quit=True):
+        self.debugger.info("Closing socket")
+        await self.sock.close()
+        self.open = False
+        await self.out_queue.put(None)
+        self.processing_queue.quit()
+
+    @_after_start
+    def close_on_internal_error(self, e):
+        self.close_on_error(INTERNAL_ERROR(f"{e.__class__.__name__}: {str(e)}"))
+
+    @_after_start
+    async def _send_frame_from_queue(self, out_queue, errq):
+        try:
+            next_frame = await self.out_queue.get()
+
+            if next_frame is None:
+                return
+            if next_frame.frame_type == frame.HTTP2_FRAME_DATA:
+                self.outbound_window -= frame.payload_length
+            self.debugger.info(f"to send: {next_frame}")
+            await self._send_frame(next_frame)
+
+            ## No error?
+            errq.put(0)
+        except Exception as e:
+            errq.put(e)
+
+    @_after_start
+    async def process_next_frame(self):
+        reader, writer = self.sock
+        if self._processing or (not self.open):
+            return
+        self._processing = True
+        try:
+            dt = await frame.async_parse_data(reader)
+            if dt is None:
+                return await self.process_next_frame()
+            if dt == frame.ConnectionToken.CONNECTION_CLOSE:
+                return
+            *next_frame_data, frame_type = dt
+            self._last_stream_id = next_frame_data[2]
+
+            if frame_type == frame.HTTP2_FRAME_DATA:
+                self.debugger.info("Received a data frame, updating window")
+                self.window.received_frame(next_frame_data[1])
+                window_increment = self.window.process(next_frame_data[1])
+                window_update = (
+                    None
+                    if window_increment == 0
+                    else frame.WindowUpdateFrame(window_increment, streamid=0x0)
+                )
+            else:
+                window_update = None
+            next_frame = frame._parse(next_frame_data + [frame_type])
+            self.debugger.info(f"Received: {next_frame}")
+            to_send = (await self.processing_queue.process(next_frame), window_update)
+            for fr in to_send:
+                if fr is not None:
+                    self.debugger.info(f"Sending back: {fr}")
+                    await self.send_frame(fr)
+
+        except HTTP2Error as e:
+            if e.send:
+                await self.close_on_error(e)
+            else:
+                await self.close_socket(False)
+            self.processing_queue.throw(sys.exc_info())
+        except Exception as e:
+            await self.close_on_internal_error(e)
+            self.processing_queue.throw(sys.exc_info())
+        finally:
+            self._processing = False
+
+    @_after_start
+    async def _send_frame(self, frame):
+        reader, writer = self.sock
+        writer.write(frame.tobytes())
+        await writer.drain()
+
+    @_after_start
+    async def _recv_frame(self):
+        reader, writer = self.sock
+        return await frame.async_parse(reader)
+
+    @_after_start
+    async def send_frame(self, frame):
+        if frame.payload_length > self.outbound_window:
+            raise Refuse("refusing to send the frame: not enough space in window")
+        self.debugger.info(f"sending {frame}")
+        self.out_queue.put(frame)
+        await self._send_frame_from_queue(self.out_queue, self.errorqueue)
+        err = False
+        while not self.errorqueue.empty():
+            next_error = await self.errorqueue.get()
             if next_error == 0:
                 continue
             else:

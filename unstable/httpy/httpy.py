@@ -44,6 +44,7 @@ from .status import *
 from .alpn import alpn_negotiate
 from .patterns import *
 from .debugger import _Debugger
+
 try:
     import chardet  # to detect charsets
 except ImportError:
@@ -83,8 +84,6 @@ ALPN_PROTOCOLS = {"1.1": "http/1.1", "2": "h2"}
 default_context = ssl._create_default_https_context()
 default_context.set_alpn_protocols(["http/1.1", "h2"])
 schemes = {"http": 80, "https": 443}
-
-
 
 
 def _binappendstr(s):
@@ -650,7 +649,7 @@ class Response:
         return f"<Response {self.method} [{self.status} {self.reason}] ({self.url})>"
 
 
-def _async_rr(q, url, **kwargs):
+def _threaded_rr(q, url, **kwargs):
     resp = request(url, **kwargs)
     q.put(resp)
 
@@ -662,7 +661,7 @@ class PendingRequest:
         self.queue = queue.Queue()
         self.__data_loaded = None
         self.thread = threading.Thread(
-            target=(lambda: _async_rr(self.queue, url, **kwargs))
+            target=(lambda: _threaded_rr(self.queue, url, **kwargs))
         )
         self.thread.start()
 
@@ -1766,9 +1765,7 @@ def request(
 
 debugger = _Debugger(False)
 
-from .debugger import _Debugger
-import warnings
-import base64
+
 def generate_websocket_key():
     """Generates a websocket key"""
     return base64.b64encode(

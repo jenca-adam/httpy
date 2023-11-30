@@ -57,13 +57,34 @@ def throw(frame, send=False, conn=None):
             else f"Received a GOAWAY frame: {ERRORS[errcode][0]}: {frame.debugdata}"
         )
     else:
-        message = (
-            "Stream closed"
-            if frame.frame_type == HTTP2_FRAME_RST_STREAM
-            else "Connection closed: {frame.debugdata}"
-        )
         if frame.frame_type == HTTP2_FRAME_GOAWAY and conn is not None:
             conn.close_socket()
+
+        return
+    try:
+        err = ERROR_INSTANCES[errcode](message, send=send)
+    except IndexError:
+        raise ERROR_INSTANCES[1](
+            "unknown error code", errtype=ErrType.CONNECTION
+        )  # Protocol error
+    raise err
+
+
+async def async_throw(frame, send=False, conn=None):
+    from .frame import HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY
+
+    errcode = frame.errcode
+    if frame.frame_type not in (HTTP2_FRAME_RST_STREAM, HTTP2_FRAME_GOAWAY):
+        return
+    if errcode > 0:
+        message = (
+            f"Received a RST_STREAM frame: {ERRORS[errcode][0]}"
+            if frame.frame_type == HTTP2_FRAME_RST_STREAM
+            else f"Received a GOAWAY frame: {ERRORS[errcode][0]}: {frame.debugdata}"
+        )
+    else:
+        if frame.frame_type == HTTP2_FRAME_GOAWAY and conn is not None:
+            await conn.close_socket()
 
         return
     try:

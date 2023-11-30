@@ -2,6 +2,7 @@ import inspect
 import builtins
 import sys
 
+
 class _Debugger:
     """
     Debugger
@@ -50,4 +51,3 @@ class _Debugger:
     ok = debugging_method("\033[92;1m[OK]", "\033[0m")
     warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
     error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
-

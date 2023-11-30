@@ -134,3 +134,77 @@ class HTTP2Recver:
         decoded_body = decode_content(body, content_encoding)
 
         return status_from_int(headers[":status"]), headers_object, decoded_body, body
+
+
+class AsyncHTTP2Sender:
+    def __init__(self, method, headers, body, path, debugger, authority=None, *_, **__):
+        self.method = method
+        self.debugger = debugger
+        self.path = path
+
+        self.authority = authority or headers.get("Host", headers.get("host"))
+        self.body = body
+        self.headers = headers
+        self.headers.update(
+            {
+                ":path": path,
+                ":method": method,
+                ":authority": self.authority,
+                ":scheme": "https",
+            }
+        )
+
+    async def send(self, connection):
+        """Creates a new stream and sends the frames to it"""
+        self.data_frames = serialize_data(
+            self.body, connection.settings.server_settings["max_frame_size"]
+        )
+        self.header_frames = serialize_headers(
+            self.headers,
+            connection,
+            not self.body,
+            connection.settings.server_settings["max_frame_size"],
+        )
+
+        stream = connection.create_stream()
+        for frm in itertools.chain(self.header_frames, self.data_frames):
+            await stream.send_frame(frm)
+        return stream.streamid
+
+
+class AsyncHTTP2Recver:
+    async def __call__(self, connection, streamid, *_, **__):
+        headers = {}
+        body = b""
+        stream = connection.streams[streamid]
+        connection.debugger.info(f"Listening on {streamid}")
+        while True:
+            next_frame = await stream.recv_frame(
+                frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
+                enable_closed=True,
+            )
+            # next_frame.decode_headers(connection.hpack)
+            headers.update(next_frame.decoded_headers)
+            if next_frame.end_stream:
+                connection.debuger.ok("Response fully received (no body)")
+                return (
+                    status_from_int(headers[":status"]),
+                    HTTP2Headers(headers),
+                    b"",
+                    b"",
+                )
+            if next_frame.end_headers:
+                break
+        while True:
+            next_frame = await stream.recv_frame(
+                frame_filter=[frame.DataFrame], enable_closed=True
+            )
+            body += next_frame.data
+            if next_frame.end_stream:
+                connection.debugger.ok("Response fully received (with body)")
+                break
+        headers_object = HTTP2Headers(headers)
+        content_encoding = headers_object.get("content-encoding", "identity")
+        decoded_body = decode_content(body, content_encoding)
+
+        return status_from_int(headers[":status"]), headers_object, decoded_body, body

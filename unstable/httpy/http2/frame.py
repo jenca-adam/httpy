@@ -596,6 +596,33 @@ def _parse(data):
     )
 
 
+async def async_parse_data(reader):
+    if reader.closed:
+        return ConnectionToken.CONNECTION_CLOSE
+    try:
+        payload_length, *_ = struct.unpack("!I", b"\x00" + await reader.read(3))
+        frame_type, *_ = struct.unpack("!B", await reader.read(1))
+        flags, *_ = struct.unpack("!B", await reader.read(1))
+        streamid, *_ = struct.unpack("!I", await reader.read(4))
+        payload = stream.read(payload_length)
+    except (struct.error, SSLError, asyncio.IncompleteReadError):  # read fail
+        raise
+        return ConnectionToken.CONNECTION_CLOSE
+    except ValueError as e:
+        if "PyMemoryView_FromBuffer(): info->buf must not be NULL" in str(
+            e
+        ):  # read fail #2
+            return ConnectionToken.CONNECTION_CLOSE
+        raise
+    if frame_type not in FRAMES:
+        return None
+    return payload, payload_length, streamid, flags, frame_type
+
+
+async def async_parse(reader):
+    return _parse(await async_parse_data(reader))
+
+
 FRAMES = {
     HTTP2_FRAME_DATA: DataFrame,
     HTTP2_FRAME_HEADERS: HeadersFrame,
