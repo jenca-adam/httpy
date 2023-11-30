@@ -9,7 +9,7 @@ import asyncio
 from httpy.utils import force_bytes
 from . import hpack, frame, stream, settings
 from .streams import Streams
-from .frame_queue import FrameQueue
+from .frame_queue import FrameQueue, AsyncFrameQueue
 from .error import *
 from .window import Window
 
@@ -27,7 +27,7 @@ def initiate_connection(sock, client_settings):
 
 
 def start_connection(host, port, client_settings, alpn=True):
-    context = ssl._create_default_https_context()
+    context = ssl.create_default_https_context()
     context.check_hostname = False
     if alpn:
         context.set_alpn_protocols(["h2"])
@@ -42,7 +42,7 @@ def start_connection(host, port, client_settings, alpn=True):
 async def async_initiate_connection(reader, writer, client_settings):
     writer.write(PREFACE)
     await writer.drain()
-    settings = await frame.async_parse(reader).dict
+    sett = (await frame.async_parse(reader)).dict
     server_settings = settings.Settings(sett, {}, sett)
     writer.write(frame.SettingsFrame(ack=True).tobytes())
     writer.write(frame.SettingsFrame(**client_settings.settings).tobytes())
@@ -55,10 +55,10 @@ async def async_start_connection(host, port, client_settings, alpn=True):
     context.check_hostname = False
     if alpn:
         context.set_alpn_protocols(["h2"])
-    reader, writer = asyncio.open_connection(
+    reader, writer = await asyncio.open_connection(
         host, port, ssl=context, server_hostname=host
     )
-    if reader._transport._ssl_protocol._sslobj.selected_alpn_protocol():
+    if reader._transport._ssl_protocol._sslobj.selected_alpn_protocol() != "h2":
         return False, (reader, writer), None
     return await async_initiate_connection(reader, writer, client_settings)
 
@@ -336,7 +336,6 @@ class AsyncConnection:
         self.debugger.ok("connection started successfully")
         self.open = True
         self.settings = settings.merge_settings(self.server_settings, self.settings)
-        self.sockfile = self.sock.makefile("b")
         self.window = Window(self.settings["initial_window_size"])
         self.outbound_window = self.settings.server_settings["initial_window_size"]
 
@@ -394,9 +393,9 @@ class AsyncConnection:
             await self._send_frame(next_frame)
 
             ## No error?
-            errq.put(0)
+            await errq.put(0)
         except Exception as e:
-            errq.put(e)
+            await errq.put(e)
 
     @_after_start
     async def process_next_frame(self):
@@ -460,7 +459,7 @@ class AsyncConnection:
         if frame.payload_length > self.outbound_window:
             raise Refuse("refusing to send the frame: not enough space in window")
         self.debugger.info(f"sending {frame}")
-        self.out_queue.put(frame)
+        await self.out_queue.put(frame)
         await self._send_frame_from_queue(self.out_queue, self.errorqueue)
         err = False
         while not self.errorqueue.empty():

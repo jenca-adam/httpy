@@ -176,7 +176,7 @@ class AsyncStream:
         self.outbound_window = conn.settings.server_settings["initial_window_size"]
         self.framequeue = queue.Queue()
 
-    def error_check(self, f):
+    async def error_check(self, f):
         err = None
         if self.state == StreamState.IDLE:
             if f.frame_type != frame.HTTP2_FRAME_PRIORITY:

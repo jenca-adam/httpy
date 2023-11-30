@@ -2,6 +2,7 @@ import io
 import struct
 import enum
 import socket
+import asyncio
 
 from .error import *
 from .priority import StreamDependency
@@ -597,14 +598,12 @@ def _parse(data):
 
 
 async def async_parse_data(reader):
-    if reader.closed:
-        return ConnectionToken.CONNECTION_CLOSE
     try:
         payload_length, *_ = struct.unpack("!I", b"\x00" + await reader.read(3))
         frame_type, *_ = struct.unpack("!B", await reader.read(1))
         flags, *_ = struct.unpack("!B", await reader.read(1))
         streamid, *_ = struct.unpack("!I", await reader.read(4))
-        payload = stream.read(payload_length)
+        payload = await reader.read(payload_length)
     except (struct.error, SSLError, asyncio.IncompleteReadError):  # read fail
         raise
         return ConnectionToken.CONNECTION_CLOSE
