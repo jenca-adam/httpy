@@ -47,7 +47,8 @@ def test_httpy_nonblocking():
         i.wait()
         assert i.response.ok
 
-
+def test_httpy_auth_basic():
+    httpy.request("http://httpbin.org/basic-auth/root/pass/",auth=("root","pass"))
 def test_httpy_redirect_limit():
     with pytest.raises(httpy.TooManyRedirectsError):
         httpy.request("http://httpbin.org/redirect/8", redirlimit=5, enable_cache=False)

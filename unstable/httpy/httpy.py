@@ -899,7 +899,7 @@ class ConnectionPool:
             sock = self.connections[host].sock
         except ConnectionError:
             raise
-        if is_closed(connection):
+        if is_closed(self.connections[host]):
             del self.connections[host]
             raise ConnectionClosedError("Connection closed by host")
         return sock, self.connections[host].is_http2
@@ -1156,7 +1156,7 @@ def _debugprint(debug, what, *args, **kwargs):
         print(force_string(what), *args, **kwargs)
 
 
-def create_connection(host, port, last_response, http_version, scheme):
+def create_connection(host, port, last_response, http_version, scheme, do_keep_alive):
     debugger.info("calling socket.create_connection")
     conn = _create_connection_and_handle_errors((host, port))
     if scheme == "http":
@@ -1185,7 +1185,10 @@ def create_connection(host, port, last_response, http_version, scheme):
         debugger.info("instancing http2 connection")
         conn = http2.Connection.from_socket(conn, debugger, host, port)
         conn.start()
-    pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
+    if do_keep_alive:
+        debugger.info("adding to pool")
+        pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
+    print(pool.connections)
     return conn, False, http_version
 
 
@@ -1539,6 +1542,7 @@ async def _async_raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
+        print("ADD")
         pool.connections[
             host, port
         ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
@@ -1652,18 +1656,19 @@ def _raw_request(
     debugger.info("Removing disabled headers")
     _dictrm(defhdr, disabled_headers)
     debugger.info("Establishing connection ")
+    print(defhdr)
     if history:
         last_response = history[-1]
     else:
         last_response = Response.plain()
+    print(defhdr.get("connection")=="keep-alive")
     sock, from_pool, http_version = create_connection(
-        host, port, last_response, http_version, scheme
+        host, port, last_response, http_version, scheme, defhdr.get("connection")=="keep-alive"
     )
     is_http2 = http_version == "2"
     start_time = time.time()
 
     try:
-        defhdr.update(headers)
         if pure_headers:
             defhdr = headers
         if cf:
@@ -1728,6 +1733,8 @@ def _raw_request(
         pool.connections[
             host, port
         ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+    elif (host,port) in pool.connections:
+        del pool[host,port]
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -1919,7 +1926,7 @@ def request(
                 disabled_headers=disabled_headers,
                 blocking=blocking,
             )
-    if resp.status == 401:
+    if resp.status == 401 and auth:
         if last_status == 401:
             debugger.warn("Invalid credentials!")
             return resp
