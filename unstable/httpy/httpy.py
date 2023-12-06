@@ -1188,7 +1188,6 @@ def create_connection(host, port, last_response, http_version, scheme, do_keep_a
     if do_keep_alive:
         debugger.info("adding to pool")
         pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
-    print(pool.connections)
     return conn, False, http_version
 
 
@@ -1489,7 +1488,6 @@ async def _async_raw_request(
         if cf:
             cf.add_header(defhdr)
         proto = _HTTP2Async()
-        print(proto)
         ret_val = await proto.send_request(sock, method, defhdr, data, path, debugger)
         args = (sock, ret_val)
 
@@ -1542,7 +1540,6 @@ async def _async_raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        print("ADD")
         pool.connections[
             host, port
         ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
@@ -1582,7 +1579,7 @@ def _raw_request(
     last_status=-1,
     pure_headers=False,
     base_dir=HTTPY_DIR / "default",
-    http_version="2",
+    http_version=None,
     disabled_headers=[],
     force_keep_alive=False,
 ):
@@ -1656,12 +1653,10 @@ def _raw_request(
     debugger.info("Removing disabled headers")
     _dictrm(defhdr, disabled_headers)
     debugger.info("Establishing connection ")
-    print(defhdr)
     if history:
         last_response = history[-1]
     else:
         last_response = Response.plain()
-    print(defhdr.get("connection")=="keep-alive")
     sock, from_pool, http_version = create_connection(
         host, port, last_response, http_version, scheme, defhdr.get("connection")=="keep-alive"
     )
@@ -1899,11 +1894,13 @@ def request(
             force_keep_alive=force_keep_alive,
         )
 
-        debugger.info("Updating permanent redirects data file")
-        permanent_redirects[host, port, "/" + path] = resp.headers["Location"]
     if 300 <= resp.status < 400:
         debugger.info("Redirect")
-        if len(history) == redirlimit:
+        if resp.status==301:
+            debugger.info("Updating permanent redirects data file")
+            permanent_redirects[host, port, "/" + path] = resp.headers["Location"]
+
+        if len(history) >= redirlimit:
             debugger.warn("too many redirects!")
             raise TooManyRedirectsError("too many redirects")
         if "Location" in resp.headers:
@@ -1931,6 +1928,175 @@ def request(
             debugger.warn("Invalid credentials!")
             return resp
         return request(
+            url,
+            auth=auth,
+            redirlimit=redirlimit,
+            timeout=timeout,
+            body=body,
+            headers=headers,
+            content_type=content_type,
+            history=resp.history,
+            debug=debug,
+            pure_headers=pure_headers,
+            enable_cache=enable_cache,
+            base_dir=base_dir,
+            http_version=http_version,
+            blocking=blocking,
+        )
+    if 399 < resp.status < 500:
+        debugger.warn(f"Client error : {resp.status} {resp.reason}")
+        if throw_on_error:
+            raise ClientError(
+                f"\n{resp.status} {resp.reason}: {resp.status.description}"
+            )
+    if 499 < resp.status < 600:
+        if throw_on_error:
+            raise ServerError(
+                f"\n{resp.status} {resp.reason}: {resp.status.description}"
+            )
+        debugger.warn(f"Server error : {resp.status} {resp.reason}")
+    if resp.ok:
+        debugger.ok(f"Response OK")
+    return resp
+async def async_request(
+    url,
+    *,
+    method="GET",
+    headers={},
+    body=b"",
+    auth=(),
+    redirlimit=20,
+    content_type=None,
+    timeout=30,
+    history=None,
+    throw_on_error=False,
+    debug=False,
+    pure_headers=False,
+    enable_cache=True,
+    base_dir=HTTPY_DIR / "default",
+    http_version="2",
+    disabled_headers=[],
+    force_keep_alive=False,
+):
+    """
+    Performs an asynchronous request.
+    `Note:` all arguments but ``url`` are keyword-only
+
+    :param url: url to request
+    :type url: ``str``
+    :param method: method to use, defaults to ``"GET"``
+    :type method: ``str``
+    :param headers: headers to add to the request, defaults to ``{}``
+    :type headers: ``dict``
+    :param body: request body, can be ``bytes`` , ``str`` or  ``dict``, defaults to ``b''``
+    :param auth: credentials to use (``{"username":"password"}``), defaults to ``{}``
+    :type auth: ``tuple``
+    :param redirlimit: redirect limit . If number of redirects has reached ``redirlimit``, ``TooManyRedirectsError`` will be raised. Defaults to ``20``.
+    :type redirlimit: ``int``
+    :param content_type: content type of request body, defaults to ``None``
+    :param timeout: request timeout, defaults to ``30``
+    :type timeout: ``int``
+    :param history: request history, defaults to ``None``
+    :param throw_on_error: if throw_on_error is ``True`` , StatusError will be raised if server responded with 4xx or 5xx status code.
+    :param debug: whether or not shall debug mode be used , defaults to ``False``
+    :type debug: ``bool``
+    :param base_dir: HTTPy cache directory to use for request, default is ``"~/.cache/httpy/default"``
+    :type base_dir: ``pathlib.Path``
+    :param http_version: HTTP version to use, MUST be "2". For async http/1 requests use aiohttp or the `blocking` parameter of request() for requests in a separate thread
+    :param disabled_headers: Disable selected headers.
+    :type disabled_headers: ``list``
+    :param force_keep_alive: If ``False``, request will be retried upon connection being closed if the connection is in keep-alive mode.
+    :type force_keep_alive:``bool``
+    """
+    global debugger
+    debugger = _Debugger(debug)
+    builtins.debugger = _Debugger(debug)
+    debugger.info("request() called.")
+    debugger.info(f"Requesting {url}")
+    history = [] if history is None else history
+    debugger.info(f"Parsing url")
+    result = URLPATTERN.search(url)
+    if result is None:
+        debugger.warn(f"Invalid url {url} ")
+        raise ValueError("Invalid URL")
+    groups = result.groupdict()
+    if "path" not in groups:
+        groups["path"] = "/"
+    scheme = groups["scheme"]
+    path = groups["path"]
+    host = groups["host"]
+
+    if scheme not in schemes:
+        raise ValueError("Invalid scheme")
+    if "port" in groups:
+        port = groups["port"]
+    else:
+        port = schemes[scheme]
+    if port is None:
+        port = schemes[scheme]
+
+    if history:
+        last_status = history[-1].status
+    else:
+        last_status = -1
+    debugger.info(f"Sending request to {host} port {port} via {scheme}")
+    resp = await _async_raw_request(
+        host,
+        port,
+        "/" + path,
+        scheme,
+        url=url,
+        history=history,
+        auth=auth,
+        data=body,
+        method=method,
+        headers=headers,
+        timeout=timeout,
+        content_type=content_type,
+        debug=debug,
+        last_status=last_status,
+        pure_headers=pure_headers,
+        enable_cache=enable_cache,
+        base_dir=base_dir,
+        http_version=http_version,
+        disabled_headers=disabled_headers,
+        force_keep_alive=force_keep_alive,
+    )
+    if 300 <= resp.status < 400:
+        debugger.info("Redirect")
+        if resp.status==301:
+            debugger.info("Updating permanent redirects data file")
+            permanent_redirects[host, port, "/" + path] = resp.headers["Location"]
+
+
+        if len(history) >= redirlimit:
+            debugger.warn("too many redirects!")
+            raise TooManyRedirectsError("too many redirects")
+        if "Location" in resp.headers:
+            return await async_request(
+                absolute_path(
+                    resp.headers["Location"], url, scheme, makehost(host, port)
+                ),
+                auth=auth,
+                redirlimit=redirlimit,
+                timeout=timeout,
+                body=body,
+                headers=headers,
+                content_type=content_type,
+                history=resp.history,
+                debug=debug,
+                pure_headers=pure_headers,
+                enable_cache=enable_cache,
+                base_dir=base_dir,
+                http_version=http_version,
+                disabled_headers=disabled_headers,
+                blocking=blocking,
+            )
+    if resp.status == 401 and auth:
+        if last_status == 401:
+            debugger.warn("Invalid credentials!")
+            return resp
+        return await async_request(
             url,
             auth=auth,
             redirlimit=redirlimit,

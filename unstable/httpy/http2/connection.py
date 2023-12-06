@@ -389,7 +389,9 @@ class AsyncConnection:
         self.debugger.info("Closing socket")
         reader, writer = self.sock
         writer.close()
+        await writer.wait_closed()
         self.open = False
+
         await self.out_queue.put(None)
         await self.processing_queue.quit()
 

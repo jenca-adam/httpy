@@ -188,7 +188,6 @@ class AsyncHTTP2Recver:
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
                 enable_closed=True,
             )
-            print("r", next_frame)
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
             # next_frame.decode_headers(connection.hpack)
@@ -207,7 +206,6 @@ class AsyncHTTP2Recver:
             next_frame = await stream.recv_frame(
                 frame_filter=[frame.DataFrame], enable_closed=True
             )
-            print("r", next_frame)
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
             body += next_frame.data

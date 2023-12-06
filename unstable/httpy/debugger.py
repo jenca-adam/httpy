@@ -1,6 +1,10 @@
 import inspect
 import builtins
 import sys
+import os
+
+def get_path():
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 class _Debugger:
@@ -25,19 +29,20 @@ class _Debugger:
             return self._debug
         return getattr(builtins, "debug", False)
 
-    def debugging_method(self, suffix):
+    def debugging_method(prefix, suffix):
         def decorated(a, data):
             if a.debug:
                 fr = inspect.currentframe().f_back
                 class_name = a.frame_class_name(fr)
 
-                sys.stdout.write(self)
+                sys.stdout.write(prefix)
                 if class_name:
                     sys.stdout.write(class_name)
-                sys.stdout.write("[")
+                    sys.stdout.write(".")
                 sys.stdout.write(fr.f_code.co_name)
-                sys.stdout.write("]")
                 sys.stdout.write("(")
+                sys.stdout.write(os.path.relpath(fr.f_code.co_filename,get_path()))
+                sys.stdout.write(':')
                 sys.stdout.write(str(inspect.getframeinfo(fr).lineno))
                 sys.stdout.write(")")
                 sys.stdout.write(": ")
@@ -47,7 +52,7 @@ class _Debugger:
 
         return decorated
 
-    info = debugging_method("\033[94;1m[INFO]", "\033[0m")
-    ok = debugging_method("\033[92;1m[OK]", "\033[0m")
-    warn = debugging_method("\033[93;1m[WARN]", "\033[0m")
-    error = debugging_method("\033[31;1m[ERROR]", "\033[0m")
+    info = debugging_method("[INFO]", "")
+    ok = debugging_method("[OK]", "")
+    warn = debugging_method("[WARN]", "")
+    error = debugging_method("[ERROR]", "")
