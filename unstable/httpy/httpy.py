@@ -28,7 +28,6 @@ import base64  # for Basic auth
 import email.utils  # to parse date strings
 import datetime  # to parse date strings
 import time  # to measure time
-import ctypes  # to get errno
 import struct  # to pack floats
 import hashlib  # for Digest auth
 import pickle  # to save data
@@ -37,8 +36,10 @@ import queue  # to communicate between threads
 import builtins  # for debugging
 import inspect  # for debugging
 import sys  # for debugging
+import asyncio # for async requests
 from . import http2
 from .utils import *
+from .utils import _create_connection_and_handle_errors,is_closed
 from .errors import *
 from .status import *
 from .alpn import alpn_negotiate
@@ -873,6 +874,9 @@ class Connection:
         return self._sock
 
     def close(self):
+        if asyncio.iscoroutinefunction(self._sock.close):
+            asyncio.get_event_loop().run_until_complete(self._sock.close)
+
         self._sock.close()
 
 
@@ -884,9 +888,7 @@ class ConnectionPool:
 
     def __setitem__(self, host, connection):
         host, port = host
-        if (connection.is_http2 and connection._sock.sock.fileno() == -1) or (
-            not connection.is_http2 and connection._sock.fileno() == -1
-        ):
+        if is_closed(connection):
             raise ConnectionClosedError("Connection closed by host")
         self.connections[host, port] = connection
 
@@ -895,12 +897,7 @@ class ConnectionPool:
             sock = self.connections[host].sock
         except ConnectionError:
             raise
-        if (
-            getattr(
-                sock, "fileno", getattr(getattr(sock, "sock", None), "fileno", None)
-            )()
-            == -1
-        ):
+        if is_closed(connection):
             del self.connections[host]
             raise ConnectionClosedError("Connection closed by host")
         return sock, self.connections[host].is_http2
@@ -928,6 +925,12 @@ class ProtoVersion:
     def recv_response(self, sock, *args):
         return self.recver(sock, *args)
 
+class AsyncProtoVersion:
+    async def send_request(self, sock, *args):
+        return await self.sender(*args).send(sock)
+
+    async def recv_response(self, sock, *args):
+        return await self.recver(sock, *args)
 
 class KeepAlive:
     """Class for parsing keep-alive headers"""
@@ -1149,27 +1152,6 @@ def _debugprint(debug, what, *args, **kwargs):
         print(force_string(what), *args, **kwargs)
 
 
-def _create_connection_and_handle_errors(address):
-    try:
-        return socket.create_connection(address)
-    except socket.gaierror as gai:
-        debugger.warn("gaierror raised, getting errno")
-        # Get errno using ctypes, check for  -2(-3)
-        if hasattr(ctypes, "pythonapi"):
-            # Not PyPy
-
-            errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
-
-        else:
-            # PyPy
-            errno = -72
-            if str(gai).startswith("[Errno -2]") or str(gai).startswith("[Errno -3]"):
-                errno = 2
-        if errno in [2, 3]:
-            raise ServerError(f"could not find server {host!r}")
-
-        debugger.warn(f"unknown errno {errno!r}")
-        raise  # Added in 1.1.1
 
 
 def create_connection(host, port, last_response, http_version, scheme):
@@ -1201,6 +1183,23 @@ def create_connection(host, port, last_response, http_version, scheme):
         debugger.info("instancing http2 connection")
         conn = http2.Connection.from_socket(conn, debugger, host, port)
         conn.start()
+    pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
+    return conn, False, http_version
+async def create_async_h2_connection(host, port, last_response, http_version, scheme):
+    is_http2 = http_version == "2"
+    if not is_http2:
+        raise ValueError("can't create an async connection with http/1.1 (use aiohttp for this)")
+    keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
+    if (host, port) in pool:
+        if pool[host, port][1] == is_http2:
+            debugger.info("Connection already in pool")
+            try:
+                return pool[host, port][0], True, http_version
+            except ConnectionClosedError:
+                debugger.warn("Connection already expired.")
+    debugger.info("instancing http2 connection")
+    conn = http2.connection.AsyncConnection(host,port,debugger)
+    await conn.start()
     pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
     return conn, False, http_version
 
@@ -1326,6 +1325,10 @@ class HTTP2(ProtoVersion):
     sender = http2.proto.HTTP2Sender
     recver = http2.proto.HTTP2Recver()
 
+class _HTTP2Async(AsyncProtoVersion):
+    version = "2"
+    sender = http2.proto.AsyncHTTP2Sender
+    recver = http2.proto.AsyncHTTP2Recver()
 
 class Session:
     def __init__(self, session_id=None, path=None, name=None):
@@ -1367,6 +1370,185 @@ def _dictrm(d, l):
         else:
             debugger.warn(f"dictrm {i} failed: not in dict")
 
+async def _async_raw_request(
+    host,
+    port,
+    path,
+    scheme,
+    url="",
+    method="GET",
+    data=b"",
+    content_type=None,
+    timeout=32,
+    enable_cache=True,
+    headers={},
+    auth={},
+    history=[],
+    debug=False,
+    last_status=-1,
+    pure_headers=False,
+    base_dir=HTTPY_DIR / "default",
+    http_version="2",
+    disabled_headers=[],
+    force_keep_alive=False,
+):
+    method = method.upper()
+    cache = Cache(base_dir / "sites")
+    jar = CookieJar(base_dir / "cj")
+    permanent_redirects = PickleFile(base_dir / "permredir.pickle")
+    headers = {capitalize(key): value for key, value in headers.items()}
+    debug = debug or getattr(builtins, "debug", False)
+    debugger.info("_async_raw_request() called.")
+    if (host, port, path) in permanent_redirects:
+        nep = permanent_redirects[host, port, path]
+        debugger.info(f"Permanently redirecting from {path} to {nep}")
+        return Response(
+            method,
+            Status(b"301 Moved Permanently"),
+            {"Location": nep},
+            "",
+            history,
+            url,
+            True,
+            b"",
+            0,
+        )
+
+    if method not in HTTPY_CACHEABLE_METHODS:
+        enable_cache = False
+    if enable_cache:
+        debugger.info("Accessing cache.")
+        cf = cache[deslash(url), method]
+        if cf and not cf.expired:
+            debugger.info("Not expired data in cache, loading from cache")
+            return Response.cacheload(cf)
+        else:
+            debugger.info("No data in cache.")
+    else:
+        debugger.info("Cache disabled.")
+        cf = None
+    defhdr = CaseInsensitiveDict(
+        {
+            "Accept-Encoding": "gzip, deflate, identity",
+            "Host": makehost(host, port),
+            "User-Agent": "httpy/" + VERSION,
+            "Connection": "keep-alive",
+        }
+    )
+    if data:
+        debugger.info("Adding form data")
+        data, cth = encode_form_data(data, content_type)
+        defhdr.update(cth)
+    if auth and last_status == 401:
+        debugger.info("adding authentication")
+        last_response = history[-1]
+        if "www-authenticate" not in last_response.headers:
+            raise AuthError(
+                "Server responded with 401 Unauthorized without WWW-Authenticate header."
+            )
+        wau = WWW_Authenticate(last_response.headers["www-authenticate"])
+
+        defhdr["Authorization"] = wau.encode_password(
+            *auth, path, method, last_response._original, last_response.content
+        )
+    cookies = jar.get_cookies(makehost(host, port), scheme, path)
+    if cookies:
+        defhdr["Cookie"] = []
+        for c in cookies:
+            defhdr["Cookie"].append(c.name + "=" + c.value)
+
+    defhdr.update(headers)
+    debugger.info("Removing disabled headers")
+    _dictrm(defhdr, disabled_headers)
+    debugger.info("Establishing connection ")
+    if history:
+        last_response = history[-1]
+    else:
+        last_response = Response.plain()
+    sock, from_pool, http_version = await create_async_h2_connection(
+        host, port, last_response, http_version, scheme
+    )
+    start_time = time.time()
+
+    try:
+        defhdr.update(headers)
+        if pure_headers:
+            defhdr = headers
+        if cf:
+            cf.add_header(defhdr)
+        proto = _HTTP2Async()
+        print(proto)
+        ret_val = await proto.send_request(sock, method, defhdr, data, path, debugger)
+        args = (sock, ret_val) 
+
+        status, resp_headers, decoded_body, body = await proto.recv_response(*args)
+
+        if status == 304:
+            return Response.cacheload(cf)
+        if "set-cookie" in resp_headers:
+            cookie = resp_headers["set-cookie"]
+
+            h = makehost(host, port)
+            if h not in jar:
+                jar.add_domain(h)
+            domain = jar[h][0]
+            if isinstance(cookie, list):
+                for c in cookie:
+                    domain.add_cookie(c)
+            else:
+                domain.add_cookie(cookie)
+    except DeadConnectionError:
+        debugger.error("Connection closed")
+        del pool[host, port]
+        if not force_keep_alive:
+            debugger.info("Keep-Alive not forced, retrying")
+            return _raw_request(
+                host,
+                port,
+                path,
+                scheme,
+                url,
+                method,
+                data,
+                content_type,
+                timeout,
+                enable_cache,
+                headers,
+                auth,
+                history,
+                debug,
+                last_status,
+                pure_headers,
+                base_dir,
+                http_version,
+                disabled_headers,
+                force_keep_alive,
+            )
+        raise
+    except:
+        del pool[host, port]
+        raise
+
+    if headers.get("connection") == "keep-alive":
+        pool.connections[
+            host, port
+        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    return Response(
+        method,
+        status,
+        resp_headers,
+        decoded_body,
+        history,
+        url,
+        False,
+        body,
+        elapsed_time,
+        enable_cache,
+        base_dir,
+    )
 
 def _raw_request(
     host,
@@ -1482,7 +1664,7 @@ def _raw_request(
         if is_http2:
             args = (sock, ret_val)
         else:
-            args = (sock, debug, timeout)
+            args = (sock, dbg, timeout)
 
         status, resp_headers, decoded_body, body = proto.recv_response(*args)
 

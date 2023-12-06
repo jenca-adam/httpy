@@ -12,5 +12,5 @@ async def do_request():
     rd = await http2.proto.AsyncHTTP2Recver()(connection,streamid)
     print(rd)
 async def main():
-    await do_request() 
+    await asyncio.gather(*(do_request() for _ in range(50)))
 asyncio.run(main())

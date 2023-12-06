@@ -1,6 +1,6 @@
-import gzip, zlib, io, struct
+import gzip, zlib, io, struct, ctypes, socket
 from .patterns import URLPATTERN
-
+from .errors import *
 __all__ = [
     "_mk2l",
     "get_host",
@@ -19,6 +19,12 @@ __all__ = [
 ]
 
 
+def is_closed(connection):
+    sock = (connection.is_http2 and connection._sock.sock) or (not connection.is_http2 and connection._sock) #ugly trick
+    if isinstance(sock,tuple): # async
+        _,writer=sock
+        return writer.is_closing()
+    return sock.fileno()==-1
 def _mk2l(original):
     if len(original) == 1:
         original.append(True)
@@ -151,6 +157,25 @@ class CaseInsensitiveDict(dict):
         return self.original.items()
 
 
+def _create_connection_and_handle_errors(address):
+    try:
+        return socket.create_connection(address)
+    except socket.gaierror as gai:
+        # Get errno using ctypes, check for  -2(-3)
+        if hasattr(ctypes, "pythonapi"):
+            # Not PyPy
+
+            errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
+
+        else:
+            # PyPy
+            errno = -72
+            if str(gai).startswith("[Errno -2]") or str(gai).startswith("[Errno -3]"):
+                errno = 2
+        if errno in [2, 3]:
+            raise ServerError(f"could not find server {host!r}")
+
+        raise  # Added in 1.1.1
 def chain_functions(funs):
     """Chains functions . Called by get_encoding_chain()"""
 

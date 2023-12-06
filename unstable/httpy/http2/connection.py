@@ -6,7 +6,7 @@ import traceback
 import sys
 import asyncio
 
-from httpy.utils import force_bytes
+from httpy.utils import force_bytes, _create_connection_and_handle_errors
 from . import hpack, frame, stream, settings
 from .streams import Streams
 from .frame_queue import FrameQueue, AsyncFrameQueue
@@ -32,7 +32,7 @@ def start_connection(host, port, client_settings, alpn=True):
     if alpn:
         context.set_alpn_protocols(["h2"])
     sock = context.wrap_socket(
-        socket.create_connection((host, port)), server_hostname=host
+        _create_connection_and_handle_errors((host,port)), server_hostname=host
     )
     if sock.selected_alpn_protocol() != "h2":
         return False, sock, None
@@ -55,9 +55,26 @@ async def async_start_connection(host, port, client_settings, alpn=True):
     context.check_hostname = False
     if alpn:
         context.set_alpn_protocols(["h2"])
-    reader, writer = await asyncio.open_connection(
-        host, port, ssl=context, server_hostname=host
-    )
+    try:
+        reader, writer = await asyncio.open_connection(
+            host, port, ssl=context, server_hostname=host
+        )
+    except socket.gaierror as gai:
+        #ctrl-c ctrl-v
+        debugger.warn("gaierror raised, getting errno")
+        if hasattr(ctypes, "pythonapi"):
+
+            errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
+
+        else:
+            errno = -72
+            if str(gai).startswith("[Errno -2]") or str(gai).startswith("[Errno -3]"):
+                errno = 2
+        if errno in [2, 3]:
+            raise ServerError(f"could not find server {host!r}")
+
+        debugger.warn(f"unknown errno {errno!r}")
+        raise 
     if reader._transport._ssl_protocol._sslobj.selected_alpn_protocol() != "h2":
         return False, (reader, writer), None
     return await async_initiate_connection(reader, writer, client_settings)
