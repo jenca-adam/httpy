@@ -174,7 +174,7 @@ class AsyncStream:
         self.state = StreamState.IDLE
         self.window = Window(window_size)
         self.outbound_window = conn.settings.server_settings["initial_window_size"]
-        self.framequeue = queue.Queue()
+        self.framequeue = asyncio.Queue()
 
     async def error_check(self, f):
         err = None
@@ -236,7 +236,9 @@ class AsyncStream:
         if not enable_closed and self.state == StreamState.CLOSED:
             raise Refuse("refusing to receive a frame on a closed stream")
         while self.framequeue.empty():
-            await self.conn.process_next_frame()
+            token = await self.conn.process_next_frame()
+            if token is not None:
+                return token
         n = await self.framequeue.get()
         if n.token == StreamToken.CLOSE_TOKEN:
             self.state = StreamState.CLOSED

@@ -27,7 +27,7 @@ def initiate_connection(sock, client_settings):
 
 
 def start_connection(host, port, client_settings, alpn=True):
-    context = ssl.create_default_https_context()
+    context = ssl._create_default_https_context()
     context.check_hostname = False
     if alpn:
         context.set_alpn_protocols(["h2"])
@@ -371,14 +371,15 @@ class AsyncConnection:
     @_after_start
     async def close_socket(self, quit=True):
         self.debugger.info("Closing socket")
-        await self.sock.close()
+        reader,writer=self.sock
+        writer.close()
         self.open = False
         await self.out_queue.put(None)
-        self.processing_queue.quit()
+        await self.processing_queue.quit()
 
     @_after_start
-    def close_on_internal_error(self, e):
-        self.close_on_error(INTERNAL_ERROR(f"{e.__class__.__name__}: {str(e)}"))
+    async def close_on_internal_error(self, e):
+        await self.close_on_error(INTERNAL_ERROR(f"{e.__class__.__name__}: {str(e)}"))
 
     @_after_start
     async def _send_frame_from_queue(self, out_queue, errq):
@@ -408,7 +409,7 @@ class AsyncConnection:
             if dt is None:
                 return await self.process_next_frame()
             if dt == frame.ConnectionToken.CONNECTION_CLOSE:
-                return
+                return dt
             *next_frame_data, frame_type = dt
             self._last_stream_id = next_frame_data[2]
 
@@ -436,10 +437,10 @@ class AsyncConnection:
                 await self.close_on_error(e)
             else:
                 await self.close_socket(False)
-            self.processing_queue.throw(sys.exc_info())
+            await self.processing_queue.throw(sys.exc_info())
         except Exception as e:
             await self.close_on_internal_error(e)
-            self.processing_queue.throw(sys.exc_info())
+            await self.processing_queue.throw(sys.exc_info())
         finally:
             self._processing = False
 
