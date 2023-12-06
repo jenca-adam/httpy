@@ -1477,7 +1477,8 @@ def _raw_request(
         if cf:
             cf.add_header(defhdr)
         proto = proto_versions[http_version]
-        ret_val = proto.send_request(sock, method, defhdr, data, path, debug)
+        dbg = debugger if is_http2 else debug
+        ret_val = proto.send_request(sock, method, defhdr, data, path, dbg)
         if is_http2:
             args = (sock, ret_val)
         else:
