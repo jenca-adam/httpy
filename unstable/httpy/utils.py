@@ -1,6 +1,7 @@
 import gzip, zlib, io, struct, ctypes, socket
 from .patterns import URLPATTERN
 from .errors import *
+
 __all__ = [
     "_mk2l",
     "get_host",
@@ -20,11 +21,15 @@ __all__ = [
 
 
 def is_closed(connection):
-    sock = (connection.is_http2 and connection._sock.sock) or (not connection.is_http2 and connection._sock) #ugly trick
-    if isinstance(sock,tuple): # async
-        _,writer=sock
+    sock = (connection.is_http2 and connection._sock.sock) or (
+        not connection.is_http2 and connection._sock
+    )  # ugly trick
+    if isinstance(sock, tuple):  # async
+        _, writer = sock
         return writer.is_closing()
-    return sock.fileno()==-1
+    return sock.fileno() == -1
+
+
 def _mk2l(original):
     if len(original) == 1:
         original.append(True)
@@ -176,6 +181,8 @@ def _create_connection_and_handle_errors(address):
             raise ServerError(f"could not find server {host!r}")
 
         raise  # Added in 1.1.1
+
+
 def chain_functions(funs):
     """Chains functions . Called by get_encoding_chain()"""
 

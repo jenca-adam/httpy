@@ -36,10 +36,10 @@ import queue  # to communicate between threads
 import builtins  # for debugging
 import inspect  # for debugging
 import sys  # for debugging
-import asyncio # for async requests
+import asyncio  # for async requests
 from . import http2
 from .utils import *
-from .utils import _create_connection_and_handle_errors,is_closed
+from .utils import _create_connection_and_handle_errors, is_closed
 from .errors import *
 from .status import *
 from .alpn import alpn_negotiate
@@ -874,7 +874,7 @@ class Connection:
         return self._sock
 
     def close(self):
-        cl=self._sock.close()
+        cl = self._sock.close()
         if asyncio.iscoroutine(cl):
             try:
                 asyncio.new_event_loop().run_until_complete(cl)
@@ -927,12 +927,14 @@ class ProtoVersion:
     def recv_response(self, sock, *args):
         return self.recver(sock, *args)
 
+
 class AsyncProtoVersion:
     async def send_request(self, sock, *args):
         return await self.sender(*args).send(sock)
 
     async def recv_response(self, sock, *args):
         return await self.recver(sock, *args)
+
 
 class KeepAlive:
     """Class for parsing keep-alive headers"""
@@ -1154,8 +1156,6 @@ def _debugprint(debug, what, *args, **kwargs):
         print(force_string(what), *args, **kwargs)
 
 
-
-
 def create_connection(host, port, last_response, http_version, scheme):
     debugger.info("calling socket.create_connection")
     conn = _create_connection_and_handle_errors((host, port))
@@ -1187,10 +1187,14 @@ def create_connection(host, port, last_response, http_version, scheme):
         conn.start()
     pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
     return conn, False, http_version
+
+
 async def create_async_h2_connection(host, port, last_response, http_version, scheme):
     is_http2 = http_version == "2"
     if not is_http2:
-        raise ValueError("can't create an async connection with http/1.1 (use aiohttp for this)")
+        raise ValueError(
+            "can't create an async connection with http/1.1 (use aiohttp for this)"
+        )
     keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
     if (host, port) in pool:
         if pool[host, port][1] == is_http2:
@@ -1200,7 +1204,7 @@ async def create_async_h2_connection(host, port, last_response, http_version, sc
             except ConnectionClosedError:
                 debugger.warn("Connection already expired.")
     debugger.info("instancing http2 connection")
-    conn = http2.connection.AsyncConnection(host,port,debugger)
+    conn = http2.connection.AsyncConnection(host, port, debugger)
     await conn.start()
     pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
     return conn, False, http_version
@@ -1327,10 +1331,12 @@ class HTTP2(ProtoVersion):
     sender = http2.proto.HTTP2Sender
     recver = http2.proto.HTTP2Recver()
 
+
 class _HTTP2Async(AsyncProtoVersion):
     version = "2"
     sender = http2.proto.AsyncHTTP2Sender
     recver = http2.proto.AsyncHTTP2Recver()
+
 
 class Session:
     def __init__(self, session_id=None, path=None, name=None):
@@ -1371,6 +1377,7 @@ def _dictrm(d, l):
             del d[i]
         else:
             debugger.warn(f"dictrm {i} failed: not in dict")
+
 
 async def _async_raw_request(
     host,
@@ -1481,7 +1488,7 @@ async def _async_raw_request(
         proto = _HTTP2Async()
         print(proto)
         ret_val = await proto.send_request(sock, method, defhdr, data, path, debugger)
-        args = (sock, ret_val) 
+        args = (sock, ret_val)
 
         status, resp_headers, decoded_body, body = await proto.recv_response(*args)
 
@@ -1551,6 +1558,7 @@ async def _async_raw_request(
         enable_cache,
         base_dir,
     )
+
 
 def _raw_request(
     host,

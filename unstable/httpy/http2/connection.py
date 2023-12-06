@@ -32,7 +32,7 @@ def start_connection(host, port, client_settings, alpn=True):
     if alpn:
         context.set_alpn_protocols(["h2"])
     sock = context.wrap_socket(
-        _create_connection_and_handle_errors((host,port)), server_hostname=host
+        _create_connection_and_handle_errors((host, port)), server_hostname=host
     )
     if sock.selected_alpn_protocol() != "h2":
         return False, sock, None
@@ -60,10 +60,9 @@ async def async_start_connection(host, port, client_settings, alpn=True):
             host, port, ssl=context, server_hostname=host
         )
     except socket.gaierror as gai:
-        #ctrl-c ctrl-v
+        # ctrl-c ctrl-v
         debugger.warn("gaierror raised, getting errno")
         if hasattr(ctypes, "pythonapi"):
-
             errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
 
         else:
@@ -74,7 +73,7 @@ async def async_start_connection(host, port, client_settings, alpn=True):
             raise ServerError(f"could not find server {host!r}")
 
         debugger.warn(f"unknown errno {errno!r}")
-        raise 
+        raise
     if reader._transport._ssl_protocol._sslobj.selected_alpn_protocol() != "h2":
         return False, (reader, writer), None
     return await async_initiate_connection(reader, writer, client_settings)
@@ -388,7 +387,7 @@ class AsyncConnection:
     @_after_start
     async def close_socket(self, quit=True):
         self.debugger.info("Closing socket")
-        reader,writer=self.sock
+        reader, writer = self.sock
         writer.close()
         self.open = False
         await self.out_queue.put(None)

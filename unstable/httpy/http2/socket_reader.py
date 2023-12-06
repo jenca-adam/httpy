@@ -16,7 +16,3 @@ class SocketReader:
     @property
     def closed(self):
         return self.sock.fileno() == -1
-
-
-
-

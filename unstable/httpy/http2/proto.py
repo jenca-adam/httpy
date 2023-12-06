@@ -3,6 +3,7 @@ from . import frame
 from httpy.status import status_from_int
 from httpy.utils import CaseInsensitiveDict, decode_content
 from httpy.errors import ConnectionClosedError
+
 CONNECTION_SPECIFIC = [
     "connection",
     "proxy-connection",
@@ -110,7 +111,7 @@ class HTTP2Recver:
                 enable_closed=True,
             )
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
-                raise ConnectionClosedError 
+                raise ConnectionClosedError
             # next_frame.decode_headers(connection.hpack)
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
@@ -187,7 +188,7 @@ class AsyncHTTP2Recver:
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
                 enable_closed=True,
             )
-            print("r",next_frame)
+            print("r", next_frame)
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
             # next_frame.decode_headers(connection.hpack)
@@ -206,7 +207,7 @@ class AsyncHTTP2Recver:
             next_frame = await stream.recv_frame(
                 frame_filter=[frame.DataFrame], enable_closed=True
             )
-            print("r",next_frame)
+            print("r", next_frame)
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
             body += next_frame.data

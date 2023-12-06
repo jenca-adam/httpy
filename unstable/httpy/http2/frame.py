@@ -604,7 +604,12 @@ async def async_parse_data(reader):
         flags, *_ = struct.unpack("!B", await reader.readexactly(1))
         streamid, *_ = struct.unpack("!I", await reader.readexactly(4))
         payload = await reader.readexactly(payload_length)
-    except (struct.error, SSLError, asyncio.IncompleteReadError, asyncio.exceptions.CancelledError):  # read fail
+    except (
+        struct.error,
+        SSLError,
+        asyncio.IncompleteReadError,
+        asyncio.exceptions.CancelledError,
+    ):  # read fail
         return ConnectionToken.CONNECTION_CLOSE
     except ValueError as e:
         if "PyMemoryView_FromBuffer(): info->buf must not be NULL" in str(
