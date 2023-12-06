@@ -874,10 +874,12 @@ class Connection:
         return self._sock
 
     def close(self):
-        if asyncio.iscoroutinefunction(self._sock.close):
-            asyncio.get_event_loop().run_until_complete(self._sock.close)
-
-        self._sock.close()
+        cl=self._sock.close()
+        if asyncio.iscoroutine(cl):
+            try:
+                asyncio.new_event_loop().run_until_complete(cl)
+            except RuntimeError:
+                pass
 
 
 class ConnectionPool:
