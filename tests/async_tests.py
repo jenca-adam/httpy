@@ -15,11 +15,11 @@ async def do_request():
     )
     streamid = await sender.send(connection)
     rd = await http2.proto.AsyncHTTP2Recver()(connection, streamid)
-    print(rd)
+    return (rd)
 
 
 async def main():
     await do_request()
 
 
-asyncio.run(main())
+asyncio.run(print(main()))

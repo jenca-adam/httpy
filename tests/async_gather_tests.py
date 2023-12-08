@@ -5,7 +5,6 @@ import asyncio
 
 
 async def do_request():
-    print("run")
     connection = http2.connection.AsyncConnection(
         "www.google.com", 443, _Debugger(True)
     )
@@ -15,11 +14,11 @@ async def do_request():
     )
     streamid = await sender.send(connection)
     rd = await http2.proto.AsyncHTTP2Recver()(connection, streamid)
-    print(rd)
+    return rd
 
 
-async def main():
-    await asyncio.gather(*(do_request() for _ in range(50)))
+async def test():
+    return await asyncio.gather(*(do_request() for _ in range(50)))
 
-
-asyncio.run(main())
+if __name__=="__main__":
+    print(asyncio.run(test()))

@@ -12,6 +12,6 @@ def main():
     )
     streamid = sender.send(connection)
     rd = http2.proto.HTTP2Recver()(connection, streamid)
-
-
-main()
+    return rd
+if __name__=="__main__":
+    print(main())
