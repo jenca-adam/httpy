@@ -228,6 +228,8 @@ class Cache:
     """
 
     def __init__(self, d=HTTPY_DIR / "default" / "sites"):
+        if not os.path.exists(d):
+            os.makedirs(d)
         self.dir = d
         self.files = [CacheFile(os.path.join(d, i)) for i in os.listdir(d)]
 
@@ -521,6 +523,19 @@ class Headers(CaseInsensitiveDict):
     def __setitem__(self, item, value):
         raise NotImplementedError
 
+class Request:
+    def __init__(self, url, headers, method, socket, cache):
+        self.url=url
+        self.headers=headers
+        self.socket=socket
+        self.cache=cache
+
+    def perform(self):
+        return request(self.url,headers=self.headers,method=self.method)
+    async def async_perform(self):
+        return await async_request(self.url,headers=self.headers,method=self.method)
+        
+
 
 class Response:
     """
@@ -544,6 +559,9 @@ class Response:
     :ivar charset: Document charset
     :ivar speed: Average download speed in bytes per second
     :type speed: float
+    :param request: The Request object for this response
+    :ivar request: The Request object for this response
+    :type request: Request
     :type method: str
     :ivar method: Indicates HTTP method used to request
     :param original_content: Document content before any Content-Encoding was applied.
@@ -563,6 +581,7 @@ class Response:
         url,
         fromcache,
         original_content,
+        request,
         time_elapsed=math.inf,
         cache=True,
         base_dir=HTTPY_DIR / "default",
@@ -610,6 +629,7 @@ class Response:
             cache_file.url,
             True,
             cache_file.content,
+            Request(cache_file.url,cache_file.headers,cache_file.method,None,True),
             cache_file.time_elapsed,
         )
 
@@ -821,6 +841,9 @@ class NonceCounter:
 class PickleFile(dict):
     def __init__(self, fn):
         self.fn = fn
+        if not os.path.exists(fn):
+            with open(fn, "wb") as f:
+                pickle.dump({},f)
         with open(fn, "rb") as f:
             self._dict = pickle.load(f)
         super().__init__(self._dict)
@@ -1555,6 +1578,7 @@ async def _async_raw_request(
         url,
         False,
         body,
+        Request(url,defhdr
         elapsed_time,
         enable_cache,
         base_dir,

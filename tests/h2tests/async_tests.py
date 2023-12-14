@@ -19,7 +19,7 @@ async def do_request():
 
 
 async def main():
-    await do_request()
+    print(await do_request())
 
 
-asyncio.run(print(main()))
+asyncio.run(main())

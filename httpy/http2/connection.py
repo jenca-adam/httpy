@@ -201,7 +201,7 @@ class Connection:
             if next_frame is None:
                 return
             if next_frame.frame_type == frame.HTTP2_FRAME_DATA:
-                self.outbound_window -= frame.payload_length
+                self.outbound_window -= next_frame.payload_length
             self.debugger.info(f"to send: {next_frame}")
             self._send_frame(next_frame)
 
@@ -277,8 +277,11 @@ class Connection:
             if next_error == 0:
                 continue
             else:
-                err = True
-            sys.stderr.write(traceback.format_tb(next_error))
+                err = next_error
+            try:
+                sys.stderr.write(traceback.format_tb(next_error))
+            except:
+                pass
         if err:
             raise err
 

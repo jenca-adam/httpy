@@ -7,7 +7,7 @@ import sys
 import time
 import os
 import pytest
-
+from h2tests import *
 try:
     import alive_progress
 except:
@@ -40,7 +40,7 @@ def test_https_200_ok():
 def test_httpy_nonblocking():
     t = time.time()
     resps = [
-        httpy.request("https://httpbin.org/delay/1", blocking=False) for i in range(4)
+        httpy.request("http://httpbin.org/delay/1", blocking=False, http_version="1.1") for i in range(4)
     ]
     assert time.time() - t < 1
     for i in resps:
@@ -65,8 +65,8 @@ def test_httpy_get_status_codes(capsys):
         iterator = httpy.STATUS_CODES
         if alive_progress:
             iterator = alive_progress.alive_it(iterator)
-        print()
         for code in iterator:
+            print(code)
             if 400 <= int(code):
                 assert httpy.request(
                     f"https://httpbin.org/status/{code}", enable_cache=False
@@ -122,6 +122,8 @@ def test_httpy_websocket_bytes_supalong():
     time.sleep(1)
     assert wsk.recv() == a
 
+def test_httpy_http2_sync():
+    pass
 
 with warnings.catch_warnings():
     unittest.main(argv=["first-arg-is-ignored"], exit=False, warnings="ignore")

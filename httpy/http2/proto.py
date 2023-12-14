@@ -21,7 +21,7 @@ def serialize_data(data, max_frame_size):
         frames.append(
             frame.DataFrame(
                 to_serialize[:max_frame_size].tobytes(),
-                end_stream=len(to_serialize <= max_frame_size),
+                end_stream=len(to_serialize) <= max_frame_size,
             )
         )
         to_serialize = to_serialize[max_frame_size:]
@@ -115,7 +115,7 @@ class HTTP2Recver:
             # next_frame.decode_headers(connection.hpack)
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
-                connection.debuger.ok("Response fully received (no body)")
+                connection.debugger.ok("Response fully received (no body)")
                 return (
                     status_from_int(headers[":status"]),
                     HTTP2Headers(headers),

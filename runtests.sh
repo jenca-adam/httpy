@@ -1,1 +1,1 @@
-pytest test_httpy.py -sv 
+pytest tests/test_httpy.py -sv 
