@@ -3,6 +3,7 @@ import builtins
 import sys
 import os
 
+
 def get_path():
     return os.path.dirname(os.path.abspath(__file__))
 
@@ -41,8 +42,8 @@ class _Debugger:
                     sys.stdout.write(".")
                 sys.stdout.write(fr.f_code.co_name)
                 sys.stdout.write("(")
-                sys.stdout.write(os.path.relpath(fr.f_code.co_filename,get_path()))
-                sys.stdout.write(':')
+                sys.stdout.write(os.path.relpath(fr.f_code.co_filename, get_path()))
+                sys.stdout.write(":")
                 sys.stdout.write(str(inspect.getframeinfo(fr).lineno))
                 sys.stdout.write(")")
                 sys.stdout.write(": ")

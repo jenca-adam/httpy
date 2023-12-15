@@ -175,31 +175,31 @@ class CacheFile:
             self.method = file.read(method_l).decode()
         cfconfig = ord(file.read(1))
         self.expires = None
-        if cfconfig | 0b1100000 or cfconfig & 0x80:  # wrong static bits, reread
+        if cfconfig|0b1100000 or cfconfig&0x80: # wrong static bits, reread  
             warnings.warn(
                 DeprecationWarning(
                     f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
                 )
             )
-            file.seek(file.tell() - 1)
+            file.seek(file.tell()-1)
 
-        elif cfconfig & 0b1:
+        elif cfconfig&0b1:
             expires_length = ord(file.read(1))
             self.expires = _unpk_float(file.read(expires_length))
-        if cfconfig & 0b10:
-            http_version = cfconfig & 0b11100
+        if cfconfig&0b10:
+            http_version=cfconfig&0b11100
         else:
-            http_version = 1
-        if http_version > 2:
+            http_version=1
+        if http_version>2:
             warnings.warn(
-                UserWarning(
-                    f"cache file {f!r} has an unknown http version, please update httpy to the newest version to gain compatibility with the cache file"
-                )
-            )
+                    UserWarning(
+                        f"cache file {f!r} has an unknown http version, please update httpy to the newest version to gain compatibility with the cache file"
+                        )
+                    )
             # fallback
-            http_version = 2
+            http_version=2
 
-        self.http_version = [None, "1.1", "2"][http_version]
+        self.http_version=[None,"1.1","2"][http_version]
         if self.http_version is None:
             warnings.warn(
                 DeprecationWarning(
@@ -550,28 +550,19 @@ class Headers(CaseInsensitiveDict):
     def __setitem__(self, item, value):
         raise NotImplementedError
 
-
 class Request:
     def __init__(self, url, headers, method, socket, cache, http_version):
-        self.url = url
-        self.headers = headers
-        self.socket = socket
-        self.cache = cache
-        self.method = method
-        self.http_version = http_version
+        self.url=url
+        self.headers=headers
+        self.socket=socket
+        self.cache=cache
+        self.http_version=http_version
 
     def perform(self):
-        return request(
-            self.url,
-            headers=self.headers,
-            method=self.method,
-            http_version=self.http_version,
-        )
-
+        return request(self.url,headers=self.headers,method=self.method,http_version=self.http_version)
     async def async_perform(self):
-        return await async_request(
-            self.url, headers=self.headers, method=self.method
-        )  # omit http version setting as we can't send async request on http<2data += b"\x00"
+        return await async_request(self.url,headers=self.headers,method=self.method)# omit http version setting as we can't send async request on http<2data += b"\x00"
+        
 
 
 class Response:
@@ -650,6 +641,7 @@ class Response:
         ):
             cacheWrite(self, base_dir, expires_override=headers.get("Expires", None))
 
+        
     @classmethod
     def cacheload(self, cache_file):
         """
@@ -667,14 +659,7 @@ class Response:
             cache_file.url,
             True,
             cache_file.content,
-            Request(
-                cache_file.url,
-                cache_file.headers,
-                cache_file.method,
-                None,
-                True,
-                cache_file.http_version,
-            ),
+            Request(cache_file.url,cache_file.headers,cache_file.method,None,True,cache_file.http_version),
             cache_file.time_elapsed,
         )
 
@@ -689,17 +674,7 @@ class Response:
 
     @classmethod
     def plain(self):
-        return Response(
-            "",
-            Status(b"000"),
-            Headers({}),
-            b"",
-            [],
-            "",
-            False,
-            b"",
-            Request("", Headers({}), "", None, False, None),
-        )
+        return Response("", Status(b"000"), Headers({}), b"", [], "", False, b"", Request("",Headers({}),"",None,False,None))
 
     @property
     def charset(self):
@@ -711,7 +686,7 @@ class Response:
     def json(self):
         if (
             self.content_type == "application/json"
-        ):  # the ONLY acceptable MIME, see RFC 4627 ## NOTE: What about the encoding suffix???
+            ):  # the ONLY acceptable MIME, see RFC 4627 ## NOTE: What about the encoding suffix???
             if self._charset is None:
                 JSON = self.content.decode("UTF-8")  #
             else:
@@ -898,7 +873,7 @@ class PickleFile(dict):
         self.fn = fn
         if not os.path.exists(fn):
             with open(fn, "wb") as f:
-                pickle.dump({}, f)
+                pickle.dump({},f)
         with open(fn, "rb") as f:
             self._dict = pickle.load(f)
         super().__init__(self._dict)
@@ -1061,7 +1036,7 @@ def cacheWrite(response, base_dir, expires_override=None):
         expires_tup = email.utils.parsedate(expires_override)
         if expires_tup is None:
             debugger.warn("wrong Expires header format!")
-            has_expires = False
+            has_expires=False 
         else:
             expires = time.mktime(expires_tup)
             if expires < time.time():
@@ -1069,17 +1044,13 @@ def cacheWrite(response, base_dir, expires_override=None):
                 return
             has_expires = True
             expires_bin = _binappendfloat(expires)
-            # data += expires_bin
+            #data += expires_bin
     else:
-        has_expires = False
-    cfconfig = (
-        0b0110010
-        | has_expires
-        | [None, "1.1", "2.0"].index(response.request.http_version) << 2
-    )
-    data += struct.pack("B", cfconfig)
+        has_expires=False
+    cfconfig=0b0110010|has_expires|[None,"1.1","2.0"].index(response.request.http_version)<<2
+    data+=struct.pack("B",cfconfig)
     if has_expires:
-        data += expires_bin
+        data+=expires_bin
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
     data += response.content
@@ -1272,9 +1243,7 @@ def create_connection(host, port, last_response, http_version, scheme, do_keep_a
         conn.start()
     if do_keep_alive:
         debugger.info("adding to pool")
-        pool[host, port] = Connection(
-            conn, keep_alive.timeout, keep_alive.max, is_http2
-        )
+        pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
     return conn, False, http_version
 
 
@@ -1642,7 +1611,7 @@ async def _async_raw_request(
         url,
         False,
         body,
-        Request(url, defhdr, method, sock, False, http_version),
+        Request(url,defhdr,method,sock,False,http_version),
         elapsed_time,
         enable_cache,
         base_dir,
@@ -1686,7 +1655,7 @@ def _raw_request(
             Status(b"301 Moved Permanently"),
             {"Location": nep},
             "",
-            history,  #
+            history,#
             url,
             True,
             b"",
@@ -1695,7 +1664,7 @@ def _raw_request(
 
     socket.setdefaulttimeout(timeout)
     if method not in HTTPY_CACHEABLE_METHODS:
-        enable_cache  # = False
+        enable_cache #= False
     if enable_cache:
         debugger.info("Accessing cache.")
         cf = cache[deslash(url), method]
@@ -1746,12 +1715,7 @@ def _raw_request(
     else:
         last_response = Response.plain()
     sock, from_pool, http_version = create_connection(
-        host,
-        port,
-        last_response,
-        http_version,
-        scheme,
-        defhdr.get("connection") == "keep-alive",
+        host, port, last_response, http_version, scheme, defhdr.get("connection")=="keep-alive"
     )
     is_http2 = http_version == "2"
     start_time = time.time()
@@ -1821,8 +1785,8 @@ def _raw_request(
         pool.connections[
             host, port
         ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
-    elif (host, port) in pool.connections:
-        del pool[host, port]
+    elif (host,port) in pool.connections:
+        del pool[host,port]
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -1835,7 +1799,7 @@ def _raw_request(
         url,
         False,
         body,
-        Request(url, defhdr, method, sock, False, http_version),
+        Request(url,defhdr,method,sock,False,http_version),
         elapsed_time,
         enable_cache,
         base_dir,
@@ -1990,7 +1954,7 @@ def request(
 
     if 300 <= resp.status < 400:
         debugger.info("Redirect")
-        if resp.status == 301:
+        if resp.status==301:
             debugger.info("Updating permanent redirects data file")
             permanent_redirects[host, port, "/" + path] = resp.headers["Location"]
 
@@ -2052,8 +2016,6 @@ def request(
     if resp.ok:
         debugger.ok(f"Response OK")
     return resp
-
-
 async def async_request(
     url,
     *,
@@ -2160,9 +2122,10 @@ async def async_request(
     )
     if 300 <= resp.status < 400:
         debugger.info("Redirect")
-        if resp.status == 301:
+        if resp.status==301:
             debugger.info("Updating permanent redirects data file")
             permanent_redirects[host, port, "/" + path] = resp.headers["Location"]
+
 
         if len(history) >= redirlimit:
             debugger.warn("too many redirects!")
