@@ -45,6 +45,10 @@ class ClientError(StatusError):
 class WebSocketError(HTTPyError):
     """Metaclass for exceptions in websockets"""
 
-
+class WebSocketHandshakeError(WebSocketError):
+    """Raised upon a failed handshake"""
 class WebSocketClientError(WebSocketError):
     """Raised on erroneous close code"""
+
+class OldCacheFileWarning(UserWarning):
+    """Raised when the cache file has an old version"""

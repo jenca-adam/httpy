@@ -1,7 +1,7 @@
 import gzip, zlib, io, struct, ctypes, socket
 from .patterns import URLPATTERN
 from .errors import *
-
+import math
 __all__ = [
     "_mk2l",
     "get_host",
@@ -17,6 +17,7 @@ __all__ = [
     "_find",
     "CaseInsensitiveDict",
     "decode_content",
+    "read_until",
 ]
 
 
@@ -35,6 +36,14 @@ def _mk2l(original):
         original.append(True)
     return original
 
+def read_until(fp,token):# meant for bytes
+    buf=[]
+    while True:
+        nx = fp.read(1)
+        if nx==token or not nx:
+            break
+        buf.append(nx)
+    return b''.join(buf)
 
 def get_host(url):
     return URLPATTERN.search(url).group("host")
@@ -81,14 +90,10 @@ def mask(data, mask):
 
 def force_string(anything):
     """Converts string or bytes to string"""
-    try:
-        if isinstance(anything, str):
-            return anything
-        if isinstance(anything, bytes):
-            return anything.decode()
-    except Exception:
-        debugger.warn(f"Could not decode {anything}")
-        raise
+    if isinstance(anything, str):
+        return anything
+    if isinstance(anything, bytes):
+        return anything.decode()
     return str(anything)
 
 

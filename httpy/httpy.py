@@ -156,8 +156,8 @@ class CacheFile:
         if "\x01" in f:
             self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
             warnings.warn(
-                DeprecationWarning(
-                    f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
+                OldCacheFileWarning(
+                    f"cache file {f!r}  is in the old format(file name). \n Please, delete it to avoid further incompatibility problems"
                 )
             )
         else:
@@ -165,8 +165,8 @@ class CacheFile:
         method_desc = file.read(2)
         if method_desc != b"\150+":
             warnings.warn(
-                DeprecationWarning(
-                    f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
+                OldCacheFileWarning(
+                    f"cache file {f!r}  is in the old format(pre 1.5.0). \n Please, delete it to avoid further incompatibility problems"
                 )
             )
             file.seek(file.tell() - 2)
@@ -175,38 +175,49 @@ class CacheFile:
             self.method = file.read(method_l).decode()
         cfconfig = ord(file.read(1))
         self.expires = None
-        if cfconfig | 0b1100000 or cfconfig & 0x80:  # wrong static bits, reread
+        if (not cfconfig & 0b1100000) or (cfconfig & 0x80): 
             warnings.warn(
-                DeprecationWarning(
-                    f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
+                OldCacheFileWarning(
+                    f"cache file {f!r}  is in the old format(cache file config static bits don't match). \n Please, delete it to avoid further incompatibility problems"
                 )
             )
-            file.seek(file.tell() - 1)
+            if cfconfig==255:
+                expires_length = ord(file.read(1))
+                self.expires = _unpk_float(file.read(expires_length))
 
-        elif cfconfig & 0b1:
-            expires_length = ord(file.read(1))
-            self.expires = _unpk_float(file.read(expires_length))
-        if cfconfig & 0b10:
-            http_version = cfconfig & 0b11100
+            self.http_version="1.1"
+            request_header_present=False
         else:
-            http_version = 1
-        if http_version > 2:
-            warnings.warn(
-                UserWarning(
-                    f"cache file {f!r} has an unknown http version, please update httpy to the newest version to gain compatibility with the cache file"
+            if cfconfig & 0b1:
+                expires_length = ord(file.read(1))
+                self.expires = _unpk_float(file.read(expires_length))
+            http_version = (cfconfig & 0b11100) >>2
+            if http_version > 2:
+                warnings.warn(
+                    UserWarning(
+                        f"cache file {f!r} has an unknown http version (ID: {http_version}), please update httpy to the newest version to gain compatibility with the cache file"
+                    )
                 )
-            )
-            # fallback
-            http_version = 2
+                # fallback
+                http_version = 2
 
-        self.http_version = [None, "1.1", "2"][http_version]
+            self.http_version = [None, "1.1", "2"][http_version]
+            request_headers_present=cfconfig&0b10
         if self.http_version is None:
             warnings.warn(
-                DeprecationWarning(
+                OldCacheFileWarning(
                     f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
                 )
             )
             file.seek(file.tell() - 1)
+
+       
+        if request_headers_present:
+            request_headers_n_entries = _int16unpk(file.read(2))
+            request_headers = []
+            for _ in range(request_headers_n_entries):
+                request_headers.append(read_until(file,b"\r"))
+            self.request_headers=Headers(request_headers)
 
         self.content = file.read()
         file.seek(0)
@@ -560,9 +571,10 @@ class Request:
         self.method = method
         self.http_version = http_version
 
-    def perform(self):
+    def perform(self,enable_cache=False):
         return request(
             self.url,
+            enable_cache=enable_cache,
             headers=self.headers,
             method=self.method,
             http_version=self.http_version,
@@ -669,7 +681,7 @@ class Response:
             cache_file.content,
             Request(
                 cache_file.url,
-                cache_file.headers,
+                cache_file.request_headers,
                 cache_file.method,
                 None,
                 True,
@@ -1073,13 +1085,15 @@ def cacheWrite(response, base_dir, expires_override=None):
     else:
         has_expires = False
     cfconfig = (
-        0b0110010
+        0b1100010
         | has_expires
-        | [None, "1.1", "2.0"].index(response.request.http_version) << 2
+        | [None, "1.1", "2"].index(response.request.http_version) << 2
     )
     data += struct.pack("B", cfconfig)
     if has_expires:
         data += expires_bin
+    data += struct.pack("!H", len(response.request.headers))
+    data += "\r".join([mk_header(i) for i in filter(lambda x:not x[0].startswith(":"),response.request.headers.items())]).encode() # remove h2 hf
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
     data += response.content
@@ -1239,8 +1253,6 @@ def mk_header(key_value_pair):
 def _debugprint(debug, what, *args, **kwargs):
     if debug:
         print(force_string(what), *args, **kwargs)
-
-
 def create_connection(host, port, last_response, http_version, scheme, do_keep_alive):
     debugger.info("calling socket.create_connection")
     conn = _create_connection_and_handle_errors((host, port))
@@ -2272,7 +2284,7 @@ def websocket_handshake(
             "ignore",
             message="no content-length nor transfer-encoding, setting socket timeout",
         )
-        response = request(url, headers=base, pure_headers=True, enable_cache=False)
+        response = request(url, headers=base, pure_headers=True, enable_cache=False,http_version="1.1")
     set_debug()
     cdebugger.info("checking response")
     if response.status != 101:
@@ -2418,11 +2430,11 @@ class WebSocket:
             self.http_url, self.key, self.debugger
         )
         self.debugger.info("extracting socket")
-        self.socket = pool.connections[get_host(self.http_url), self.port]._sock
+        self.socket = self.handshake_response.request.socket
 
     def _fail(self, message):
         self.debugger.error(f"{message}, failing connection")
-        self._client_close(1002, message)
+        self.close_with_errcode(1002, message)
 
     def _recv_frame(self):
         if self.closed:
@@ -2494,7 +2506,7 @@ class WebSocket:
     def close(self):
         """Closes the WebSocket connection with close code of 1000"""
         if not self.closed:
-            self._client_close(1000, "")
+            self.close_with_errcode(1000, "")
 
     def _send_frame(self, opcode, payload, final=True):
         if self.closed:
@@ -2529,7 +2541,7 @@ class WebSocket:
         self.debugger.info("Sending")
         self.socket.send(message.getvalue())
 
-    def _client_close(self, close_code, message):
+    def close_with_errcode(self, close_code, message):
         if close_code == 1000:
             self.debugger.info("Closing connection.")
         else:
@@ -2546,13 +2558,13 @@ class WebSocket:
             self.debugger.info(
                 "Received 0x8 CLOSE, exitting. Close code: 1000 Normal closure"
             )
-            self._client_close(close_code, message)
+            self.close_with_errcode(close_code, message)
             return
         else:
             self.debugger.error(
                 f"Received erroneous close code: {close_code} {WEBSOCKET_CLOSE_CODES[close_code]}, {message}"
             )
-            self._client_close(close_code, message)
+            self.close_with_errcode(close_code, message)
             raise WebSocketClientError(
                 f"{close_code} {WEBSOCKET_CLOSE_CODES[close_code]} : {message}"
             )
