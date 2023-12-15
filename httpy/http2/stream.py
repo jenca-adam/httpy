@@ -236,7 +236,7 @@ class AsyncStream:
         if not enable_closed and self.state == StreamState.CLOSED:
             raise Refuse("refusing to receive a frame on a closed stream")
         while self.framequeue.empty():
-            token = await self.conn.process_next_frame()
+            token=await asyncio.create_task(self.conn.process_next_frame(self.framequeue))
             if token is not None:
                 return token
         n = await self.framequeue.get()

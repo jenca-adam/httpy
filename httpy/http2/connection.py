@@ -182,7 +182,10 @@ class Connection:
     @_after_start
     def close_socket(self, quit=True):
         self.debugger.info("Closing socket")
-        self.sock.shutdown(socket.SHUT_RDWR)
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+        except ssl.SSLError:#application data after close notify
+            pass
         self.sock.close()
         self.sockfile.close()
         self.open = False
@@ -289,6 +292,9 @@ class Connection:
 class AsyncConnection:
     def __init__(self, host, port, debugger, client_settings={}, sock=None):
         self.debugger = debugger
+        self.debugger.do_debug=True
+        self.processed=asyncio.Event()
+        self.processed.set()
         self.host = host
         self.port = port
         self.client_hpack, self.server_hpack = hpack.HPACK(), hpack.HPACK()
@@ -305,7 +311,6 @@ class AsyncConnection:
         self.processing_queue = AsyncFrameQueue(self.streams, self)
         self.window = None
         self.outbound_window = None
-        self._processing = False
         self.from_socket = self.sock is not None
 
     def _after_start(fun):
@@ -384,15 +389,18 @@ class AsyncConnection:
 
     @_after_start
     async def close_on_error(self, err):
-        self.debugger.error(f"{err}: closing connection")
+        self.debugger.info(f"{err}: closing connection")
         await self.close(err.code, str(err))
 
     @_after_start
     async def close_socket(self, quit=True):
         self.debugger.info("Closing socket")
         reader, writer = self.sock
-        writer.close()
-        await writer.wait_closed()
+        try:
+            writer.close()
+            await writer.wait_closed()
+        except ssl.SSLError: #application data after close notify
+            pass
         self.open = False
 
         await self.out_queue.put(None)
@@ -420,11 +428,15 @@ class AsyncConnection:
             await errq.put(e)
 
     @_after_start
-    async def process_next_frame(self):
+    async def process_next_frame(self,queue):
         reader, writer = self.sock
-        if self._processing or (not self.open):
+        if not self.open:
             return
-        self._processing = True
+        if not self.processed.is_set():
+            return
+        if not queue.empty():
+            return
+        self.processed.clear()
         try:
             dt = await frame.async_parse_data(reader)
             if dt is None:
@@ -463,7 +475,7 @@ class AsyncConnection:
             await self.close_on_internal_error(e)
             await self.processing_queue.throw(sys.exc_info())
         finally:
-            self._processing = False
+            self.processed.set()
 
     @_after_start
     async def _send_frame(self, frame):

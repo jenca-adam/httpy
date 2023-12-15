@@ -1508,6 +1508,7 @@ async def _async_raw_request(
     permanent_redirects = PickleFile(base_dir / "permredir.pickle")
     headers = {capitalize(key): value for key, value in headers.items()}
     debug = debug or getattr(builtins, "debug", False)
+    debugger=_Debugger(debug)
     debugger.info("_async_raw_request() called.")
     if (host, port, path) in permanent_redirects:
         nep = permanent_redirects[host, port, path]
@@ -2234,6 +2235,17 @@ async def async_request(
     if resp.ok:
         debugger.ok(f"Response OK")
     return resp
+
+async def initiate_http2_connection(url=None,host=None):
+    if url is None and host is None:
+        raise ValueError
+    if url is not None:
+        result = URLPATTERN.search(url)
+        if not result:
+            raise ValueError("Invalid URL")
+        host=result.group("host")
+    port = 443
+    await create_async_h2_connection(host,port,Response.plain(),"2","https")
 
 
 debugger = _Debugger(False)

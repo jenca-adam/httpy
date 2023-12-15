@@ -599,10 +599,10 @@ def _parse(data):
 
 async def async_parse_data(reader):
     try:
-        payload_length, *_ = struct.unpack("!I", b"\x00" + await reader.readexactly(3))
-        frame_type, *_ = struct.unpack("!B", await reader.readexactly(1))
-        flags, *_ = struct.unpack("!B", await reader.readexactly(1))
-        streamid, *_ = struct.unpack("!I", await reader.readexactly(4))
+        payload_length, *_ = struct.unpack("!I", b"\x00" + await reader.read(3))
+        frame_type, *_ = struct.unpack("!B", await reader.read(1))
+        flags, *_ = struct.unpack("!B", await reader.read(1))
+        streamid, *_ = struct.unpack("!I", await reader.read(4))
         payload = await reader.readexactly(payload_length)
     except (
         struct.error,

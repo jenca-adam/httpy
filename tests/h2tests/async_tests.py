@@ -5,7 +5,6 @@ import asyncio
 
 
 async def do_request():
-    print("run")
     connection = http2.connection.AsyncConnection(
         "www.google.com", 443, _Debugger(True)
     )
@@ -18,8 +17,8 @@ async def do_request():
     return (rd)
 
 
-async def main():
-    print(await do_request())
+async def test():
+    return (await do_request())
 
-
-asyncio.run(main())
+if __name__=="__main__":
+    asyncio.run(test())

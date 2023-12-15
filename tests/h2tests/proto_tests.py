@@ -4,7 +4,7 @@ from httpy.debugger import _Debugger
 import asyncio
 
 
-def main():
+async def test():
     connection = http2.connection.Connection("www.example.com", 443, _Debugger(True))
     connection.start()
     sender = http2.proto.HTTP2Sender(
@@ -14,4 +14,4 @@ def main():
     rd = http2.proto.HTTP2Recver()(connection, streamid)
     return rd
 if __name__=="__main__":
-    print(main())
+    print(asyncio.run(test()))
