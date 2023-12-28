@@ -184,7 +184,7 @@ class Connection:
         self.debugger.info("Closing socket")
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
-        except ssl.SSLError:#application data after close notify
+        except ssl.SSLError:  # application data after close notify
             pass
         self.sock.close()
         self.sockfile.close()
@@ -292,8 +292,8 @@ class Connection:
 class AsyncConnection:
     def __init__(self, host, port, debugger, client_settings={}, sock=None):
         self.debugger = debugger
-        self.debugger.do_debug=True
-        self.processed=asyncio.Event()
+        self.debugger.do_debug = True
+        self.processed = asyncio.Event()
         self.processed.set()
         self.host = host
         self.port = port
@@ -399,7 +399,7 @@ class AsyncConnection:
         try:
             writer.close()
             await writer.wait_closed()
-        except ssl.SSLError: #application data after close notify
+        except ssl.SSLError:  # application data after close notify
             pass
         self.open = False
 
@@ -428,7 +428,7 @@ class AsyncConnection:
             await errq.put(e)
 
     @_after_start
-    async def process_next_frame(self,queue):
+    async def process_next_frame(self, queue):
         reader, writer = self.sock
         if not self.open:
             return

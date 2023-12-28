@@ -2,6 +2,7 @@ import gzip, zlib, io, struct, ctypes, socket
 from .patterns import URLPATTERN
 from .errors import *
 import math
+
 __all__ = [
     "_mk2l",
     "get_host",
@@ -18,6 +19,7 @@ __all__ = [
     "CaseInsensitiveDict",
     "decode_content",
     "read_until",
+    "mk_header",
 ]
 
 
@@ -36,14 +38,26 @@ def _mk2l(original):
         original.append(True)
     return original
 
-def read_until(fp,token):# meant for bytes
-    buf=[]
+
+def mk_header(key_value_pair):
+    """Makes header from key/value pair"""
+    if isinstance(key_value_pair[1], list):
+        header = ""
+        for key_value in key_value_pair[1]:
+            header += key_value_pair[0] + ": " + key_value + "\r\n"
+        return header.strip()
+    return ": ".join([force_string(key_value) for key_value in key_value_pair])
+
+
+def read_until(fp, token):  # meant for bytes
+    buf = []
     while True:
         nx = fp.read(1)
-        if nx==token or not nx:
+        if nx == token or not nx:
             break
         buf.append(nx)
-    return b''.join(buf)
+    return b"".join(buf)
+
 
 def get_host(url):
     return URLPATTERN.search(url).group("host")

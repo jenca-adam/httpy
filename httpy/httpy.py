@@ -37,6 +37,8 @@ import builtins  # for debugging
 import inspect  # for debugging
 import sys  # for debugging
 import asyncio  # for async requests
+import atexit  # to add exit handlers
+
 from . import http2
 from .utils import *
 from .utils import _create_connection_and_handle_errors, is_closed
@@ -52,7 +54,7 @@ except ImportError:
     chardet = None
 
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
-os.makedirs(HTTPY_DIR / "sessions", exist_ok=True)
+os.makedirs(HTTPY_DIR / "dirs", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
 VERSION = "2.0.0"
 
@@ -175,23 +177,23 @@ class CacheFile:
             self.method = file.read(method_l).decode()
         cfconfig = ord(file.read(1))
         self.expires = None
-        if (not cfconfig & 0b1100000) or (cfconfig & 0x80): 
+        if (not cfconfig & 0b1100000) or (cfconfig & 0x80):
             warnings.warn(
                 OldCacheFileWarning(
                     f"cache file {f!r}  is in the old format(cache file config static bits don't match). \n Please, delete it to avoid further incompatibility problems"
                 )
             )
-            if cfconfig==255:
+            if cfconfig == 255:
                 expires_length = ord(file.read(1))
                 self.expires = _unpk_float(file.read(expires_length))
 
-            self.http_version="1.1"
-            request_header_present=False
+            self.http_version = "1.1"
+            request_header_present = False
         else:
             if cfconfig & 0b1:
                 expires_length = ord(file.read(1))
                 self.expires = _unpk_float(file.read(expires_length))
-            http_version = (cfconfig & 0b11100) >>2
+            http_version = (cfconfig & 0b11100) >> 2
             if http_version > 2:
                 warnings.warn(
                     UserWarning(
@@ -202,7 +204,7 @@ class CacheFile:
                 http_version = 2
 
             self.http_version = [None, "1.1", "2"][http_version]
-            request_headers_present=cfconfig&0b10
+            request_headers_present = cfconfig & 0b10
         if self.http_version is None:
             warnings.warn(
                 OldCacheFileWarning(
@@ -211,13 +213,12 @@ class CacheFile:
             )
             file.seek(file.tell() - 1)
 
-       
         if request_headers_present:
             request_headers_n_entries = _int16unpk(file.read(2))
             request_headers = []
             for _ in range(request_headers_n_entries):
-                request_headers.append(read_until(file,b"\r"))
-            self.request_headers=Headers(request_headers)
+                request_headers.append(read_until(file, b"\r"))
+            self.request_headers = Headers(request_headers)
 
         self.content = file.read()
         file.seek(0)
@@ -571,7 +572,7 @@ class Request:
         self.method = method
         self.http_version = http_version
 
-    def perform(self,enable_cache=False):
+    def perform(self, enable_cache=False):
         return request(
             self.url,
             enable_cache=enable_cache,
@@ -949,6 +950,7 @@ class Connection:
         self.is_http2 = is_http2
         self.requests = 0
         self.time_started = time.time()
+        self.is_async = isinstance(self.sock, http2.connection.AsyncConnection)
 
     @property
     def sock(self):
@@ -972,27 +974,34 @@ class Connection:
                 pass
 
 
-class ConnectionPool:
-    """Class for connection pools"""
+class Session:
+    """Class for connection sessions"""
 
     def __init__(self):
+        sessions.append(self)
         self.connections = {}
 
     def __setitem__(self, host, connection):
+        print("Addded", host, connection)
         host, port = host
         if is_closed(connection):
             raise ConnectionClosedError("Connection closed by host")
-        self.connections[host, port] = connection
+        self.connections[host, port, connection.is_async] = connection
+        print(self.connections)
 
     def __getitem__(self, host):
         try:
             sock = self.connections[host].sock
-        except ConnectionError:
+        except ConnectionError:  # maybe handle? TODO in 2.1
             raise
         if is_closed(self.connections[host]):
             del self.connections[host]
             raise ConnectionClosedError("Connection closed by host")
         return sock, self.connections[host].is_http2
+
+    async def initiate_http2_connection(self, *args, **kwargs):
+        kwargs["session"] = self
+        await initiate_http2_connection(*args, **kwargs)
 
     def __contains__(self, host):
         return host in self.connections
@@ -1093,7 +1102,14 @@ def cacheWrite(response, base_dir, expires_override=None):
     if has_expires:
         data += expires_bin
     data += struct.pack("!H", len(response.request.headers))
-    data += "\r".join([mk_header(i) for i in filter(lambda x:not x[0].startswith(":"),response.request.headers.items())]).encode() # remove h2 hf
+    data += "\r".join(
+        [
+            mk_header(i)
+            for i in filter(
+                lambda x: not x[0].startswith(":"), response.request.headers.items()
+            )
+        ]
+    ).encode()  # remove h2 hf
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
     data += response.content
@@ -1240,20 +1256,14 @@ def generate_cnonce(length=16):
     return hex(random.randrange(16**length))[2:]
 
 
-def mk_header(key_value_pair):
-    """Makes header from key/value pair"""
-    if isinstance(key_value_pair[1], list):
-        header = ""
-        for key_value in key_value_pair[1]:
-            header += key_value_pair[0] + ": " + key_value + "\r\n"
-        return header.strip()
-    return ": ".join([force_string(key_value) for key_value in key_value_pair])
-
-
 def _debugprint(debug, what, *args, **kwargs):
     if debug:
         print(force_string(what), *args, **kwargs)
-def create_connection(host, port, last_response, http_version, scheme, do_keep_alive):
+
+
+def create_connection(
+    host, port, last_response, http_version, scheme, do_keep_alive, session
+):
     debugger.info("calling socket.create_connection")
     conn = _create_connection_and_handle_errors((host, port))
     if scheme == "http":
@@ -1270,12 +1280,13 @@ def create_connection(host, port, last_response, http_version, scheme, do_keep_a
         conn = context.wrap_socket(conn, server_hostname=host)
     debugger.info(f"http version: {http_version}")
     is_http2 = http_version == "2"
+    is_async = False
     keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
-    if (host, port) in pool:
-        if pool[host, port][1] == is_http2:
-            debugger.info("Connection already in pool")
+    if (host, port, is_async) in session:
+        if session[host, port, is_async][1] == is_http2:
+            debugger.info("Connection already in session")
             try:
-                return pool[host, port][0], True, http_version
+                return session[host, port, is_async][0], True, http_version
             except ConnectionClosedError:
                 debugger.warn("Connection already expired.")
     if is_http2:
@@ -1283,70 +1294,72 @@ def create_connection(host, port, last_response, http_version, scheme, do_keep_a
         conn = http2.Connection.from_socket(conn, debugger, host, port)
         conn.start()
     if do_keep_alive:
-        debugger.info("adding to pool")
-        pool[host, port] = Connection(
+        debugger.info("adding to session")
+        session[host, port] = Connection(
             conn, keep_alive.timeout, keep_alive.max, is_http2
         )
     return conn, False, http_version
 
 
-async def create_async_h2_connection(host, port, last_response, http_version, scheme):
+async def create_async_h2_connection(
+    host, port, last_response, http_version, scheme, session
+):
     is_http2 = http_version == "2"
     if not is_http2:
         raise ValueError(
             "can't create an async connection with http/1.1 (use aiohttp for this)"
         )
     keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
-    if (host, port) in pool:
-        if pool[host, port][1] == is_http2:
-            debugger.info("Connection already in pool")
+    if (host, port, True) in session:
+        if session[host, port, True][1] == is_http2:
+            debugger.info("Connection already in session")
             try:
-                return pool[host, port][0], True, http_version
+                return session[host, port, True][0], True, http_version
             except ConnectionClosedError:
                 debugger.warn("Connection already expired.")
     debugger.info("instancing http2 connection")
     conn = http2.connection.AsyncConnection(host, port, debugger)
     await conn.start()
-    pool[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
+    session[host, port] = Connection(conn, keep_alive.timeout, keep_alive.max, is_http2)
     return conn, False, http_version
 
 
-def generate_session_id():
+def generate_dir_id():
     return "".join(random.choices(string.hexdigits, k=16))
 
 
-def setup_session(sess_path, name):
-    os.makedirs(sess_path / "sites", exist_ok=True)
-    if not os.path.exists(sess_path / "permredir.pickle"):
-        with open(sess_path / "permredir.pickle", "wb") as f:
+def setup_dir(dir_path, name):
+    os.makedirs(dir_path / "sites", exist_ok=True)
+    if not os.path.exists(dir_path / "permredir.pickle"):
+        with open(dir_path / "permredir.pickle", "wb") as f:
             pickle.dump({}, f)
-    if not os.path.exists(sess_path / "cj"):
-        with open(sess_path / "cj", "wb") as f:
+    if not os.path.exists(dir_path / "cj"):
+        with open(dir_path / "cj", "wb") as f:
             f.write(b"")
 
-    if not os.path.exists(sess_path / "meta.json"):
+    if not os.path.exists(dir_path / "meta.json"):
         if name is None:
-            name = f"session-{session_count()+1}"
-        with open(sess_path / "meta.json", "w") as f:
+            name = f"session-{dir_count()+1}"
+        with open(dir_path / "meta.json", "w") as f:
             json.dump({"name": name}, f)
     elif name is not None:
         # don't reset additional meta
-        with open(sess_path / "meta.json", "w") as f:
+        with open(dir_path / "meta.json", "w") as f:
             json.dump({"name": name}, f)
     else:
-        with open(sess_path / "meta.json", "r") as f:
+        with open(dir_path / "meta.json", "r") as f:
             meta = json.load(f)
             name = meta["name"]
     return name
 
 
-def find_session_by_id(sessid):
-    if sessid in os.listdir(HTTPY_DIR / "sessions"):
-        return HTTPY_DIR / "sessions" / sessid
+def find_dir_by_id(sessid):
+    if sessid in os.listdir(HTTPY_DIR / "dirs"):
+        return HTTPY_DIR / "dirs" / sessid
 
 
-def session_count():
-    return len(os.listdir(HTTPY_DIR / "sessions"))
+def dir_count():
+    return len(os.listdir(HTTPY_DIR / "dirs"))
 
 
 class HTTP11Sender:
@@ -1439,25 +1452,25 @@ class _HTTP2Async(AsyncProtoVersion):
     recver = http2.proto.AsyncHTTP2Recver()
 
 
-class Session:
-    def __init__(self, session_id=None, path=None, name=None):
-        if session_id is None:
-            session_id = generate_session_id()
+class Dir:
+    def __init__(self, dir_id=None, path=None, name=None):
+        if dir_id is None:
+            dir_id = generate_dir_id()
 
         if path is None:
-            path = find_session_by_id(session_id)
+            path = find_dir_by_id(dir_id)
             if path is None:
-                path = HTTPY_DIR / "sessions" / session_id
+                path = HTTPY_DIR / "dirs" / dir_id
         self.new = os.path.exists(path)
-        name = setup_session(path, name)
+        name = setup_dir(path, name)
         self.name = name
-        self.session_id = session_id
+        self.dir_id = dir_id
         self.path = path
         self.jar = CookieJar(path / "cj")
         self.permanent_redirects = PickleFile(path / "permredir.pickle")
         self.cache = Cache(path / "sites")
         if self.new:
-            sessions.append(self)
+            dirs.append(self)
 
     def request(self, url, **kwargs):
         if "base_dir" in kwargs:
@@ -1465,7 +1478,7 @@ class Session:
         return request(url, **kwargs, base_dir=self.path)
 
     def __repr__(self):
-        return f"<Session {self.name} ( {self.session_id} ) at {self.path!r}>"
+        return f"<Dir {self.name} ( {self.dir_id} ) at {self.path!r}>"
 
 
 def _dictrm(d, l):
@@ -1480,11 +1493,25 @@ def _dictrm(d, l):
             debugger.warn(f"dictrm {i} failed: not in dict")
 
 
+proto_versions = {"1.1": HTTP11(), "2": HTTP2()}
+jar = CookieJar()
+cache = Cache()
+nonce_counter = NonceCounter()
+sessions = []
+default_session = Session()
+dir_ids = os.listdir(HTTPY_DIR / "dirs")
+dirs = []
+dirs = [Dir(dir_id=i) for i in dir_ids]
+default_dir = Dir(path=HTTPY_DIR / "default", name="default")
+permanent_redirects = PickleFile(HTTPY_DIR / "default" / "permredir.pickle")
+
+
 async def _async_raw_request(
     host,
     port,
     path,
     scheme,
+    session=default_session,
     url="",
     method="GET",
     data=b"",
@@ -1502,13 +1529,14 @@ async def _async_raw_request(
     disabled_headers=[],
     force_keep_alive=False,
 ):
+    base_dir = pathlib.Path(base_dir)
     method = method.upper()
     cache = Cache(base_dir / "sites")
     jar = CookieJar(base_dir / "cj")
     permanent_redirects = PickleFile(base_dir / "permredir.pickle")
     headers = {capitalize(key): value for key, value in headers.items()}
     debug = debug or getattr(builtins, "debug", False)
-    debugger=_Debugger(debug)
+    debugger = _Debugger(debug)
     debugger.info("_async_raw_request() called.")
     if (host, port, path) in permanent_redirects:
         nep = permanent_redirects[host, port, path]
@@ -1576,8 +1604,8 @@ async def _async_raw_request(
         last_response = history[-1]
     else:
         last_response = Response.plain()
-    sock, from_pool, http_version = await create_async_h2_connection(
-        host, port, last_response, http_version, scheme
+    sock, from_session, http_version = await create_async_h2_connection(
+        host, port, last_response, http_version, scheme, session
     )
     start_time = time.time()
 
@@ -1609,7 +1637,7 @@ async def _async_raw_request(
                 domain.add_cookie(cookie)
     except DeadConnectionError:
         debugger.error("Connection closed")
-        del pool[host, port]
+        del default_session[host, port]
         if not force_keep_alive:
             debugger.info("Keep-Alive not forced, retrying")
             return _raw_request(
@@ -1636,11 +1664,11 @@ async def _async_raw_request(
             )
         raise
     except:
-        del pool[host, port]
+        del session[host, port]
         raise
 
     if headers.get("connection") == "keep-alive":
-        pool.connections[
+        session.connections[
             host, port
         ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
     end_time = time.time()
@@ -1667,6 +1695,7 @@ def _raw_request(
     port,
     path,
     scheme,
+    session=default_session,
     url="",
     method="GET",
     data=b"",
@@ -1684,6 +1713,7 @@ def _raw_request(
     disabled_headers=[],
     force_keep_alive=False,
 ):
+    base_dir = pathlib.Path(base_dir)
     method = method.upper()
     cache = Cache(base_dir / "sites")
     jar = CookieJar(base_dir / "cj")
@@ -1758,13 +1788,14 @@ def _raw_request(
         last_response = history[-1]
     else:
         last_response = Response.plain()
-    sock, from_pool, http_version = create_connection(
+    sock, from_session, http_version = create_connection(
         host,
         port,
         last_response,
         http_version,
         scheme,
         defhdr.get("connection") == "keep-alive",
+        session,
     )
     is_http2 = http_version == "2"
     start_time = time.time()
@@ -1800,7 +1831,7 @@ def _raw_request(
                 domain.add_cookie(cookie)
     except DeadConnectionError:
         debugger.error("Connection closed")
-        del pool[host, port]
+        del session[host, port]
         if not force_keep_alive:
             debugger.info("Keep-Alive not forced, retrying")
             return _raw_request(
@@ -1827,15 +1858,13 @@ def _raw_request(
             )
         raise
     except:
-        del pool[host, port]
+        del session[host, port]
         raise
 
     if headers.get("connection") == "keep-alive":
-        pool.connections[
+        session.connections[
             host, port
         ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
-    elif (host, port) in pool.connections:
-        del pool[host, port]
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -1877,6 +1906,7 @@ def absolute_path(url, last_url, scheme, host):
 def request(
     url,
     *,
+    session=default_session,
     method="GET",
     headers={},
     body=b"",
@@ -1965,6 +1995,7 @@ def request(
             port,
             "/" + path,
             scheme,
+            session=session,
             url=url,
             history=history,
             auth=auth,
@@ -1985,6 +2016,7 @@ def request(
     else:  # PendingRequest
         return PendingRequest(
             url,
+            session=session,
             auth=auth,
             redirlimit=redirlimit,
             timeout=timeout,
@@ -2015,6 +2047,7 @@ def request(
                 absolute_path(
                     resp.headers["Location"], url, scheme, makehost(host, port)
                 ),
+                session=session,
                 auth=auth,
                 redirlimit=redirlimit,
                 timeout=timeout,
@@ -2036,6 +2069,7 @@ def request(
             return resp
         return request(
             url,
+            session=session,
             auth=auth,
             redirlimit=redirlimit,
             timeout=timeout,
@@ -2070,6 +2104,7 @@ def request(
 async def async_request(
     url,
     *,
+    session=default_session,
     method="GET",
     headers={},
     body=b"",
@@ -2154,6 +2189,7 @@ async def async_request(
         port,
         "/" + path,
         scheme,
+        session=session,
         url=url,
         history=history,
         auth=auth,
@@ -2185,6 +2221,7 @@ async def async_request(
                 absolute_path(
                     resp.headers["Location"], url, scheme, makehost(host, port)
                 ),
+                session=session,
                 auth=auth,
                 redirlimit=redirlimit,
                 timeout=timeout,
@@ -2198,7 +2235,6 @@ async def async_request(
                 base_dir=base_dir,
                 http_version=http_version,
                 disabled_headers=disabled_headers,
-                blocking=blocking,
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -2206,6 +2242,7 @@ async def async_request(
             return resp
         return await async_request(
             url,
+            session=session,
             auth=auth,
             redirlimit=redirlimit,
             timeout=timeout,
@@ -2218,7 +2255,6 @@ async def async_request(
             enable_cache=enable_cache,
             base_dir=base_dir,
             http_version=http_version,
-            blocking=blocking,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2236,16 +2272,29 @@ async def async_request(
         debugger.ok(f"Response OK")
     return resp
 
-async def initiate_http2_connection(url=None,host=None):
+
+async def initiate_http2_connection(url=None, host=None, session=default_session):
     if url is None and host is None:
         raise ValueError
     if url is not None:
         result = URLPATTERN.search(url)
         if not result:
             raise ValueError("Invalid URL")
-        host=result.group("host")
+        host = result.group("host")
     port = 443
-    await create_async_h2_connection(host,port,Response.plain(),"2","https")
+    await create_async_h2_connection(
+        host, port, Response.plain(), "2", "https", session
+    )
+
+
+def close_all():
+    for session in sessions:
+        del session
+
+
+def get_connection(host, port):
+    conn = default_session[(host, port)]
+    return conn
 
 
 debugger = _Debugger(False)
@@ -2296,7 +2345,9 @@ def websocket_handshake(
             "ignore",
             message="no content-length nor transfer-encoding, setting socket timeout",
         )
-        response = request(url, headers=base, pure_headers=True, enable_cache=False,http_version="1.1")
+        response = request(
+            url, headers=base, pure_headers=True, enable_cache=False, http_version="1.1"
+        )
     set_debug()
     cdebugger.info("checking response")
     if response.status != 101:
@@ -2437,7 +2488,7 @@ class WebSocket:
         self.key = generate_websocket_key()
         self.base_url = url.split("://")[-1]
         self.http_url = f"http{'s' if use_tls else ''}://{self.base_url}"
-        del pool[get_host(self.http_url), self.port]
+        del default_session[get_host(self.http_url), self.port]
         self.handshake_response = websocket_handshake(
             self.http_url, self.key, self.debugger
         )
@@ -2616,16 +2667,6 @@ class WebSocket:
         )
 
 
-proto_versions = {"1.1": HTTP11(), "2": HTTP2()}
-
-jar = CookieJar()
-cache = Cache()
-nonce_counter = NonceCounter()
-pool = ConnectionPool()
-session_ids = os.listdir(HTTPY_DIR / "sessions")
-sessions = []
-sessions = [Session(session_id=i) for i in session_ids]
-default_session = Session(path=HTTPY_DIR / "default", name="default")
-permanent_redirects = PickleFile(HTTPY_DIR / "default" / "permredir.pickle")
+atexit.register(close_all)
 __version__ = VERSION
 __author__ = "Adam Jenca"

@@ -13,5 +13,7 @@ async def test():
     streamid = sender.send(connection)
     rd = http2.proto.HTTP2Recver()(connection, streamid)
     return rd
-if __name__=="__main__":
+
+
+if __name__ == "__main__":
     print(asyncio.run(test()))

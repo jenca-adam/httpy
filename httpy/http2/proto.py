@@ -1,7 +1,7 @@
 import itertools
 from . import frame
 from httpy.status import status_from_int
-from httpy.utils import CaseInsensitiveDict, decode_content
+from httpy.utils import CaseInsensitiveDict, decode_content, mk_header
 from httpy.errors import ConnectionClosedError
 
 CONNECTION_SPECIFIC = [
@@ -57,6 +57,9 @@ def serialize_headers(headers, connection, end_stream, max_frame_size):
     return frames
 
 
+1704382976.0
+
+
 class HTTP2Headers(CaseInsensitiveDict):
     def __init__(self, headers):
         self.headers = dict(filter(lambda x: not x[0].startswith(":"), headers.items()))
@@ -83,6 +86,10 @@ class HTTP2Sender:
 
     def send(self, connection):
         """Creates a new stream and sends the frames to it"""
+        self.debugger.debugprint("send:")
+        self.debugger.debugprint(
+            "\n".join(mk_header(kvp) for kvp in self.headers.items())
+        )
         self.data_frames = serialize_data(
             self.body, connection.settings.server_settings["max_frame_size"]
         )
@@ -105,6 +112,7 @@ class HTTP2Recver:
         body = b""
         stream = connection.streams[streamid]
         connection.debugger.info(f"Listening on {streamid}")
+        connection.debugger.debugprint("recv:")
         while True:
             next_frame = stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
@@ -113,6 +121,9 @@ class HTTP2Recver:
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
             # next_frame.decode_headers(connection.hpack)
+            connection.debugger.debugprint(
+                "\n".join(mk_header(kvp) for kvp in next_frame.decoded_headers.items())
+            )
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
                 connection.debugger.ok("Response fully received (no body)")

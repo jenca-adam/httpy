@@ -9,6 +9,7 @@ import os
 import pytest
 import asyncio
 from h2tests import *
+
 try:
     import alive_progress
 except:
@@ -25,32 +26,37 @@ except:
 
 httpy.set_debug(False)
 
+
 def test_HTTPy_imports():
     import httpy
 
 
 def test_http_200_ok():
-    resp = httpy.request("http://httpbin.org/", http_version="1.1",enable_cache=False)
+    resp = httpy.request("http://httpbin.org/", http_version="1.1", enable_cache=False)
     assert resp.status == 200
 
 
 def test_https_200_ok():
-    resp = httpy.request("https://python.org/", http_version="1.1",enable_cache=False)
+    resp = httpy.request("https://python.org/", http_version="1.1", enable_cache=False)
     assert resp.status == 200
 
 
 def test_httpy_nonblocking():
     t = time.time()
     resps = [
-        httpy.request("http://httpbin.org/delay/1", blocking=False, http_version="2") for i in range(4)
+        httpy.request("http://httpbin.org/delay/1", blocking=False, http_version="2")
+        for i in range(4)
     ]
     assert time.time() - t < 1
     for i in resps:
         i.wait()
         assert i.response.ok
 
+
 def test_httpy_auth_basic():
-    httpy.request("http://httpbin.org/basic-auth/root/pass/",auth=("root","pass"))
+    httpy.request("http://httpbin.org/basic-auth/root/pass/", auth=("root", "pass"))
+
+
 def test_httpy_redirect_limit():
     with pytest.raises(httpy.TooManyRedirectsError):
         httpy.request("http://httpbin.org/redirect/8", redirlimit=5, enable_cache=False)
@@ -76,7 +82,11 @@ def test_httpy_get_status_codes(capsys):
 
 def test_httpy_http_1_post_raw():
     f = httpy.request(
-        "https://www.httpbin.org/post", method="POST", body="12345", enable_cache=False, http_version="1.1"
+        "https://www.httpbin.org/post",
+        method="POST",
+        body="12345",
+        enable_cache=False,
+        http_version="1.1",
     )
     assert f.json["data"] == "12345"
 
@@ -87,7 +97,7 @@ def test_httpy_http_1_post_form():
         method="POST",
         body={"foo": "bar"},
         enable_cache=False,
-        http_version="1.1"
+        http_version="1.1",
     )
     assert f.json["form"] == {"foo": "bar"}
 
@@ -123,9 +133,21 @@ def test_httpy_websocket_bytes_supalong():
     wsk.send(a)
     time.sleep(1)
     assert wsk.recv() == a
+
+
 def test_httpy_http2_sync():
-    assert httpy.request("https://www.example.org/",http_version="2",enable_cache=False).status==200
+    assert (
+        httpy.request(
+            "https://www.example.org/", http_version="2", enable_cache=False
+        ).status
+        == 200
+    )
+
+
 @pytest.mark.asyncio
 async def test_httpy_http2_async():
-    assert (await httpy.async_request("https://www.example.org/",http_version="2",enable_cache=False)).status==200
-
+    assert (
+        await httpy.async_request(
+            "https://www.example.org/", http_version="2", enable_cache=False
+        )
+    ).status == 200

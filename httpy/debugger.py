@@ -16,6 +16,10 @@ class _Debugger:
     def __init__(self, do_debug=None):
         self._debug = do_debug
 
+    def debugprint(self, *args, **kwargs):
+        if self.debug:
+            print(*args, **kwargs)
+
     def frame_class_name(self, fr):
         args, _, _, value_dict = inspect.getargvalues(fr)
         if len(args) and args[0] == "self":

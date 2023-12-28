@@ -20,5 +20,6 @@ async def do_request():
 async def test():
     return await asyncio.gather(*(do_request() for _ in range(50)))
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     print(asyncio.run(test()))
