@@ -15,6 +15,9 @@ CONNECTION_SPECIFIC = [
 
 
 def serialize_data(data, max_frame_size):
+    """
+    Serialises data as a sequence of DATA frames
+    """
     to_serialize = memoryview(data)
     frames = []
     while to_serialize:
@@ -29,6 +32,9 @@ def serialize_data(data, max_frame_size):
 
 
 def serialize_headers(headers, connection, end_stream, max_frame_size):
+    """
+    Serialises headers as a sequence of HEADERS/CONTINUATION frames
+    """
     to_serialize = memoryview(
         connection.client_hpack.encode_headers(
             filter((lambda x: x[0].lower() not in CONNECTION_SPECIFIC), headers.items())
@@ -57,9 +63,6 @@ def serialize_headers(headers, connection, end_stream, max_frame_size):
     return frames
 
 
-1704382976.0
-
-
 class HTTP2Headers(CaseInsensitiveDict):
     def __init__(self, headers):
         self.headers = dict(filter(lambda x: not x[0].startswith(":"), headers.items()))
@@ -67,6 +70,10 @@ class HTTP2Headers(CaseInsensitiveDict):
 
 
 class HTTP2Sender:
+    """
+    A synchronous HTTP/2 sender.
+    """
+
     def __init__(self, method, headers, body, path, debugger, authority=None, *_, **__):
         self.method = method
         self.debugger = debugger
@@ -107,7 +114,14 @@ class HTTP2Sender:
 
 
 class HTTP2Recver:
+    """
+    A synchronous HTTP/2 receiver implementation.
+    """
+
     def __call__(self, connection, streamid, *_, **__):
+        """
+        Receives a response on a stream with a given ID.
+        """
         headers = {}
         body = b""
         stream = connection.streams[streamid]
@@ -153,6 +167,11 @@ class HTTP2Recver:
 
 
 class AsyncHTTP2Sender:
+    """
+    Asynchronous HTTP/2 sender implementation.
+    For method details, see HTTP2Sender.__doc__
+    """
+
     def __init__(self, method, headers, body, path, debugger, authority=None, *_, **__):
         self.method = method
         self.debugger = debugger
@@ -189,6 +208,11 @@ class AsyncHTTP2Sender:
 
 
 class AsyncHTTP2Recver:
+    """
+    Asynchronous HTTP/2 receiver implementation.
+    For method details, see HTTP2Recver.__doc__
+    """
+
     async def __call__(self, connection, streamid, *_, **__):
         headers = {}
         body = b""

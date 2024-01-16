@@ -4,9 +4,8 @@ import asyncio
 
 
 async def perform_request():
-    print("E")
     return await httpy.async_request(
-        "https://www.example.com/", debug=True, enable_cache=False
+        "https://www.example.com/",  enable_cache=False
     )
 
 
@@ -16,4 +15,4 @@ async def test():
 
 
 if __name__ == "__main__":
-    print(asyncio.run(test()))
+    asyncio.run(test())

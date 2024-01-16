@@ -1,7 +1,0 @@
-docs/build
-*.log
-*.ign
-*.template
-unstable/*.pickle
-localsetup.py
-__pycache__

@@ -29,6 +29,10 @@ class StreamEvent:
 
 
 class Stream:
+    """
+    A HTTP/2 synchronous stream implementation.
+    """
+
     def __init__(self, streamid, conn, window_size, weight=0, dependency=0):
         self.streamid = streamid
         self.conn = conn
@@ -40,6 +44,9 @@ class Stream:
         self.framequeue = queue.Queue()
 
     def error_check(self, f):
+        """
+        Checks a frame for stream state errors.
+        """
         err = None
         if self.state == StreamState.IDLE:
             if f.frame_type != frame.HTTP2_FRAME_PRIORITY:
@@ -96,6 +103,9 @@ class Stream:
         return err, False
 
     def recv_frame(self, enable_closed=False, frame_filter=None):
+        """
+        Returns the last frame received on this stream.
+        """
         if not enable_closed and self.state == StreamState.CLOSED:
             raise Refuse("refusing to receive a frame on a closed stream")
         while self.framequeue.empty():
@@ -114,6 +124,9 @@ class Stream:
         return s.streamid == self.streamid
 
     def send_frame(self, f):
+        """
+        Sends a frame to the server on this stream.
+        """
         errmsg = None
         ## BLOCK: State changes
         if self.state == StreamState.IDLE:
@@ -166,6 +179,11 @@ class Stream:
 
 
 class AsyncStream:
+    """
+    Asynchronous HTTP/2 stream implementation
+    For method description, see Stream.__doc__
+    """
+
     def __init__(self, streamid, conn, window_size, weight=0, dependency=0):
         self.streamid = streamid
         self.conn = conn

@@ -12,9 +12,8 @@ async def test():
             for _ in range(5)
         )
     )
-    await close_all_h2_connections()
     return q
 
 
 if __name__ == "__main__":
-    print(*map(lambda x: x.content, asyncio.run(test())))
+    asyncio.run(test())

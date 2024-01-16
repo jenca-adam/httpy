@@ -3,6 +3,10 @@ from httpy.utils import force_string
 
 
 class Entry:
+    """
+    A HPACK table entry.
+    """
+
     def __init__(self, name, value=None):
         self.name = force_string(name)
         if isinstance(value, list):
@@ -27,6 +31,10 @@ class Entry:
 
 
 class Table:
+    """
+    A HPACK table implementation
+    """
+
     def __init__(self, max_size=4096):
         self.static_table = []
         self.dynamic_table = []
@@ -46,6 +54,9 @@ class Table:
             self.static_table[ix] = Entry(k, v or None)
 
     def add(self, entry):
+        """
+        Adds an entry to the dynamic table
+        """
         if entry.size > self.max_size:
             self.dynamic_table = []
             self.size = 0
@@ -56,12 +67,18 @@ class Table:
         self.dynamic_table.insert(0, entry)
 
     def change_size(self, new_size):
+        """
+        Changes the dynamic table size by removing items
+        """
         while new_size < self.size:
             self.size -= self.dynamic_table[-1].size
             del self.dynamic_table[-1]
         self.max_size = new_size
 
     def find_item(self, item):
+        """
+        Returns the index of an item in the table
+        """
         if not isinstance(item, Entry):
             item = force_string(item)
         if item in self.static_table:

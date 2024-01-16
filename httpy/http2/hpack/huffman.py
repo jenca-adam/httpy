@@ -6,6 +6,9 @@ import io
 
 
 def encode_huffman(inp):
+    """
+    Encodes a byte sequence using Huffman encoding with the HPACK Huffman table
+    """
     if not isinstance(inp, bytes):
         inp = force_bytes(inp)
         # warn! TODO
@@ -26,6 +29,9 @@ def encode_huffman(inp):
 
 
 def decode_huffman(inp):
+    """
+    Decodes a Huffman-encoded byte sequence with the HPACK Huffman table
+    """
     nbits = len(inp) * 8  # huffman strings are padded with 1s to nearest octet
     bits = bytes2bits(inp, "big", nbits)
     stream = io.StringIO(bits)

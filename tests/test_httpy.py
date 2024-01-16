@@ -8,7 +8,6 @@ import time
 import os
 import pytest
 import asyncio
-from h2tests import *
 
 try:
     import alive_progress
@@ -44,7 +43,7 @@ def test_https_200_ok():
 def test_httpy_nonblocking():
     t = time.time()
     resps = [
-        httpy.request("http://httpbin.org/delay/1", blocking=False, http_version="2")
+        httpy.request("https://httpbin.org/delay/1", blocking=False, http_version="2")
         for i in range(4)
     ]
     assert time.time() - t < 1
@@ -151,3 +150,4 @@ async def test_httpy_http2_async():
             "https://www.example.org/", http_version="2", enable_cache=False
         )
     ).status == 200
+

@@ -83,6 +83,7 @@ WEBSOCKET_CLOSE_CODES = {
     1014: "Bad Gateway",
     1015: "TLS handshake",
 }
+
 ALPN_PROTOCOLS = {"1.1": "http/1.1", "2": "h2"}
 default_context = ssl._create_default_https_context()
 default_context.set_alpn_protocols(["http/1.1", "h2"])
@@ -90,7 +91,7 @@ schemes = {"http": 80, "https": 443}
 
 
 def _binappendstr(s):
-    return struct.pack("!H", len(s)) + force_bytes(s)
+    return struct.pack("!H", len(force_bytes(s))) + force_bytes(s)
 
 
 def _binappendfloat(b):
@@ -129,7 +130,6 @@ class CacheControl:
 
     def __init__(self, directives):
         d = [_mk2l(x.split("=")) for x in directives.split(",")]
-
         self.directives = CaseInsensitiveDict(d)
         if "max-age" in self.directives:
             self.max_age = int(self.directives["max-age"])
@@ -188,7 +188,7 @@ class CacheFile:
                 self.expires = _unpk_float(file.read(expires_length))
 
             self.http_version = "1.1"
-            request_header_present = False
+            request_headers_present = False
         else:
             if cfconfig & 0b1:
                 expires_length = ord(file.read(1))
@@ -219,7 +219,6 @@ class CacheFile:
             for _ in range(request_headers_n_entries):
                 request_headers.append(read_until(file, b"\r"))
             self.request_headers = Headers(request_headers)
-
         self.content = file.read()
         file.seek(0)
         file.close()
@@ -270,7 +269,12 @@ class Cache:
         if not os.path.exists(d):
             os.makedirs(d)
         self.dir = d
-        self.files = [CacheFile(os.path.join(d, i)) for i in os.listdir(d)]
+        self.files = []
+        for f in os.listdir(d):
+            try:
+                self.files.append(CacheFile(os.path.join(d,f)))
+            except:
+                pass
 
     def updateCache(self):
         """Updates self.files according to /sites directory content and removes expired ones"""
@@ -413,6 +417,7 @@ class CookieDomain:
 
     def delete_cookie(self, key):
         """Deletes cookie from domain"""
+
         del self[key]
         self.jar.update()
 
@@ -444,7 +449,7 @@ class CookieDomain:
 
 
 class CookieJar:
-    """Class for cookie jar"""
+    """Class for cookie jars"""
 
     def __init__(self, jarfile=HTTPY_DIR / "default" / "cj"):
         try:
@@ -548,15 +553,22 @@ class Headers(CaseInsensitiveDict):
     """Class for HTTP headers"""
 
     def __init__(self, h):
-        h = filter(lambda x: bool(x), h)
-        self.headers = (
-            [
+        h = filter(None, h)
+        _headers = mkdict(
+            (
                 force_string(a).split(":", 1)[0].strip().lower(),
                 force_string(a).split(":", 1)[1].strip(),
-            ]
+            )
             for a in h
         )
-        self.headers = mkdict(self.headers)
+        self.headers = {
+            k: v
+            for k, v in filter(lambda h: not h[0].startswith(":"), _headers.items())
+        }
+        self.h2_headers = {
+            k: v for k, v in filter(lambda h: h[0].startswith(":"), _headers.items())
+        }
+
         super().__init__(self.headers)
 
     def __setitem__(self, item, value):
@@ -642,7 +654,7 @@ class Response:
         self.content = content
         self.ok = self.status == 200
         self.reason = self.status.reason
-        self._original = original_content
+        self._original = self.original_content = original_content
         try:
             self.speed = len(self._original) / time_elapsed
         except ZeroDivisionError:  # bug #28 permanent redirects
@@ -650,7 +662,9 @@ class Response:
         self.url = reslash(url)
         self.fromcache = fromcache
         self._time_elapsed = time_elapsed
-        self.content_type = headers.get("content-type", "text/html")
+        self.content_type = (
+            headers.get("content-type", "text/html").split(";")[0].strip()
+        )  # remove charset suffix
         self._charset = determine_charset(headers)
         self.history = history
         self.request = request
@@ -694,10 +708,7 @@ class Response:
     @property
     def string(self):
         if self.charset is None:
-            try:
-                return self.content.decode()
-            except Exception as e:
-                raise ValueError("no charset, can't decode") from e
+            return self.content.decode()
         return self.content.decode(self.charset)
 
     @classmethod
@@ -722,9 +733,11 @@ class Response:
 
     @property
     def json(self):
-        if (
-            self.content_type == "application/json"
-        ):  # the ONLY acceptable MIME, see RFC 4627 ## NOTE: What about the encoding suffix???
+        if self.content_type == (
+            "application/json"
+        ):  # the ONLY acceptable MIME, see RFC 4627
+            ## NOTE: What about the encoding suffix???
+            ##   AJ: fixed! (2.0.0)
             if self._charset is None:
                 JSON = self.content.decode("UTF-8")  #
             else:
@@ -982,12 +995,10 @@ class Session:
         self.connections = {}
 
     def __setitem__(self, host, connection):
-        print("Addded", host, connection)
         host, port = host
         if is_closed(connection):
             raise ConnectionClosedError("Connection closed by host")
         self.connections[host, port, connection.is_async] = connection
-        print(self.connections)
 
     def __getitem__(self, host):
         try:
@@ -1002,6 +1013,22 @@ class Session:
     async def initiate_http2_connection(self, *args, **kwargs):
         kwargs["session"] = self
         await initiate_http2_connection(*args, **kwargs)
+
+    def request(self, *args, **kwargs):
+        if "headers" not in kwargs:
+            kwargs["headers"] = {}
+        if "connection" not in kwargs["headers"]:
+            kwargs["headers"]["connection"] = "Keep-Alive"
+        kwargs["session"] = self
+        return request(*args, **kwargs)
+
+    async def async_request(self, *args, **kwargs):
+        if "headers" not in kwargs:
+            kwargs["headers"] = {}
+        if "connection" not in kwargs["headers"]:
+            kwargs["headers"]["connection"] = "Keep-Alive"
+        kwargs["session"] = self
+        return await async_request(*args, **kwargs)
 
     def __contains__(self, host):
         return host in self.connections
@@ -1101,7 +1128,9 @@ def cacheWrite(response, base_dir, expires_override=None):
     data += struct.pack("B", cfconfig)
     if has_expires:
         data += expires_bin
-    data += struct.pack("!H", len(response.request.headers))
+    data += struct.pack(
+        "!H", sum(1 for h in response.request.headers if not h.startswith(":"))
+    )
     data += "\r".join(
         [
             mk_header(i)
@@ -1110,6 +1139,7 @@ def cacheWrite(response, base_dir, expires_override=None):
             )
         ]
     ).encode()  # remove h2 hf
+    data += b"\r"
     data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
     data += b"\x00"
     data += response.content
@@ -1124,6 +1154,7 @@ def cacheWrite(response, base_dir, expires_override=None):
 def mkdict(kvp):
     """Makes dict from key/value pairs"""
     d = {}
+    kvp = list(kvp)
     for k, v in kvp:
         k = k.lower()
         if k in d:
@@ -1252,7 +1283,6 @@ def deslash(url):
 
 
 def generate_cnonce(length=16):
-    debugger.info("generating cnonce")
     return hex(random.randrange(16**length))[2:]
 
 
@@ -1264,6 +1294,9 @@ def _debugprint(debug, what, *args, **kwargs):
 def create_connection(
     host, port, last_response, http_version, scheme, do_keep_alive, session
 ):
+    """
+    Creates a connection to a given host and port
+    """
     debugger.info("calling socket.create_connection")
     conn = _create_connection_and_handle_errors((host, port))
     if scheme == "http":
@@ -1281,8 +1314,8 @@ def create_connection(
     debugger.info(f"http version: {http_version}")
     is_http2 = http_version == "2"
     is_async = False
-    keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
-    if (host, port, is_async) in session:
+    keep_alive = KeepAlive(last_response.headers.get("Keep-Alive", ""))
+    if (host, port, is_async) in session and do_keep_alive:
         if session[host, port, is_async][1] == is_http2:
             debugger.info("Connection already in session")
             try:
@@ -1309,7 +1342,7 @@ async def create_async_h2_connection(
         raise ValueError(
             "can't create an async connection with http/1.1 (use aiohttp for this)"
         )
-    keep_alive = KeepAlive(last_response.headers.get("keep-alive", ""))
+    keep_alive = KeepAlive(last_response.headers.get("Keep-Alive", ""))
     if (host, port, True) in session:
         if session[host, port, True][1] == is_http2:
             debugger.info("Connection already in session")
@@ -1435,18 +1468,30 @@ class HTTP11Recver:
 
 
 class HTTP11(ProtoVersion):
+    """
+    A sender/receiver for HTTP/1.1 requests
+    """
+
     version = "1.1"
     sender = HTTP11Sender
     recver = HTTP11Recver()
 
 
 class HTTP2(ProtoVersion):
+    """
+    A sender/receiver for synchronous HTTP/2 requests
+    """
+
     version = "2"
     sender = http2.proto.HTTP2Sender
     recver = http2.proto.HTTP2Recver()
 
 
 class _HTTP2Async(AsyncProtoVersion):
+    """
+    A sender/receiver for asynchronous HTTP/2 requests
+    """
+
     version = "2"
     sender = http2.proto.AsyncHTTP2Sender
     recver = http2.proto.AsyncHTTP2Recver()
@@ -1494,8 +1539,6 @@ def _dictrm(d, l):
 
 
 proto_versions = {"1.1": HTTP11(), "2": HTTP2()}
-jar = CookieJar()
-cache = Cache()
 nonce_counter = NonceCounter()
 sessions = []
 default_session = Session()
@@ -1528,11 +1571,15 @@ async def _async_raw_request(
     http_version="2",
     disabled_headers=[],
     force_keep_alive=False,
+    enable_cookies=True,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
-    cache = Cache(base_dir / "sites")
-    jar = CookieJar(base_dir / "cj")
+    if enable_cache:
+        cache = Cache(base_dir / "sites")
+    if enable_cookies:
+        jar = CookieJar(base_dir / "cj")
+
     permanent_redirects = PickleFile(base_dir / "permredir.pickle")
     headers = {capitalize(key): value for key, value in headers.items()}
     debug = debug or getattr(builtins, "debug", False)
@@ -1571,7 +1618,8 @@ async def _async_raw_request(
             "Accept-Encoding": "gzip, deflate, identity",
             "Host": makehost(host, port),
             "User-Agent": "httpy/" + VERSION,
-            "Connection": "keep-alive",
+            "Connection": "close",
+            "Accept": "*/*",
         }
     )
     if data:
@@ -1590,11 +1638,12 @@ async def _async_raw_request(
         defhdr["Authorization"] = wau.encode_password(
             *auth, path, method, last_response._original, last_response.content
         )
-    cookies = jar.get_cookies(makehost(host, port), scheme, path)
-    if cookies:
-        defhdr["Cookie"] = []
-        for c in cookies:
-            defhdr["Cookie"].append(c.name + "=" + c.value)
+    if enable_cookies:
+        cookies = jar.get_cookies(makehost(host, port), scheme, path)
+        if cookies:
+            defhdr["Cookie"] = []
+            for c in cookies:
+                defhdr["Cookie"].append(c.name + "=" + c.value)
 
     defhdr.update(headers)
     debugger.info("Removing disabled headers")
@@ -1616,51 +1665,81 @@ async def _async_raw_request(
         if cf:
             cf.add_header(defhdr)
         proto = _HTTP2Async()
-        ret_val = await proto.send_request(sock, method, defhdr, data, path, debugger)
+        try:
+            ret_val = await proto.send_request(
+                sock, method, defhdr, data, path, debugger
+            )
+        except BrokenPipeError:
+            headers["connection"] = "close"
+            return await _async_raw_request(
+                host,
+                port,
+                path,
+                scheme,
+                session=session,
+                url=url,
+                method=method,
+                data=data,
+                content_type=content_type,
+                timeout=timeout,
+                enable_cache=enable_cache,
+                headers=headers,
+                auth=auth,
+                history=history,
+                debug=debug,
+                last_status=last_status,
+                pure_headers=pure_headers,
+                base_dir=base_dir,
+                http_version=http_version,
+                disabled_headers=disabled_headers,
+                force_keep_alive=force_keep_alive,
+            )
+
         args = (sock, ret_val)
 
         status, resp_headers, decoded_body, body = await proto.recv_response(*args)
 
         if status == 304:
             return Response.cacheload(cf)
-        if "set-cookie" in resp_headers:
-            cookie = resp_headers["set-cookie"]
-
+        if "set-cookie" in resp_headers and enable_cookies:
+            cookies = resp_headers["set-cookie"]
             h = makehost(host, port)
             if h not in jar:
                 jar.add_domain(h)
             domain = jar[h][0]
-            if isinstance(cookie, list):
-                for c in cookie:
+            if isinstance(cookies, list) or isinstance(cookies, tuple):
+                for c in cookies:
                     domain.add_cookie(c)
             else:
-                domain.add_cookie(cookie)
+                domain.add_cookie(cookies)
     except DeadConnectionError:
         debugger.error("Connection closed")
-        del default_session[host, port]
+        del session[host, port]
         if not force_keep_alive:
+            headers["connection"] = "close"
             debugger.info("Keep-Alive not forced, retrying")
-            return _raw_request(
+            return await _async_raw_request(
                 host,
                 port,
                 path,
                 scheme,
-                url,
-                method,
-                data,
-                content_type,
-                timeout,
-                enable_cache,
-                headers,
-                auth,
-                history,
-                debug,
-                last_status,
-                pure_headers,
-                base_dir,
-                http_version,
-                disabled_headers,
-                force_keep_alive,
+                session=session,
+                url=url,
+                method=method,
+                data=data,
+                content_type=content_type,
+                timeout=timeout,
+                enable_cache=enable_cache,
+                headers=headers,
+                auth=auth,
+                history=history,
+                debug=debug,
+                last_status=last_status,
+                pure_headers=pure_headers,
+                base_dir=base_dir,
+                http_version=http_version,
+                disabled_headers=disabled_headers,
+                force_keep_alive=force_keep_alive,
             )
         raise
     except:
@@ -1712,11 +1791,14 @@ def _raw_request(
     http_version=None,
     disabled_headers=[],
     force_keep_alive=False,
+    enable_cookies=True,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
-    cache = Cache(base_dir / "sites")
-    jar = CookieJar(base_dir / "cj")
+    if enable_cache:
+        cache = Cache(base_dir / "sites")
+    if enable_cookies:
+        jar = CookieJar(base_dir / "cj")
     permanent_redirects = PickleFile(base_dir / "permredir.pickle")
     headers = {capitalize(key): value for key, value in headers.items()}
     debug = debug or getattr(builtins, "debug", False)
@@ -1755,7 +1837,8 @@ def _raw_request(
             "Accept-Encoding": "gzip, deflate, identity",
             "Host": makehost(host, port),
             "User-Agent": "httpy/" + VERSION,
-            "Connection": "keep-alive",
+            "Connection": "close",
+            "Accept": "*/*",
         }
     )
     if data:
@@ -1774,12 +1857,12 @@ def _raw_request(
         defhdr["Authorization"] = wau.encode_password(
             *auth, path, method, last_response._original, last_response.content
         )
-    cookies = jar.get_cookies(makehost(host, port), scheme, path)
-    if cookies:
-        defhdr["Cookie"] = []
-        for c in cookies:
-            defhdr["Cookie"].append(c.name + "=" + c.value)
-
+    if enable_cookies:
+        cookies = jar.get_cookies(makehost(host, port), scheme, path)
+        if cookies:
+            defhdr["Cookie"] = []
+            for c in cookies:
+                defhdr["Cookie"].append(c.name + "=" + c.value)
     defhdr.update(headers)
     debugger.info("Removing disabled headers")
     _dictrm(defhdr, disabled_headers)
@@ -1807,7 +1890,35 @@ def _raw_request(
             cf.add_header(defhdr)
         proto = proto_versions[http_version]
         dbg = debugger if is_http2 else debug
-        ret_val = proto.send_request(sock, method, defhdr, data, path, dbg)
+        try:
+            ret_val = proto.send_request(sock, method, defhdr, data, path, dbg)
+        except BrokenPipeError:
+            debugger.warn("broken pipe, reconnecting")
+            headers["connection"] = "close"
+            return _raw_request(
+                host,
+                port,
+                path,
+                scheme,
+                session=session,
+                url=url,
+                method=method,
+                data=data,
+                content_type=content_type,
+                timeout=timeout,
+                enable_cache=enable_cache,
+                headers=headers,
+                auth=auth,
+                history=history,
+                debug=debug,
+                last_status=last_status,
+                pure_headers=pure_headers,
+                base_dir=base_dir,
+                http_version=http_version,
+                disabled_headers=disabled_headers,
+                force_keep_alive=force_keep_alive,
+            )
+
         if is_http2:
             args = (sock, ret_val)
         else:
@@ -1817,44 +1928,45 @@ def _raw_request(
 
         if status == 304:
             return Response.cacheload(cf)
-        if "set-cookie" in resp_headers:
-            cookie = resp_headers["set-cookie"]
-
+        if "set-cookie" in resp_headers and enable_cookies:
+            cookies = resp_headers["set-cookie"]
             h = makehost(host, port)
             if h not in jar:
                 jar.add_domain(h)
             domain = jar[h][0]
-            if isinstance(cookie, list):
-                for c in cookie:
+            if isinstance(cookies, list) or isinstance(cookies, tuple):
+                for c in cookies:
                     domain.add_cookie(c)
             else:
-                domain.add_cookie(cookie)
+                domain.add_cookie(cookies)
     except DeadConnectionError:
         debugger.error("Connection closed")
         del session[host, port]
         if not force_keep_alive:
             debugger.info("Keep-Alive not forced, retrying")
+            headers["connection"] = "close"
             return _raw_request(
                 host,
                 port,
                 path,
                 scheme,
-                url,
-                method,
-                data,
-                content_type,
-                timeout,
-                enable_cache,
-                headers,
-                auth,
-                history,
-                debug,
-                last_status,
-                pure_headers,
-                base_dir,
-                http_version,
-                disabled_headers,
-                force_keep_alive,
+                session=session,
+                url=url,
+                method=method,
+                data=data,
+                content_type=content_type,
+                timeout=timeout,
+                enable_cache=enable_cache,
+                headers=headers,
+                auth=auth,
+                history=history,
+                debug=debug,
+                last_status=last_status,
+                pure_headers=pure_headers,
+                base_dir=base_dir,
+                http_version=http_version,
+                disabled_headers=disabled_headers,
+                force_keep_alive=force_keep_alive,
             )
         raise
     except:
@@ -1889,6 +2001,7 @@ def set_debug(d=True):
 
 
 def absolute_path(url, last_url, scheme, host):
+    """Makes relative urls absolute"""
     if URLPATTERN.search(url) is not None:
         debugger.info("Absolute url")
         return url
@@ -1924,6 +2037,7 @@ def request(
     disabled_headers=[],
     blocking=True,
     force_keep_alive=False,
+    enable_cookies=True,
 ):
     """
     Performs request.
@@ -1947,7 +2061,7 @@ def request(
     :param throw_on_error: if throw_on_error is ``True`` , StatusError will be raised if server responded with 4xx or 5xx status code.
     :param debug: whether or not shall debug mode be used , defaults to ``False``
     :type debug: ``bool``
-    :param base_dir: HTTPy cache directory to use for request, default is ``"~/.cache/httpy/default"``
+    :param base_dir: HTTPy cache directory to use for the request, default is ``"~/.cache/httpy/default"``
     :type base_dir: ``pathlib.Path``
     :param http_version: HTTP version to use, MUST be "1.1" or "2" or None. If None the HTTP version will be automatically detected via ALPN.
     :param disabled_headers: Disable selected headers.
@@ -1956,6 +2070,7 @@ def request(
     :type blocking: ``bool``
     :param force_keep_alive: If ``False``, request will be retried upon connection being closed if the connection is in keep-alive mode.
     :type force_keep_alive:``bool``
+
     """
     global debugger
     debugger = _Debugger(debug)
@@ -1984,6 +2099,8 @@ def request(
     if port is None:
         port = schemes[scheme]
 
+    if http_version == "2" and scheme == "http":
+        raise HTTPyError("can't perform a HTTP/2 request over an insecure connection")
     if history:
         last_status = history[-1].status
     else:
@@ -2012,6 +2129,7 @@ def request(
             http_version=http_version,
             disabled_headers=disabled_headers,
             force_keep_alive=force_keep_alive,
+            enable_cookies=enable_cookies,
         )
     else:  # PendingRequest
         return PendingRequest(
@@ -2031,6 +2149,7 @@ def request(
             http_version=http_version,
             blocking=False,
             force_keep_alive=force_keep_alive,
+            enable_cookies=enable_cookies,
         )
 
     if 300 <= resp.status < 400:
@@ -2062,6 +2181,7 @@ def request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 blocking=blocking,
+                enable_cookies=enable_cookies,
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -2083,6 +2203,7 @@ def request(
             base_dir=base_dir,
             http_version=http_version,
             blocking=blocking,
+            enable_cookies=enable_cookies,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2121,9 +2242,12 @@ async def async_request(
     http_version="2",
     disabled_headers=[],
     force_keep_alive=False,
+    enable_cookies=True,
 ):
     """
     Performs an asynchronous request.
+    Asynchronous requests are always HTTP/2.
+
     `Note:` all arguments but ``url`` are keyword-only
 
     :param url: url to request
@@ -2144,13 +2268,14 @@ async def async_request(
     :param throw_on_error: if throw_on_error is ``True`` , StatusError will be raised if server responded with 4xx or 5xx status code.
     :param debug: whether or not shall debug mode be used , defaults to ``False``
     :type debug: ``bool``
-    :param base_dir: HTTPy cache directory to use for request, default is ``"~/.cache/httpy/default"``
+    :param base_dir: HTTPy cache directory to use for the request, default is ``"~/.cache/httpy/default"``
     :type base_dir: ``pathlib.Path``
     :param http_version: HTTP version to use, MUST be "2". For async http/1 requests use aiohttp or the `blocking` parameter of request() for requests in a separate thread
     :param disabled_headers: Disable selected headers.
     :type disabled_headers: ``list``
     :param force_keep_alive: If ``False``, request will be retried upon connection being closed if the connection is in keep-alive mode.
     :type force_keep_alive:``bool``
+
     """
     global debugger
     debugger = _Debugger(debug)
@@ -2206,6 +2331,7 @@ async def async_request(
         http_version=http_version,
         disabled_headers=disabled_headers,
         force_keep_alive=force_keep_alive,
+        enable_cookies=enable_cookies,
     )
     if 300 <= resp.status < 400:
         debugger.info("Redirect")
@@ -2235,6 +2361,7 @@ async def async_request(
                 base_dir=base_dir,
                 http_version=http_version,
                 disabled_headers=disabled_headers,
+                enable_cookies=enable_cookies,
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -2255,6 +2382,7 @@ async def async_request(
             enable_cache=enable_cache,
             base_dir=base_dir,
             http_version=http_version,
+            enable_cookies=enable_cookies,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2274,6 +2402,10 @@ async def async_request(
 
 
 async def initiate_http2_connection(url=None, host=None, session=default_session):
+    """
+    Starts a HTTP/2 connection and adds it to a session.
+    Used to send multiple asynchronous requests on one connection.
+    """
     if url is None and host is None:
         raise ValueError
     if url is not None:
@@ -2288,11 +2420,18 @@ async def initiate_http2_connection(url=None, host=None, session=default_session
 
 
 def close_all():
+    """
+    Closes all sessions.
+    Always called at program exit.
+    """
     for session in sessions:
         del session
 
 
 def get_connection(host, port):
+    """
+    Returns a connection in the default session.
+    """
     conn = default_session[(host, port)]
     return conn
 
@@ -2327,8 +2466,8 @@ def websocket_handshake(
     cdebugger.info("started handshake")
     base = {
         "Host": get_host(url),
-        "upgrade": "websocket",
-        "connection": "Upgrade",
+        "Upgrade": "websocket",
+        "Connection": "Upgrade",
         "Sec-WebSocket-Version": "13",
         "Sec-WebSocket-Key": key,
     }

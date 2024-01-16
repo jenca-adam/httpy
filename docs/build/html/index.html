@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy &mdash; httpy 1.8.1 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>httpy &mdash; httpy 1.8.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=8209df7b" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=50a25ae7"></script>
+        <script src="_static/doctools.js?v=4184ea2e"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -55,26 +57,48 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#usage">Usage</a><ul>
-<li><a class="reference internal" href="#http">HTTP</a></li>
+<li><a class="reference internal" href="#http">HTTP</a><ul>
+<li><a class="reference internal" href="#specifying-a-http-version">Specifying a HTTP version</a></li>
 <li><a class="reference internal" href="#non-blocking-requests">Non-blocking requests</a></li>
-<li><a class="reference internal" href="#sessions">Sessions</a><ul>
-<li><a class="reference internal" href="#websocket">WebSocket</a></li>
+<li><a class="reference internal" href="#i-want-cookies">I want cookies!</a></li>
+<li><a class="reference internal" href="#stayin-alive">Stayin’ alive</a></li>
+<li><a class="reference internal" href="#asynchronous-requests">Asynchronous requests</a></li>
+<li><a class="reference internal" href="#response-class-attributes"><code class="docutils literal notranslate"><span class="pre">Response</span></code> class attributes</a><ul>
+<li><a class="reference internal" href="#response-content"><code class="docutils literal notranslate"><span class="pre">Response.content</span></code></a></li>
+<li><a class="reference internal" href="#response-status"><code class="docutils literal notranslate"><span class="pre">Response.status</span></code></a></li>
+<li><a class="reference internal" href="#response-history"><code class="docutils literal notranslate"><span class="pre">Response.history</span></code></a></li>
+<li><a class="reference internal" href="#response-fromcache"><code class="docutils literal notranslate"><span class="pre">Response.fromcache</span></code></a></li>
+<li><a class="reference internal" href="#response-request"><code class="docutils literal notranslate"><span class="pre">Response.request</span></code></a><ul>
+<li><a class="reference internal" href="#request-s-attributes"><code class="docutils literal notranslate"><span class="pre">Request</span></code>’s attributes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#response-original-content"><code class="docutils literal notranslate"><span class="pre">Response.original_content</span></code></a></li>
+<li><a class="reference internal" href="#response-time-elapsed"><code class="docutils literal notranslate"><span class="pre">Response.time_elapsed</span></code></a></li>
+<li><a class="reference internal" href="#response-speed"><code class="docutils literal notranslate"><span class="pre">Response.speed</span></code></a></li>
+<li><a class="reference internal" href="#response-content-type"><code class="docutils literal notranslate"><span class="pre">Response.content_type</span></code></a></li>
+<li><a class="reference internal" href="#response-charset-property"><code class="docutils literal notranslate"><span class="pre">Response.charset</span></code> (property)</a></li>
+<li><a class="reference internal" href="#response-string-property"><code class="docutils literal notranslate"><span class="pre">Response.string</span></code> (property)</a></li>
+<li><a class="reference internal" href="#response-json-property"><code class="docutils literal notranslate"><span class="pre">Response.json</span></code> (property)</a></li>
+<li><a class="reference internal" href="#response-method"><code class="docutils literal notranslate"><span class="pre">Response.method</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#examples">Examples</a></li>
+<li><a class="reference internal" href="#websockets">WebSockets</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#examples">Examples</a><ul>
 <li><a class="reference internal" href="#post-method">POST method</a><ul>
 <li><a class="reference internal" href="#simple-form">Simple Form</a></li>
 <li><a class="reference internal" href="#sending-files">Sending files</a></li>
 <li><a class="reference internal" href="#sending-binary-data">Sending binary data</a></li>
 <li><a class="reference internal" href="#sending-plain-text">Sending plain text</a></li>
-<li><a class="reference internal" href="#sending-json">Sending JSON</a><ul>
+<li><a class="reference internal" href="#sending-json">Sending JSON</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#debugging">Debugging</a></li>
-</ul>
-</li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -104,46 +128,49 @@
            <div itemprop="articleBody">
              
   <section id="httpy">
-<h1>httpy<a class="headerlink" href="#httpy" title="Permalink to this heading"></a></h1>
-<p>A Python lightweight socket-based library to create HTTP(s) and WebSocket connections.</p>
+<h1>httpy<a class="headerlink" href="#httpy" title="Link to this heading"></a></h1>
+<p>A Python lightweight socket-based library to create HTTP(s) and
+WebSocket connections.</p>
 <section id="features">
-<h2>Features<a class="headerlink" href="#features" title="Permalink to this heading"></a></h2>
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>Cookies support</p></li>
 <li><p>Caching support</p></li>
 <li><p>Easy debugging</p></li>
 <li><p>HTTP Basic and Digest authentication</p></li>
 <li><p>Form support</p></li>
-<li><p>Keep-Alive and connection pooling support</p></li>
+<li><p>Keep-Alive and Sessions support</p></li>
 <li><p>JSON support</p></li>
 <li><p>Sessions support</p></li>
 <li><p>Runs in PyPy</p></li>
 <li><p>Independent of http.client</p></li>
+<li><p>HTTP/2 Support</p></li>
+<li><p>Async IO support</p></li>
 </ul>
 </section>
 <section id="requirements">
-<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading"></a></h2>
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>Python&gt;=3.6</p></li>
 </ul>
 </section>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
 <section id="any-platform">
-<h3>Any platform<a class="headerlink" href="#any-platform" title="Permalink to this heading"></a></h3>
+<h3>Any platform<a class="headerlink" href="#any-platform" title="Link to this heading"></a></h3>
 <section id="git">
-<h4>Git<a class="headerlink" href="#git" title="Permalink to this heading"></a></h4>
+<h4>Git<a class="headerlink" href="#git" title="Link to this heading"></a></h4>
 <blockquote>
 <div><ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/jenca-adam/httpy</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">httpy</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">setup.py</span> <span class="pre">install</span></code>
-The Python version check will be performed automatically</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">setup.py</span> <span class="pre">install</span></code></p></li>
 </ol>
 </div></blockquote>
+<p>The Python version check will be performed automatically</p>
 </section>
 <section id="pip">
-<h4>Pip<a class="headerlink" href="#pip" title="Permalink to this heading"></a></h4>
+<h4>Pip<a class="headerlink" href="#pip" title="Link to this heading"></a></h4>
 <blockquote>
 <div><ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">httpy</span></code></p></li>
@@ -152,7 +179,7 @@ The Python version check will be performed automatically</p></li>
 </section>
 </section>
 <section id="arch-linux">
-<h3>Arch Linux<a class="headerlink" href="#arch-linux" title="Permalink to this heading"></a></h3>
+<h3>Arch Linux<a class="headerlink" href="#arch-linux" title="Link to this heading"></a></h3>
 <blockquote>
 <div><ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">yay</span> <span class="pre">-S</span> <span class="pre">httpy</span></code></p></li>
@@ -161,53 +188,300 @@ The Python version check will be performed automatically</p></li>
 </section>
 </section>
 <section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h2>
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="httpy.html#submodules">REFERENCE</a></p>
 <section id="http">
-<h3>HTTP<a class="headerlink" href="#http" title="Permalink to this heading"></a></h3>
+<h3>HTTP<a class="headerlink" href="#http" title="Link to this heading"></a></h3>
 <p>It’s easy.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span> <span class="c1"># Do a request</span>
 <span class="n">resp</span><span class="o">.</span><span class="n">content</span> <span class="c1">#Access content</span>
 </pre></div>
 </div>
+<section id="specifying-a-http-version">
+<h4>Specifying a HTTP version<a class="headerlink" href="#specifying-a-http-version" title="Link to this heading"></a></h4>
+<p>Set the <code class="docutils literal notranslate"><span class="pre">http_version</span></code> argument, but keep in mind the following</p>
+<ol class="arabic simple">
+<li><p>You can’t make an asynchronous request using HTTP/1.1</p></li>
+<li><p>HTTP/2 requests can’t be performed over insecure (http scheme)
+connections.</p></li>
+</ol>
+<p>If you don’t set it, the HTTP version will be automatically detected
+using ALPN &lt;<a class="reference external" href="https://datatracker.ietf.org/doc/html/rfc7301">https://datatracker.ietf.org/doc/html/rfc7301</a>&gt;.</p>
+<p>Valid <code class="docutils literal notranslate"><span class="pre">http_version</span></code> values are <code class="docutils literal notranslate"><span class="pre">&quot;1.1&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;2&quot;</span></code>.</p>
 </section>
 <section id="non-blocking-requests">
-<h3>Non-blocking requests<a class="headerlink" href="#non-blocking-requests" title="Permalink to this heading"></a></h3>
+<h4>Non-blocking requests<a class="headerlink" href="#non-blocking-requests" title="Link to this heading"></a></h4>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">pending</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">blocking</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-<span class="c1"># PendingRequest.response returns the result of the response. You can check if the request is already done using PendingRequest.finished</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">PendingRequest.response</span></code> returns the result of the response. You can
+check if the request is already done using <code class="docutils literal notranslate"><span class="pre">PendingRequest.finished</span></code></p>
+</section>
+<section id="i-want-cookies">
+<h4>I want cookies!<a class="headerlink" href="#i-want-cookies" title="Link to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">Dir</span></code> class allows you to store httpy’s data (cache and cookies)
+on the path of your choice. By default, the data is stored in
+<code class="docutils literal notranslate"><span class="pre">~/.cache/httpy</span></code>. If you don’t want to store the data, use the
+<code class="docutils literal notranslate"><span class="pre">enable_cookies</span></code> or <code class="docutils literal notranslate"><span class="pre">enable_cache</span></code> argument of <code class="docutils literal notranslate"><span class="pre">request</span></code>. ..
+code-block:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">directory</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">Dir</span><span class="p">(</span><span class="s2">&quot;your/path&quot;</span><span class="p">)</span>
+<span class="n">directory</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span> <span class="c1"># ...</span>
 </pre></div>
 </div>
 </section>
-<section id="sessions">
-<h3>Sessions<a class="headerlink" href="#sessions" title="Permalink to this heading"></a></h3>
-<p>The <code class="docutils literal notranslate"><span class="pre">Session</span></code> class is there for you:</p>
+<section id="stayin-alive">
+<h4>Stayin’ alive<a class="headerlink" href="#stayin-alive" title="Link to this heading"></a></h4>
+<p>If you want to reuse a connection, it is highly recommended to use a
+<code class="docutils literal notranslate"><span class="pre">Session</span></code> class. It offers more control over connection closure than
+the standard <code class="docutils literal notranslate"><span class="pre">request</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
-<span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span> <span class="c1"># ...</span>
+<span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<section id="websocket">
-<h4>WebSocket<a class="headerlink" href="#websocket" title="Permalink to this heading"></a></h4>
+<p>HTTPy sets <code class="docutils literal notranslate"><span class="pre">Connection:</span> <span class="pre">close</span></code> by default in non-Session requests. If
+you want to keep the connection alive outside a session, you must
+specify so in the <code class="docutils literal notranslate"><span class="pre">headers</span></code> argument.</p>
+</section>
+<section id="asynchronous-requests">
+<h4>Asynchronous requests<a class="headerlink" href="#asynchronous-requests" title="Link to this heading"></a></h4>
+<p>You can perform async requests using the <code class="docutils literal notranslate"><span class="pre">async_request</span></code> method.</p>
+<p>The simplest use case:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">my_function</span><span class="p">():</span>
+     <span class="k">return</span> <span class="k">await</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to perform multiple requests at once on the same connection
+(i.e. with <code class="docutils literal notranslate"><span class="pre">asyncio.gather</span></code>), use the <code class="docutils literal notranslate"><span class="pre">initiate_http2_connection</span></code>
+method of <code class="docutils literal notranslate"><span class="pre">Session</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">my_function</span><span class="p">():</span>
+     <span class="n">session</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+     <span class="k">await</span> <span class="n">session</span><span class="o">.</span><span class="n">initiate_http2_connection</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;example.com&quot;</span><span class="p">)</span>
+     <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">async_request</span><span class="p">(</span><span class="s2">&quot;https://www.example.com/&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">69</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Session</span></code> and <code class="docutils literal notranslate"><span class="pre">Dir</span></code> and everything with a <code class="docutils literal notranslate"><span class="pre">request()</span></code> method has
+an <code class="docutils literal notranslate"><span class="pre">async_request()</span></code> equivalent.</p>
+</section>
+<section id="response-class-attributes">
+<h4><code class="docutils literal notranslate"><span class="pre">Response</span></code> class attributes<a class="headerlink" href="#response-class-attributes" title="Link to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">Response</span></code> class returned by <code class="docutils literal notranslate"><span class="pre">request()</span></code> has some useful
+attributes:</p>
+<section id="response-content">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.content</span></code><a class="headerlink" href="#response-content" title="Link to this heading"></a></h5>
+<p>The response content as <code class="docutils literal notranslate"><span class="pre">bytes</span></code>. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://www.google.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+<span class="sa">b</span><span class="s1">&#39;!&lt;doctype html&gt;</span><span class="se">\n</span><span class="s1">&lt;html&gt;...</span>
+</pre></div>
+</div>
+</section>
+<section id="response-status">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.status</span></code><a class="headerlink" href="#response-status" title="Link to this heading"></a></h5>
+<p>The response status as a <code class="docutils literal notranslate"><span class="pre">Status</span></code> object. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://www.example.com/this_url_doesnt_exist&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+<span class="c1"># 404</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">reason</span><span class="p">)</span>
+<span class="c1"># NOT FOUND</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+<span class="c1"># indicates that the origin server did not find a current representation for the target resource or is not willing to disclose that one exists.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="o">&gt;</span><span class="mi">400</span><span class="p">)</span>
+<span class="c1"># True</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Status</span></code> subclasses <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p>
+</section>
+<section id="response-history">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.history</span></code><a class="headerlink" href="#response-history" title="Link to this heading"></a></h5>
+<p>All the redirects on the way to this response as <code class="docutils literal notranslate"><span class="pre">list</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://httpbin.org/redirect/1&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
+<span class="c1"># [&lt;Response GET [302 Found] (https://httpbin.org/redirect/1/)&gt;, &lt;Response GET [200 OK] (https://httpbin.org/get/)&gt;]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Response.history</span></code> is ordered from oldest to newest</p>
+</section>
+<section id="response-fromcache">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.fromcache</span></code><a class="headerlink" href="#response-fromcache" title="Link to this heading"></a></h5>
+<p>Indicates whether the response was loaded from cache (<code class="docutils literal notranslate"><span class="pre">bool</span></code>).</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">fromcache</span><span class="p">)</span>
+<span class="c1"># False</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">fromcache</span><span class="p">)</span>
+<span class="c1"># True</span>
+</pre></div>
+</div>
+</section>
+<section id="response-request">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.request</span></code><a class="headerlink" href="#response-request" title="Link to this heading"></a></h5>
+<p>Some of the attributes of the request that produced this response, as a
+<code class="docutils literal notranslate"><span class="pre">Request</span></code> object.</p>
+<section id="request-s-attributes">
+<h6><code class="docutils literal notranslate"><span class="pre">Request</span></code>’s attributes<a class="headerlink" href="#request-s-attributes" title="Link to this heading"></a></h6>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Request.url</span></code> - the URL requested (<code class="docutils literal notranslate"><span class="pre">str</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Request.headers</span></code> - the requests’ headers (<code class="docutils literal notranslate"><span class="pre">Headers</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Request.socket</span></code> - the underlying connection (either
+<code class="docutils literal notranslate"><span class="pre">socket.socket</span></code> or <code class="docutils literal notranslate"><span class="pre">httpy.http2.connection.HTTP2Connection</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Request.cache</span></code> - the same as <code class="docutils literal notranslate"><span class="pre">Response.fromcache</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Request.http_version</span></code> - the HTTP version used (<code class="docutils literal notranslate"><span class="pre">str</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Request.method</span></code> - the HTTP method used (<code class="docutils literal notranslate"><span class="pre">str</span></code>)</p></li>
+</ul>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+<span class="c1"># https://example.com/</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+<span class="c1"># {&#39;Accept-Encoding&#39;: &#39;gzip, deflate, identity&#39;, &#39;Host&#39;: &#39;example.com&#39;, &#39;User-Agent&#39;: &#39;httpy/2.0.0&#39;, &#39;Connection&#39;: &#39;close&#39;, &#39;Accept&#39;: &#39;*/*&#39;}</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+<span class="c1"># GET</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="response-original-content">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.original_content</span></code><a class="headerlink" href="#response-original-content" title="Link to this heading"></a></h5>
+<p>Raw content received from the server, not decoded with Content-Encoding
+(<code class="docutils literal notranslate"><span class="pre">bytes</span></code>).</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">original_content</span><span class="p">)</span>
+<span class="c1"># b&#39;\x1f\x8b\x08\x00\xc2 ...</span>
+</pre></div>
+</div>
+</section>
+<section id="response-time-elapsed">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.time_elapsed</span></code><a class="headerlink" href="#response-time-elapsed" title="Link to this heading"></a></h5>
+<p>Time the request took, in seconds. Only the loading time of this
+particular request, doesn’t account for redirects. (<code class="docutils literal notranslate"><span class="pre">float</span></code>).</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">time_elapsed</span><span class="p">)</span>
+<span class="c1"># 0.2497</span>
+</pre></div>
+</div>
+</section>
+<section id="response-speed">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.speed</span></code><a class="headerlink" href="#response-speed" title="Link to this heading"></a></h5>
+<p>The download speed for the response, in bytes per second. (<code class="docutils literal notranslate"><span class="pre">float</span></code>).
+Might be different for HTTP/2 request. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>
+<span class="c1"># 2594.79</span>
+</pre></div>
+</div>
+</section>
+<section id="response-content-type">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.content_type</span></code><a class="headerlink" href="#response-content-type" title="Link to this heading"></a></h5>
+<p>The response’s <code class="docutils literal notranslate"><span class="pre">Content-Type</span></code> header contents, with the charset
+information stripped. If the headers lack <code class="docutils literal notranslate"><span class="pre">Content-Type</span></code>, it’s
+<code class="docutils literal notranslate"><span class="pre">text/html</span></code> by default.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">content_type</span><span class="p">)</span>
+<span class="c1"># text/html</span>
+</pre></div>
+</div>
+</section>
+<section id="response-charset-property">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.charset</span></code> (property)<a class="headerlink" href="#response-charset-property" title="Link to this heading"></a></h5>
+<p>Gets the charset of the response (<code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>):</p>
+<ol class="arabic simple">
+<li><p>If a charset was specified in the response headers, return it</p></li>
+<li><p>If a charset was not specified, but <code class="docutils literal notranslate"><span class="pre">chardet</span></code> is available, try to
+detect the charset (Note that this still returns <code class="docutils literal notranslate"><span class="pre">None</span></code> if
+<code class="docutils literal notranslate"><span class="pre">chardet</span></code> fails)</p></li>
+<li><p>If a charset was not specified, and <code class="docutils literal notranslate"><span class="pre">chardet</span></code> is not available,
+return <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+</ol>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">charset</span><span class="p">)</span>
+<span class="c1"># UTF-8</span>
+</pre></div>
+</div>
+</section>
+<section id="response-string-property">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.string</span></code> (property)<a class="headerlink" href="#response-string-property" title="Link to this heading"></a></h5>
+<p><code class="docutils literal notranslate"><span class="pre">Response.content</span></code>, decoded using <code class="docutils literal notranslate"><span class="pre">Response.charset</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>)</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Do not try to access <code class="docutils literal notranslate"><span class="pre">Response.string</span></code>, if <code class="docutils literal notranslate"><span class="pre">Response.charset</span></code> is
+<code class="docutils literal notranslate"><span class="pre">None</span></code>, unless you are absolutely sure the response data is
+decodable by the default locale encoding.</p>
+<p>For ASCII responses this is probably harmless, but you have been
+warned!</p>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>import httpy
+resp = httpy.request(&quot;https://example.com/&quot;)
+print(resp.string)
+&lt;!doctype html&gt;
+...
+</pre></div>
+</div>
+</section>
+<section id="response-json-property">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.json</span></code> (property)<a class="headerlink" href="#response-json-property" title="Link to this heading"></a></h5>
+<p>If <code class="docutils literal notranslate"><span class="pre">Response.content_type</span></code> is <code class="docutils literal notranslate"><span class="pre">application/json</span></code>, try to parse
+<code class="docutils literal notranslate"><span class="pre">Response.string</span></code> using JSON. Throw an error otherwise.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The same as above applies.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://httpbin.org/get&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s2">&quot;url&quot;</span><span class="p">])</span>
+<span class="c1"># https://httpbin.org/get</span>
+</pre></div>
+</div>
+</section>
+<section id="response-method">
+<h5><code class="docutils literal notranslate"><span class="pre">Response.method</span></code><a class="headerlink" href="#response-method" title="Link to this heading"></a></h5>
+<p>The same as <code class="docutils literal notranslate"><span class="pre">Response.request.method</span></code></p>
+</section>
+</section>
+</section>
+<section id="websockets">
+<h3>WebSockets<a class="headerlink" href="#websockets" title="Link to this heading"></a></h3>
 <p>Easy again…</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">httpy</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s2">&quot;wss://echo.websocket.events/&quot;</span><span class="p">)</span><span class="c1"># create a websocket(echo server example)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s2">&quot;wss://echo.websocket.events/&quot;</span><span class="p">)</span><span class="c1"># create a websocket client(echo server example)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;Hello, world!💥&quot;</span><span class="p">)</span><span class="c1"># you can send also bytes</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
 <span class="go">&quot;Hello, world!💥&quot;</span>
 </pre></div>
 </div>
-<p><a class="reference external" href="httpy.html">REFERENCE</a></p>
-</section>
 </section>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
-</section>
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
 <section id="post-method">
-<h2>POST method<a class="headerlink" href="#post-method" title="Permalink to this heading"></a></h2>
+<h3>POST method<a class="headerlink" href="#post-method" title="Link to this heading"></a></h3>
 <section id="simple-form">
-<h3>Simple Form<a class="headerlink" href="#simple-form" title="Permalink to this heading"></a></h3>
+<h4>Simple Form<a class="headerlink" href="#simple-form" title="Link to this heading"></a></h4>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;foo&quot;</span><span class="p">:</span><span class="s2">&quot;bar&quot;</span><span class="p">})</span>
 <span class="c1"># ...</span>
@@ -215,7 +489,7 @@ The Python version check will be performed automatically</p></li>
 </div>
 </section>
 <section id="sending-files">
-<h3>Sending files<a class="headerlink" href="#sending-files" title="Permalink to this heading"></a></h3>
+<h4>Sending files<a class="headerlink" href="#sending-files" title="Link to this heading"></a></h4>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;foo&quot;</span> <span class="p">:</span> <span class="s2">&quot;bar&quot;</span><span class="p">,</span> <span class="s2">&quot;file&quot;</span> <span class="p">:</span> <span class="n">httpy</span><span class="o">.</span><span class="n">File</span><span class="o">.</span><span class="n">open</span><span class="p">(</span> <span class="s2">&quot;example.txt&quot;</span> <span class="p">)</span> <span class="p">})</span>
 <span class="c1"># ...</span>
@@ -223,7 +497,7 @@ The Python version check will be performed automatically</p></li>
 </div>
 </section>
 <section id="sending-binary-data">
-<h3>Sending binary data<a class="headerlink" href="#sending-binary-data" title="Permalink to this heading"></a></h3>
+<h4>Sending binary data<a class="headerlink" href="#sending-binary-data" title="Link to this heading"></a></h4>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span> <span class="sa">b</span><span class="s2">&quot; Hello, World ! &quot;</span><span class="p">)</span>
 <span class="c1"># ...</span>
@@ -231,20 +505,23 @@ The Python version check will be performed automatically</p></li>
 </div>
 </section>
 <section id="sending-plain-text">
-<h3>Sending plain text<a class="headerlink" href="#sending-plain-text" title="Permalink to this heading"></a></h3>
+<h4>Sending plain text<a class="headerlink" href="#sending-plain-text" title="Link to this heading"></a></h4>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;I support Ünicode !&quot;</span><span class="p">)</span>
 <span class="c1"># ...</span>
 </pre></div>
 </div>
 </section>
 <section id="sending-json">
-<h3>Sending JSON<a class="headerlink" href="#sending-json" title="Permalink to this heading"></a></h3>
+<h4>Sending JSON<a class="headerlink" href="#sending-json" title="Link to this heading"></a></h4>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">foo</span><span class="se">\&quot;</span><span class="s2"> : </span><span class="se">\&quot;</span><span class="s2">bar</span><span class="se">\&quot;</span><span class="s2"> }&quot;</span><span class="p">,</span> <span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;application/json&quot;</span><span class="p">)</span>
 <span class="c1"># ...</span>
 </pre></div>
 </div>
+</section>
+</section>
+</section>
 <section id="debugging">
-<h4>Debugging<a class="headerlink" href="#debugging" title="Permalink to this heading"></a></h4>
+<h2>Debugging<a class="headerlink" href="#debugging" title="Link to this heading"></a></h2>
 <p>Just set <code class="docutils literal notranslate"><span class="pre">debug</span></code> to <code class="docutils literal notranslate"><span class="pre">True</span></code> :</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -282,8 +559,6 @@ The Python version check will be performed automatically</p></li>
 </div>
 </section>
 </section>
-</section>
-</section>
 
 
            </div>
@@ -293,7 +568,7 @@ The Python version check will be performed automatically</p></li>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Adam Jenca.</p>
+    <p>&#169; Copyright 2022-2023, Adam Jenca.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

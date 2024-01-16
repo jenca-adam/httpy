@@ -1,8 +1,0 @@
-LICENSE
-README.md
-setup.py
-httpy/__init__.py
-httpy_client.egg-info/PKG-INFO
-httpy_client.egg-info/SOURCES.txt
-httpy_client.egg-info/dependency_links.txt
-httpy_client.egg-info/top_level.txt

@@ -17,6 +17,9 @@ PREFACE = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
 
 
 def initiate_connection(sock, client_settings):
+    """
+    Initiates the connection on a socket by sending the connection preface and exchanging settings frames
+    """
     sf = sock.makefile("b")
     sock.send(PREFACE)
     sett = frame.parse(sf).dict
@@ -27,6 +30,9 @@ def initiate_connection(sock, client_settings):
 
 
 def start_connection(host, port, client_settings, alpn=True):
+    """
+    Starts a connection to a given server.
+    """
     context = ssl._create_default_https_context()
     context.check_hostname = False
     if alpn:
@@ -40,6 +46,9 @@ def start_connection(host, port, client_settings, alpn=True):
 
 
 async def async_initiate_connection(reader, writer, client_settings):
+    """
+    Initiates an asynchronous connection by sending the connection preface and exchanging settings frames
+    """
     writer.write(PREFACE)
     await writer.drain()
     sett = (await frame.async_parse(reader)).dict
@@ -51,6 +60,9 @@ async def async_initiate_connection(reader, writer, client_settings):
 
 
 async def async_start_connection(host, port, client_settings, alpn=True):
+    """
+    Starts an asynchronous connection to a given server
+    """
     context = ssl._create_default_https_context()
     context.check_hostname = False
     if alpn:
@@ -80,6 +92,10 @@ async def async_start_connection(host, port, client_settings, alpn=True):
 
 
 class Connection:
+    """
+    A synchronous HTTP/2 Conection implementation
+    """
+
     def __init__(self, host, port, debugger, client_settings={}, sock=None):
         self.debugger = debugger
         self.host = host
@@ -111,6 +127,9 @@ class Connection:
 
     @classmethod
     def from_socket(self, socket, debugger, host, port, client_settings={}):
+        """
+        Builds a `Connection` from a socket
+        """
         return self(host, port, debugger, client_settings, socket)
 
     @property
@@ -119,6 +138,9 @@ class Connection:
 
     @_after_start
     def create_stream(self):
+        """
+        Creates a new stream for the connection.
+        """
         new_stream_id = self.highest_id + 2
         self.highest_id += 2
         s = stream.Stream(new_stream_id, self, self.settings["initial_window_size"])
@@ -128,6 +150,9 @@ class Connection:
         return s
 
     def start(self):
+        """
+        Starts a HTTP2 connection to the server.
+        """
         if self.from_socket:
             self.debugger.info("Initiating h2 connection")
             success, self.sock, self.server_settings = initiate_connection(
@@ -153,6 +178,9 @@ class Connection:
         return True, self.sock
 
     def update_server_settings(self, new_settings):
+        """
+        Updates the server_settings upon the receival of a SETTINGS frame
+        """
         new_window_size = new_settings.get("max_window_size", None)  # can't use walrus
         if new_window_size is not None:
             self.window.update_max_window_size(new_window_size)
@@ -161,12 +189,18 @@ class Connection:
         self.settings = settings.merge_settings(new_settings, self.settings)
 
     def update_settings(self, **new_settings):
+        """
+        Sends a SETTINGS frame with new settings
+        """
         self.settings = settings.merge_client_settings(new_settings, self.settings)
         self.send_frame(frame.SettingsFrame(**new_settings))
 
     @_after_start
     def close(self, errcode=0x0, debug=b""):
-        self.debugger.info("Sending GOAWAY frame")
+        """
+        Closes the connection by sending a GOAWAY frame
+        """
+        self.debugger.info("GOAWAY")
         fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
         try:
             self._send_frame(fr)
@@ -176,11 +210,17 @@ class Connection:
 
     @_after_start
     def close_on_error(self, err):
+        """
+        Closes the connection with a debug message after an error has occured.
+        """
         self.debugger.error(f"{err}: closing connection")
         self.close(err.code, str(err))
 
     @_after_start
     def close_socket(self, quit=True):
+        """
+        Closes the underlying socket.
+        """
         self.debugger.info("Closing socket")
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
@@ -215,6 +255,9 @@ class Connection:
 
     @_after_start
     def process_next_frame(self):
+        """
+        Processes the next frame in queue.
+        """
         if self._processing or self.sockfile.closed or (not self.open):
             return
         self._processing = True
@@ -269,6 +312,9 @@ class Connection:
 
     @_after_start
     def send_frame(self, frame):
+        """
+        Sends a frame to the server.
+        """
         if frame.payload_length > self.outbound_window:
             raise Refuse("refusing to send the frame: not enough space in window")
         self.debugger.info(f"sending {frame}")
@@ -290,6 +336,11 @@ class Connection:
 
 
 class AsyncConnection:
+    """
+    Asynchronous HTTP/2 Connection implementation.
+    For method description, see Connection.__doc__
+    """
+
     def __init__(self, host, port, debugger, client_settings={}, sock=None):
         self.debugger = debugger
         self.debugger.do_debug = True

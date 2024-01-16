@@ -131,32 +131,85 @@ def _find(key, d):
     return key
 
 
+def _fix_multiple_values(q):
+    if isinstance(q, dict):
+        return q
+    r = {}
+    multiple = set()
+    for k, v in q:
+        if k in r:
+            if k in multiple:
+                r[k] += (v,)
+            else:
+                r[k] = (r[k], v)
+                multiple.add(k)
+        else:
+            r[k] = v
+    return r
+
+
+def _make_case_insensitive(val):
+    if isinstance(val, tuple):
+        return tuple(map(_make_case_insensitive, val))
+    elif isinstance(val, list):
+        return list(map(_make_case_insensitive, val))
+    elif isinstance(val, str):
+        return CaseInsensitiveString(val)
+    return val
+
+
+class CaseInsensitiveString(str):
+    def __init__(self, st):
+        self._stl = st.lower()
+        self._string = st
+
+    def __new__(cls, _string):
+        return super().__new__(cls, _string)
+
+    def __eq__(self, oth):
+        try:
+            return self._stl == oth.lower()
+        except:
+            return False
+
+
+def _mk_string(a):
+    if isinstance(a, bytes):
+        return a.decode()
+    return a
+
+
 class CaseInsensitiveDict(dict):
-    """Case insensitive subclass of dictionary"""
+    """Case insensitive subclass of dictionary that supports multiple values for a single key"""
 
     def __init__(self, data):
-        self.lowercase = {force_string(k).lower(): v for k, v in dict(data).items()}
+        data = _fix_multiple_values(data)
+        self.lowercase = {
+            _mk_string(k).lower(): _make_case_insensitive(_mk_string(v))
+            for k, v in data.items()
+        }
         self.original = data
         super().__init__(self.original)
 
     def __contains__(self, item):
-        return (force_string(item).lower() in self.lowercase) | (
-            force_string(item) in self.original
+        return (_mk_string(item).lower() in self.lowercase) | (
+            _mk_string(item) in self.original
         )
 
     def __getitem__(self, item):
         try:
-            return self.lowercase[force_string(item).lower()]
+            return self.lowercase[_mk_string(item).lower()]
         except KeyError:
-            return self.original[force_string(item)]
+            return self.original[_mk_string(item)]
 
-    def __setitem__(self, item, val):
-        self.lowercase[force_string(item).lower()] = val
+    def __setitem__(self, item, v):
+        val = _make_case_insensitive(v)
+        self.lowercase[_mk_string(item).lower()] = val
         self.original[_find(item, self.original)] = val
         super().__init__(self.original)  # remake??
 
     def __delitem__(self, item):
-        del self.lowercase[force_string(item).lower()]
+        del self.lowercase[_mk_string(item).lower()]
         del self.original[_find(item, self.original)]
 
     def get(self, key, default=None):
@@ -182,6 +235,7 @@ class CaseInsensitiveDict(dict):
 
 
 def _create_connection_and_handle_errors(address):
+    host, port = address
     try:
         return socket.create_connection(address)
     except socket.gaierror as gai:

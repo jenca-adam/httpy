@@ -6,11 +6,11 @@ import asyncio
 
 async def do_request():
     connection = http2.connection.AsyncConnection(
-        "www.google.com", 443, _Debugger(True)
+        "www.google.com", 443, _Debugger(False)
     )
     await connection.start()
     sender = http2.proto.AsyncHTTP2Sender(
-        "GET", {}, b"", "/", _Debugger(True), "www.google.com"
+        "GET", {}, b"", "/", _Debugger(False), "www.google.com"
     )
     streamid = await sender.send(connection)
     rd = await http2.proto.AsyncHTTP2Recver()(connection, streamid)
@@ -22,4 +22,4 @@ async def test():
 
 
 if __name__ == "__main__":
-    print(asyncio.run(test()))
+    asyncio.run(test())

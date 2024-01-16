@@ -2,6 +2,7 @@ docs/build
 *.log
 *.ign
 *.template
-unstable/*.pickle
-localsetup.py
+*.pickle
+README.md.html
 *__pycache__*
+*pytest_cache*

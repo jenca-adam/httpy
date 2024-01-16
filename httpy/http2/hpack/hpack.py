@@ -35,10 +35,17 @@ def _mk_si(stream):
 
 
 class Encoder:
+    """
+    A HPACK encoder
+    """
+
     def __init__(self):
         self.table = Table()
 
     def encode_headers(self, headers, huffman=True):
+        """
+        Encodes multiple headers with the current table
+        """
         if isinstance(headers, dict):
             headers = headers.items()
         headers = sorted(
@@ -48,6 +55,9 @@ class Encoder:
         return b"".join(result)
 
     def encode_header(self, header, huffman=True):
+        """
+        Encodes a single header with the current table
+        """
         name, value, *index_mode = header
         if not index_mode:  # Default
             index_mode = YES
@@ -95,6 +105,10 @@ class Encoder:
 
 
 class Decoder:
+    """
+    A HPACK decoder
+    """
+
     def __init__(self):
         self.table = Table()
 
@@ -131,6 +145,9 @@ class Decoder:
         return (entry.name, entry.value)
 
     def decode_headers(self, b):
+        """
+        Decodes multiple headers with the current dynamic table
+        """
         si = StreamIterable(io.BytesIO(b), func=ord)
         headers_list = []
         while True:
@@ -142,5 +159,9 @@ class Decoder:
 
 
 class HPACK(Encoder, Decoder):
+    """
+    A HPACK encoder/decoder pair with a shared dynamic table
+    """
+
     def __init__(self):
         self.table = Table()
