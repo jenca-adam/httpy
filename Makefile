@@ -8,23 +8,20 @@ BUILD=./build
 SETUP_PY=./setup.py
 SETUP_PYARGS=sdist bdist bdist_wheel
 TESTDIR=./tests
-BADGES=./\.badges.md
+SPHINX_APIDOC=sphinx-apidoc
+BADGES=./\.badges.rst
 DOCS_INDEX=./docs/source/index.rst
 DOCS_FILES=./docs/source/index.rst ./docs/source/modules.rst ./docs/source/httpy.rst
 HTTPY_SOURCE=./httpy
 REQUIREMENTS=requirements.txt -r make_requirements.txt
-PANDOC=/usr/bin/pandoc
 ALL_DIST=./all_dist
-PANDOC_FLAGS=--verbose -s -o
 all: black docs
 black:
 	$(BLACK_CMD)
 docs: $(DOCS_MAKEFILE) $(HTTPY_SOURCE) $(DOCS_FILES) $(PANDOC)
+	$(SPHINX_APIDOC) $(HTTPY_SOURCE) -o $(DOCS_DIR)/source 
 	cd $(DOCS_DIR) && $(MAKE) $(DOCS_MAKEARGS)
-	-ln -s $(DOCS_INDEX) README.rst
-	-$(PANDOC) $(PANDOC_FLAGS) tmp.md README.rst
-	-cat <$(BADGES) >README.md; cat tmp.md >>README.md; rm tmp.md
-	
+	-cat <$(BADGES) >README.rst; cat $(DOCS_INDEX) >>README.rst
 test:
 	cd $(TESTDIR); \
 		bash ./run_all.sh

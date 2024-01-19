@@ -19,15 +19,16 @@ try:
 except:
     pass
 try:
-    import httpy
+    from .. import httpy
 except:
     httpy = None
-
-httpy.set_debug(False)
-
+try:
+    httpy.set_debug(False)
+except:
+    pass
 
 def test_HTTPy_imports():
-    import httpy
+    from .. import httpy
 
 
 def test_http_200_ok():

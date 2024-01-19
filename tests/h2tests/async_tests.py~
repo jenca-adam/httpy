@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from .httpy import http2
-from .httpy.debugger import _Debugger
+from httpy import http2
+from httpy.debugger import _Debugger
 import asyncio
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .httpy.httpy import _async_raw_request
+from httpy.httpy import _async_raw_request
 import asyncio
 
 
