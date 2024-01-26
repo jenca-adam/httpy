@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from .httpy import http2
-from .httpy.debugger import _Debugger
+from httpy import http2
+from httpy.debugger import _Debugger
 import asyncio
 
 
@@ -12,6 +12,7 @@ async def test():
     )
     streamid = sender.send(connection)
     rd = http2.proto.HTTP2Recver()(connection, streamid)
+    connection.close()
     return rd
 
 

@@ -1,5 +1,4 @@
 #  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
-#  APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
 #  HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
 #  OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
 #  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -993,6 +992,7 @@ class Session:
     def __init__(self):
         sessions.append(self)
         self.connections = {}
+        atexit.register(self.close)
 
     def __setitem__(self, host, connection):
         host, port = host
@@ -1038,9 +1038,12 @@ class Session:
             return
         del self.connections[host]
 
-    def __del__(self):
+    def close(self):
         for conn in self.connections.values():
             conn.close()
+
+    def __del__(self):
+        self.close()
 
 
 class ProtoVersion:
@@ -2425,7 +2428,8 @@ def close_all():
     Always called at program exit.
     """
     for session in sessions:
-        del session
+        session.close()
+    default_session.close()
 
 
 def get_connection(host, port):

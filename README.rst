@@ -109,7 +109,7 @@ HTTP
 
 It's easy.
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/") # Do a request
@@ -132,7 +132,7 @@ Valid ``http_version`` values are ``"1.1"`` and ``"2"``.
 Non-blocking requests
 ~~~~~~~~~~~~~~~~~~~~~
 
-::
+.. code-block:: python
 
    import httpy
    pending = httpy.request("https://example.com/", blocking = False)
@@ -149,7 +149,7 @@ on the path of your choice. By default, the data is stored in
 ``enable_cookies`` or ``enable_cache`` argument of ``request``. ..
 code-block:
 
-::
+.. code-block:: python
 
    import httpy
    directory = httpy.Dir("your/path")
@@ -162,7 +162,7 @@ If you want to reuse a connection, it is highly recommended to use a
 ``Session`` class. It offers more control over connection closure than
 the standard ``request``
 
-::
+.. code-block:: python
 
    import httpy
    session = httpy.Session()
@@ -179,7 +179,7 @@ You can perform async requests using the ``async_request`` method.
 
 The simplest use case:
 
-::
+.. code-block:: python
 
    import httpy
 
@@ -190,7 +190,7 @@ If you want to perform multiple requests at once on the same connection
 (i.e. with ``asyncio.gather``), use the ``initiate_http2_connection``
 method of ``Session``:
 
-::
+.. code-block:: python
 
    import httpy
    import asyncio
@@ -214,7 +214,7 @@ attributes:
 
 The response content as ``bytes``. Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://www.google.com/")
@@ -226,7 +226,7 @@ The response content as ``bytes``. Example:
 
 The response status as a ``Status`` object. Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://www.example.com/this_url_doesnt_exist")
@@ -248,7 +248,7 @@ All the redirects on the way to this response as ``list``.
 
 Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://httpbin.org/redirect/1")
@@ -264,7 +264,7 @@ Indicates whether the response was loaded from cache (``bool``).
 
 Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/")
@@ -293,7 +293,7 @@ Some of the attributes of the request that produced this response, as a
 
 Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/")
@@ -312,7 +312,7 @@ Raw content received from the server, not decoded with Content-Encoding
 
 Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/")
@@ -327,7 +327,7 @@ particular request, doesn't account for redirects. (``float``).
 
 Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/")
@@ -340,7 +340,7 @@ Example:
 The download speed for the response, in bytes per second. (``float``).
 Might be different for HTTP/2 request. Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/")
@@ -354,7 +354,7 @@ The response's ``Content-Type`` header contents, with the charset
 information stripped. If the headers lack ``Content-Type``, it's
 ``text/html`` by default.
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/")
@@ -375,7 +375,7 @@ Gets the charset of the response (``str`` or ``None``):
 
 Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/")
@@ -398,7 +398,7 @@ Example:
 
 Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/")
@@ -418,7 +418,7 @@ If ``Response.content_type`` is ``application/json``, try to parse
 
 Example:
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://httpbin.org/get")
@@ -435,7 +435,7 @@ WebSockets
 
 Easy again...
 
-::
+.. code-block:: python
 
    >>> import httpy
    >>> sock = httpy.WebSocket("wss://echo.websocket.events/")# create a websocket client(echo server example)
@@ -452,7 +452,7 @@ POST method
 Simple Form
 ~~~~~~~~~~~
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/", method="POST", body = {"foo":"bar"})
@@ -461,7 +461,7 @@ Simple Form
 Sending files
 ~~~~~~~~~~~~~
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/", method = "POST", body = { "foo" : "bar", "file" : httpy.File.open( "example.txt" ) })
@@ -470,7 +470,7 @@ Sending files
 Sending binary data
 ~~~~~~~~~~~~~~~~~~~
 
-::
+.. code-block:: python
 
    import httpy
    resp = httpy.request("https://example.com/", method = "POST", body= b" Hello, World ! ")
@@ -479,7 +479,7 @@ Sending binary data
 Sending plain text
 ~~~~~~~~~~~~~~~~~~
 
-::
+.. code-block:: python
 
    resp = httpy.request("https://example.com/", method = "POST", body = "I support Ünicode !")
    # ...
@@ -487,7 +487,7 @@ Sending plain text
 Sending JSON
 ~~~~~~~~~~~~
 
-::
+.. code-block:: python
 
    resp = httpy.request("https://example.com/", method = "POST", body = "{\"foo\" : \"bar\" }", content_type = "application/json")
    # ...
@@ -497,7 +497,7 @@ Debugging
 
 Just set ``debug`` to ``True`` :
 
-::
+.. code-block:: python
 
    >>> import httpy
    >>> httpy.request("https://example.com/",debug=True)

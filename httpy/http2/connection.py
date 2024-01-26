@@ -455,6 +455,7 @@ class AsyncConnection:
             await writer.wait_closed()
         except ssl.SSLError:  # application data after close notify
             pass
+        # await writer.transport.connection_lost()
         self.open = False
 
         await self.out_queue.put(None)

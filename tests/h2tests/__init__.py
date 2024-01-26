@@ -16,4 +16,5 @@ async def run():
         async_tests,
         proto_tests,
     ]:
+        print("TESTING", test_case)
         (await test_case.test())

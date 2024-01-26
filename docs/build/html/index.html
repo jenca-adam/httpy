@@ -193,7 +193,7 @@ WebSocket connections.</p>
 <section id="http">
 <h3>HTTP<a class="headerlink" href="#http" title="Link to this heading"></a></h3>
 <p>It’s easy.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span> <span class="c1"># Do a request</span>
 <span class="n">resp</span><span class="o">.</span><span class="n">content</span> <span class="c1">#Access content</span>
 </pre></div>
@@ -212,7 +212,7 @@ using ALPN &lt;<a class="reference external" href="https://datatracker.ietf.org/
 </section>
 <section id="non-blocking-requests">
 <h4>Non-blocking requests<a class="headerlink" href="#non-blocking-requests" title="Link to this heading"></a></h4>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">pending</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">blocking</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -226,7 +226,7 @@ on the path of your choice. By default, the data is stored in
 <code class="docutils literal notranslate"><span class="pre">~/.cache/httpy</span></code>. If you don’t want to store the data, use the
 <code class="docutils literal notranslate"><span class="pre">enable_cookies</span></code> or <code class="docutils literal notranslate"><span class="pre">enable_cache</span></code> argument of <code class="docutils literal notranslate"><span class="pre">request</span></code>. ..
 code-block:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">directory</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">Dir</span><span class="p">(</span><span class="s2">&quot;your/path&quot;</span><span class="p">)</span>
 <span class="n">directory</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span> <span class="c1"># ...</span>
 </pre></div>
@@ -237,7 +237,7 @@ code-block:</p>
 <p>If you want to reuse a connection, it is highly recommended to use a
 <code class="docutils literal notranslate"><span class="pre">Session</span></code> class. It offers more control over connection closure than
 the standard <code class="docutils literal notranslate"><span class="pre">request</span></code></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">session</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 </pre></div>
@@ -250,7 +250,7 @@ specify so in the <code class="docutils literal notranslate"><span class="pre">h
 <h4>Asynchronous requests<a class="headerlink" href="#asynchronous-requests" title="Link to this heading"></a></h4>
 <p>You can perform async requests using the <code class="docutils literal notranslate"><span class="pre">async_request</span></code> method.</p>
 <p>The simplest use case:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">my_function</span><span class="p">():</span>
      <span class="k">return</span> <span class="k">await</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
@@ -259,7 +259,7 @@ specify so in the <code class="docutils literal notranslate"><span class="pre">h
 <p>If you want to perform multiple requests at once on the same connection
 (i.e. with <code class="docutils literal notranslate"><span class="pre">asyncio.gather</span></code>), use the <code class="docutils literal notranslate"><span class="pre">initiate_http2_connection</span></code>
 method of <code class="docutils literal notranslate"><span class="pre">Session</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="kn">import</span> <span class="nn">asyncio</span>
 
 <span class="k">async</span> <span class="k">def</span> <span class="nf">my_function</span><span class="p">():</span>
@@ -278,7 +278,7 @@ attributes:</p>
 <section id="response-content">
 <h5><code class="docutils literal notranslate"><span class="pre">Response.content</span></code><a class="headerlink" href="#response-content" title="Link to this heading"></a></h5>
 <p>The response content as <code class="docutils literal notranslate"><span class="pre">bytes</span></code>. Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://www.google.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
 <span class="sa">b</span><span class="s1">&#39;!&lt;doctype html&gt;</span><span class="se">\n</span><span class="s1">&lt;html&gt;...</span>
@@ -288,7 +288,7 @@ attributes:</p>
 <section id="response-status">
 <h5><code class="docutils literal notranslate"><span class="pre">Response.status</span></code><a class="headerlink" href="#response-status" title="Link to this heading"></a></h5>
 <p>The response status as a <code class="docutils literal notranslate"><span class="pre">Status</span></code> object. Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://www.example.com/this_url_doesnt_exist&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
 <span class="c1"># 404</span>
@@ -306,7 +306,7 @@ attributes:</p>
 <h5><code class="docutils literal notranslate"><span class="pre">Response.history</span></code><a class="headerlink" href="#response-history" title="Link to this heading"></a></h5>
 <p>All the redirects on the way to this response as <code class="docutils literal notranslate"><span class="pre">list</span></code>.</p>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://httpbin.org/redirect/1&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
 <span class="c1"># [&lt;Response GET [302 Found] (https://httpbin.org/redirect/1/)&gt;, &lt;Response GET [200 OK] (https://httpbin.org/get/)&gt;]</span>
@@ -318,7 +318,7 @@ attributes:</p>
 <h5><code class="docutils literal notranslate"><span class="pre">Response.fromcache</span></code><a class="headerlink" href="#response-fromcache" title="Link to this heading"></a></h5>
 <p>Indicates whether the response was loaded from cache (<code class="docutils literal notranslate"><span class="pre">bool</span></code>).</p>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">fromcache</span><span class="p">)</span>
 <span class="c1"># False</span>
@@ -344,7 +344,7 @@ attributes:</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">Request.method</span></code> - the HTTP method used (<code class="docutils literal notranslate"><span class="pre">str</span></code>)</p></li>
 </ul>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
 <span class="c1"># https://example.com/</span>
@@ -361,7 +361,7 @@ attributes:</p>
 <p>Raw content received from the server, not decoded with Content-Encoding
 (<code class="docutils literal notranslate"><span class="pre">bytes</span></code>).</p>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">original_content</span><span class="p">)</span>
 <span class="c1"># b&#39;\x1f\x8b\x08\x00\xc2 ...</span>
@@ -373,7 +373,7 @@ attributes:</p>
 <p>Time the request took, in seconds. Only the loading time of this
 particular request, doesn’t account for redirects. (<code class="docutils literal notranslate"><span class="pre">float</span></code>).</p>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">time_elapsed</span><span class="p">)</span>
 <span class="c1"># 0.2497</span>
@@ -384,7 +384,7 @@ particular request, doesn’t account for redirects. (<code class="docutils lite
 <h5><code class="docutils literal notranslate"><span class="pre">Response.speed</span></code><a class="headerlink" href="#response-speed" title="Link to this heading"></a></h5>
 <p>The download speed for the response, in bytes per second. (<code class="docutils literal notranslate"><span class="pre">float</span></code>).
 Might be different for HTTP/2 request. Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span>
 <span class="c1"># 2594.79</span>
@@ -396,7 +396,7 @@ Might be different for HTTP/2 request. Example:</p>
 <p>The response’s <code class="docutils literal notranslate"><span class="pre">Content-Type</span></code> header contents, with the charset
 information stripped. If the headers lack <code class="docutils literal notranslate"><span class="pre">Content-Type</span></code>, it’s
 <code class="docutils literal notranslate"><span class="pre">text/html</span></code> by default.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">content_type</span><span class="p">)</span>
 <span class="c1"># text/html</span>
@@ -415,7 +415,7 @@ detect the charset (Note that this still returns <code class="docutils literal n
 return <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 </ol>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">charset</span><span class="p">)</span>
 <span class="c1"># UTF-8</span>
@@ -434,11 +434,11 @@ decodable by the default locale encoding.</p>
 warned!</p>
 </div>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>import httpy
-resp = httpy.request(&quot;https://example.com/&quot;)
-print(resp.string)
-&lt;!doctype html&gt;
-...
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">string</span><span class="p">)</span>
+<span class="o">&lt;</span><span class="err">!</span><span class="n">doctype</span> <span class="n">html</span><span class="o">&gt;</span>
+<span class="o">...</span>
 </pre></div>
 </div>
 </section>
@@ -451,7 +451,7 @@ print(resp.string)
 <p>The same as above applies.</p>
 </div>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://httpbin.org/get&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s2">&quot;url&quot;</span><span class="p">])</span>
 <span class="c1"># https://httpbin.org/get</span>
@@ -467,7 +467,7 @@ print(resp.string)
 <section id="websockets">
 <h3>WebSockets<a class="headerlink" href="#websockets" title="Link to this heading"></a></h3>
 <p>Easy again…</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s2">&quot;wss://echo.websocket.events/&quot;</span><span class="p">)</span><span class="c1"># create a websocket client(echo server example)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;Hello, world!💥&quot;</span><span class="p">)</span><span class="c1"># you can send also bytes</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
@@ -482,7 +482,7 @@ print(resp.string)
 <h3>POST method<a class="headerlink" href="#post-method" title="Link to this heading"></a></h3>
 <section id="simple-form">
 <h4>Simple Form<a class="headerlink" href="#simple-form" title="Link to this heading"></a></h4>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;foo&quot;</span><span class="p">:</span><span class="s2">&quot;bar&quot;</span><span class="p">})</span>
 <span class="c1"># ...</span>
 </pre></div>
@@ -490,7 +490,7 @@ print(resp.string)
 </section>
 <section id="sending-files">
 <h4>Sending files<a class="headerlink" href="#sending-files" title="Link to this heading"></a></h4>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;foo&quot;</span> <span class="p">:</span> <span class="s2">&quot;bar&quot;</span><span class="p">,</span> <span class="s2">&quot;file&quot;</span> <span class="p">:</span> <span class="n">httpy</span><span class="o">.</span><span class="n">File</span><span class="o">.</span><span class="n">open</span><span class="p">(</span> <span class="s2">&quot;example.txt&quot;</span> <span class="p">)</span> <span class="p">})</span>
 <span class="c1"># ...</span>
 </pre></div>
@@ -498,7 +498,7 @@ print(resp.string)
 </section>
 <section id="sending-binary-data">
 <h4>Sending binary data<a class="headerlink" href="#sending-binary-data" title="Link to this heading"></a></h4>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span> <span class="sa">b</span><span class="s2">&quot; Hello, World ! &quot;</span><span class="p">)</span>
 <span class="c1"># ...</span>
 </pre></div>
@@ -506,14 +506,14 @@ print(resp.string)
 </section>
 <section id="sending-plain-text">
 <h4>Sending plain text<a class="headerlink" href="#sending-plain-text" title="Link to this heading"></a></h4>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;I support Ünicode !&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;I support Ünicode !&quot;</span><span class="p">)</span>
 <span class="c1"># ...</span>
 </pre></div>
 </div>
 </section>
 <section id="sending-json">
 <h4>Sending JSON<a class="headerlink" href="#sending-json" title="Link to this heading"></a></h4>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">foo</span><span class="se">\&quot;</span><span class="s2"> : </span><span class="se">\&quot;</span><span class="s2">bar</span><span class="se">\&quot;</span><span class="s2"> }&quot;</span><span class="p">,</span> <span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;application/json&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;{</span><span class="se">\&quot;</span><span class="s2">foo</span><span class="se">\&quot;</span><span class="s2"> : </span><span class="se">\&quot;</span><span class="s2">bar</span><span class="se">\&quot;</span><span class="s2"> }&quot;</span><span class="p">,</span> <span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;application/json&quot;</span><span class="p">)</span>
 <span class="c1"># ...</span>
 </pre></div>
 </div>
@@ -523,7 +523,7 @@ print(resp.string)
 <section id="debugging">
 <h2>Debugging<a class="headerlink" href="#debugging" title="Link to this heading"></a></h2>
 <p>Just set <code class="docutils literal notranslate"><span class="pre">debug</span></code> to <code class="docutils literal notranslate"><span class="pre">True</span></code> :</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">httpy</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">,</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="go">[INFO][request](1266): request() called.</span>
 <span class="go">[INFO][_raw_request](1112): _raw_request() called.</span>
