@@ -272,7 +272,7 @@ class Cache:
         self.files = []
         for f in os.listdir(d):
             try:
-                self.files.append(CacheFile(os.path.join(d,f)))
+                self.files.append(CacheFile(os.path.join(d, f)))
             except:
                 pass
 

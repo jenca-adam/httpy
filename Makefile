@@ -1,4 +1,4 @@
-PYTHON=/usr/bin/python
+PYTHON=/usr/bin/python3
 BLACK_CMD=$(PYTHON) -m black . -v --exclude="($(dir)docs/httpy/|$(dir)docs/source/httpy/|$(dir)tests/httpy/)"
 DOCS_DIR=./docs
 DOCS_MAKEARGS=html

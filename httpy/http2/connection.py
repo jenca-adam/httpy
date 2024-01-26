@@ -86,7 +86,10 @@ async def async_start_connection(host, port, client_settings, alpn=True):
 
         debugger.warn(f"unknown errno {errno!r}")
         raise
-    if reader._transport._ssl_protocol._sslpipe.ssl_object.selected_alpn_protocol() != "h2":
+    if (
+        reader._transport._ssl_protocol._sslpipe.ssl_object.selected_alpn_protocol()
+        != "h2"
+    ):
         return False, (reader, writer), None
     return await async_initiate_connection(reader, writer, client_settings)
 

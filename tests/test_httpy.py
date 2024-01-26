@@ -27,6 +27,7 @@ try:
 except:
     pass
 
+
 def test_HTTPy_imports():
     from .. import httpy
 
@@ -151,4 +152,3 @@ async def test_httpy_http2_async():
             "https://www.example.org/", http_version="2", enable_cache=False
         )
     ).status == 200
-

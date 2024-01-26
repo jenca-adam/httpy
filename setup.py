@@ -3,16 +3,17 @@ import sys
 import setuptools
 
 PROJECT_URLS = {
-        "GitHub": "https://github.com/jenca-adam/httpy",
-        "PyPI": "https://pypi.python.org/project/httpy",
-        "Bug Tracker": "https://github.com/jenca-adam/httpy/issues",
-        "Download": "https://github.com/jenca-adam/httpy/releases/latest",
-        }
+    "GitHub": "https://github.com/jenca-adam/httpy",
+    "PyPI": "https://pypi.python.org/project/httpy",
+    "Bug Tracker": "https://github.com/jenca-adam/httpy/issues",
+    "Download": "https://github.com/jenca-adam/httpy/releases/latest",
+}
 
 try:
     ld = open("README.rst").read()
 except:
     ld = ""
+
 
 class VersionError(Exception):
     """Raised if vrong wersion"""
