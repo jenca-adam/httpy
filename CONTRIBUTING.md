@@ -108,5 +108,11 @@ Runs Sphinx, see [Documentation](#documentation)
 Installs `make_reqs.txt`
 This command should be run before anything else
 
-#### `make tests`
+#### `make test`
+
+Runs tests, see [Testing](#testing)
+
+#### `make build`
+
+Builds the source distributions and wheels, see [Building](#building)
  
