@@ -93,11 +93,12 @@ But here are some thinks you need to know first:
 ### Makefile
 
 The `Makefile` contains a bunch of useful commands you might need when editing the project.
+However, this only works on Linux. If you use Windows, you're on your own until someone adds more quality-of-life scripts.
 The commands are as follows:
 
 #### `make black`
 
-Runs a linter.
+Runs the code formatter.
 
 #### `make docs`
 
@@ -115,4 +116,39 @@ Runs tests, see [Testing](#testing)
 #### `make build`
 
 Builds the source distributions and wheels, see [Building](#building)
- 
+
+### Code quality
+
+Please test your code thoroughly, as the test suite is quite lacking as of right now.
+Also, don't write too inefficient / spaghetti code, as these problems can't be fixed by the formatter.
+
+#### Code style
+
+I don't really care, just pass it through the formatter, please
+
+### Building
+
+The latest source disribution is built into `dist/`.
+Source dists for every version are in `all_dist/`.
+
+Currently, the project is built using `setup.py`, although this might be changed to a more modern approach in the near future.
+
+### Testing
+
+Unit tests are in `tests/test_httpy.py`. These are written in `pytest`. Additional http2/async tests are in `tests/h2test`.
+The test suite is severely lacking and does not cover nearly every aspect of the library, so you'll have to make a lot of makeshift
+manual testing.
+
+To run the tests, use the [Makefile](#makefile).
+On Windows, run
+```
+python.exe -m h2tests
+python.exe -m pytest test_httpy.py
+```
+in the `tests/` directory.
+
+### Documentation
+
+Documentation is built using `sphinx` and `sphinx-apidoc`, and hosted by https://readthedocs.io/ (https://httpy.readthedocs.io/latest)
+To build the documentation, use `make docs`.
+The README file is in `index.rst`. It contains the descriptions of high-level functions.
