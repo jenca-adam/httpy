@@ -73,8 +73,40 @@ But here are some thinks you need to know first:
 
    see [Makefile](#makefile)
 
-*  `README.md`,`README.rst`
+*  `README.rst`
 
    see [Documentation](#documentation)
 
 * `requirements.txt`
+
+  A list of the project's requirements.
+  Currently empty, but if your changes add a requirement, please add it to this file.
+
+* `make_reqs.txt`
+
+ A list of requirements needed to build the project (documentation tools, linters, etc.)
+
+* `.badges.md`, `.badges.rst`
+
+  see [Documentation](#documentation)
+
+### Makefile
+
+The `Makefile` contains a bunch of useful commands you might need when editing the project.
+The commands are as follows:
+
+#### `make black`
+
+Runs a linter.
+
+#### `make docs`
+
+Runs Sphinx, see [Documentation](#documentation)
+
+#### `make setup`
+
+Installs `make_reqs.txt`
+This command should be run before anything else
+
+#### `make tests`
+ 
