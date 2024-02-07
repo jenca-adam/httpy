@@ -149,6 +149,6 @@ in the `tests/` directory.
 
 ### Documentation
 
-Documentation is built using `sphinx` and `sphinx-apidoc`, and hosted by https://readthedocs.io/ (https://httpy.readthedocs.io/latest)
+Documentation is built using `sphinx` and `sphinx-apidoc`, and hosted by https://readthedocs.io/ (https://httpy.readthedocs.io/)
 To build the documentation, use `make docs`.
 The README file is in `index.rst`. It contains the descriptions of high-level functions.
