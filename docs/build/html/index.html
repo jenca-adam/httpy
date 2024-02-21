@@ -61,7 +61,7 @@
 <li><a class="reference internal" href="#specifying-a-http-version">Specifying a HTTP version</a></li>
 <li><a class="reference internal" href="#non-blocking-requests">Non-blocking requests</a></li>
 <li><a class="reference internal" href="#i-want-cookies">I want cookies!</a></li>
-<li><a class="reference internal" href="#stayin-alive">Stayin’ alive</a></li>
+<li><a class="reference internal" href="#keep-alive-requests">Keep-Alive requests</a></li>
 <li><a class="reference internal" href="#asynchronous-requests">Asynchronous requests</a></li>
 <li><a class="reference internal" href="#response-class-attributes"><code class="docutils literal notranslate"><span class="pre">Response</span></code> class attributes</a><ul>
 <li><a class="reference internal" href="#response-content"><code class="docutils literal notranslate"><span class="pre">Response.content</span></code></a></li>
@@ -232,8 +232,8 @@ code-block:</p>
 </pre></div>
 </div>
 </section>
-<section id="stayin-alive">
-<h4>Stayin’ alive<a class="headerlink" href="#stayin-alive" title="Link to this heading"></a></h4>
+<section id="keep-alive-requests">
+<h4>Keep-Alive requests<a class="headerlink" href="#keep-alive-requests" title="Link to this heading"></a></h4>
 <p>If you want to reuse a connection, it is highly recommended to use a
 <code class="docutils literal notranslate"><span class="pre">Session</span></code> class. It offers more control over connection closure than
 the standard <code class="docutils literal notranslate"><span class="pre">request</span></code></p>
@@ -281,7 +281,7 @@ attributes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://www.google.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-<span class="sa">b</span><span class="s1">&#39;!&lt;doctype html&gt;</span><span class="se">\n</span><span class="s1">&lt;html&gt;...</span>
+<span class="c1">#b&#39;!&lt;doctype html&gt;\n&lt;html&gt;...</span>
 </pre></div>
 </div>
 </section>
@@ -437,7 +437,7 @@ warned!</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
 <span class="n">resp</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">string</span><span class="p">)</span>
-<span class="o">&lt;</span><span class="err">!</span><span class="n">doctype</span> <span class="n">html</span><span class="o">&gt;</span>
+<span class="c1">#&lt;!doctype html&gt;</span>
 <span class="o">...</span>
 </pre></div>
 </div>

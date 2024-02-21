@@ -155,8 +155,8 @@ code-block:
    directory = httpy.Dir("your/path")
    directory.request("https://example.com/") # ...
 
-Stayin' alive
-~~~~~~~~~~~~~
+Keep-Alive requests
+~~~~~~~~~~~~~~~~~~~
 
 If you want to reuse a connection, it is highly recommended to use a
 ``Session`` class. It offers more control over connection closure than
@@ -219,7 +219,7 @@ The response content as ``bytes``. Example:
    import httpy
    resp = httpy.request("https://www.google.com/")
    print(resp.content)
-   b'!<doctype html>\n<html>...
+   #b'!<doctype html>\n<html>...
 
 ``Response.status``
 ^^^^^^^^^^^^^^^^^^^
@@ -403,7 +403,7 @@ Example:
    import httpy
    resp = httpy.request("https://example.com/")
    print(resp.string)
-   <!doctype html>
+   #<!doctype html>
    ...
 
 ``Response.json`` (property)

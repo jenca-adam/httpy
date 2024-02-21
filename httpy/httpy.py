@@ -1750,9 +1750,9 @@ async def _async_raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        session.connections[
-            host, port
-        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        session.connections[host, port]._sock = (
+            sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        )
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -1977,9 +1977,9 @@ def _raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        session.connections[
-            host, port
-        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        session.connections[host, port]._sock = (
+            sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        )
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -2043,7 +2043,9 @@ def request(
     enable_cookies=True,
 ):
     """
+
     Performs request.
+
     `Note:` all arguments but ``url`` are keyword-only
 
     :param url: url to request
@@ -2248,6 +2250,7 @@ async def async_request(
     enable_cookies=True,
 ):
     """
+
     Performs an asynchronous request.
     Asynchronous requests are always HTTP/2.
 

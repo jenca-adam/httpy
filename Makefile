@@ -13,7 +13,8 @@ BADGES=./\.badges.rst
 DOCS_INDEX=./docs/source/index.rst
 DOCS_FILES=./docs/source/index.rst ./docs/source/modules.rst ./docs/source/httpy.rst
 HTTPY_SOURCE=./httpy
-REQUIREMENTS=requirements.txt -r make_requirements.txt
+REQUIREMENTS=requirements.txt 
+MAKE_REQS=make_reqs.txt
 ALL_DIST=./all_dist
 all: black docs
 black:
@@ -25,8 +26,8 @@ docs: $(DOCS_MAKEFILE) $(HTTPY_SOURCE) $(DOCS_FILES) $(PANDOC)
 test:
 	cd $(TESTDIR); \
 		bash ./run_all.sh
-setup:  $(REQUIREMENTS)
-	pip install -r $(REQUIREMENTS)
+setup:  $(REQUIREMENTS) $(MAKE_REQS)
+	pip install -r $(REQUIREMENTS) -r $(MAKE_REQS)
 build:  $(SETUP_PY)
 	rm -rf $(DIST) $(BUILD) 
 	$(PYTHON) $(SETUP_PY) $(SETUP_PYARGS)

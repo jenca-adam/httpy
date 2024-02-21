@@ -217,16 +217,20 @@ class HeadersFrame(HTTP2Frame):
         return b"".join(
             [
                 struct.pack("!B", self.pad_length) if self.pad_length > 0 else b"",
-                struct.pack(
-                    "!I",
-                    self.stream_dependency.stream
-                    | 0x80000000 * self.stream_dependency.exc,
-                )
-                if self.stream_dependency is not None
-                else b"",
-                struct.pack("!B", self.priority_weight)
-                if self.priority_weight is not None
-                else b"",
+                (
+                    struct.pack(
+                        "!I",
+                        self.stream_dependency.stream
+                        | 0x80000000 * self.stream_dependency.exc,
+                    )
+                    if self.stream_dependency is not None
+                    else b""
+                ),
+                (
+                    struct.pack("!B", self.priority_weight)
+                    if self.priority_weight is not None
+                    else b""
+                ),
                 self.header_fragment,
                 self.pad_length * b"\x00",
             ]
