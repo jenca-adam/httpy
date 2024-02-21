@@ -31,7 +31,7 @@
    :target: https://httpy.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://badgen.net/badgesize/normal/jenca-adam/httpy/master/httpy/__init__.py
+.. image:: https://badgen.net/badgesize/normal/jenca-adam/httpy/master/dist/httpy-2.0.1.tar.gz
    :target: https://github.com/jenca-adam/httpy
    :alt: Size
 
