@@ -1,9 +1,4 @@
 
-.. role:: raw-html-m2r(raw)
-   :format: html
-
-
-
 .. image:: https://badgen.net/github/release/jenca-adam/httpy?color=green
    :target: https://github.com/jenca-adam/httpy/releases/latest
    :alt: Latest Release
