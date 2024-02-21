@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy &mdash; httpy 1.8.1 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>httpy &mdash; httpy 1.8.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=8209df7b" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=50a25ae7"></script>
+        <script src="_static/doctools.js?v=4184ea2e"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -70,188 +72,264 @@
            <div itemprop="articleBody">
              
   <section id="httpy">
-<h1>httpy<a class="headerlink" href="#httpy" title="Permalink to this heading"></a></h1>
+<h1>httpy<a class="headerlink" href="#httpy" title="Link to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="httpy.html">httpy module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.AuthError"><code class="docutils literal notranslate"><span class="pre">AuthError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.Cache"><code class="docutils literal notranslate"><span class="pre">Cache</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Cache.updateCache"><code class="docutils literal notranslate"><span class="pre">Cache.updateCache()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="httpy.html">httpy package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="httpy.http2.html">httpy.http2 package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.connection">httpy.http2.connection module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.error">httpy.http2.error module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.frame">httpy.http2.frame module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.frame_queue">httpy.http2.frame_queue module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.priority">httpy.http2.priority module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.proto">httpy.http2.proto module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.settings">httpy.http2.settings module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.socket_reader">httpy.http2.socket_reader module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.stream">httpy.http2.stream module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.streams">httpy.http2.streams module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.window">httpy.http2.window module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#module-httpy.http2">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.CacheControl"><code class="docutils literal notranslate"><span class="pre">CacheControl</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.CacheFile"><code class="docutils literal notranslate"><span class="pre">CacheFile</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CacheFile.add_header"><code class="docutils literal notranslate"><span class="pre">CacheFile.add_header()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CacheFile.expired"><code class="docutils literal notranslate"><span class="pre">CacheFile.expired</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.CaseInsensitiveDict"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CaseInsensitiveDict.get"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.get()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CaseInsensitiveDict.items"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.items()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CaseInsensitiveDict.keys"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.keys()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CaseInsensitiveDict.update"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.update()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CaseInsensitiveDict.values"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#module-httpy.alpn">httpy.alpn module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.alpn.alpn_negotiate"><code class="docutils literal notranslate"><span class="pre">alpn_negotiate()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ClientError"><code class="docutils literal notranslate"><span class="pre">ClientError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.Connection"><code class="docutils literal notranslate"><span class="pre">Connection</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Connection.close"><code class="docutils literal notranslate"><span class="pre">Connection.close()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Connection.sock"><code class="docutils literal notranslate"><span class="pre">Connection.sock</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#module-httpy.debugger">httpy.debugger module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.debugger.get_path"><code class="docutils literal notranslate"><span class="pre">get_path()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ConnectionClosedError"><code class="docutils literal notranslate"><span class="pre">ConnectionClosedError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ConnectionExpiredError"><code class="docutils literal notranslate"><span class="pre">ConnectionExpiredError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ConnectionLimitError"><code class="docutils literal notranslate"><span class="pre">ConnectionLimitError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ConnectionPool"><code class="docutils literal notranslate"><span class="pre">ConnectionPool</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ContentTypeError"><code class="docutils literal notranslate"><span class="pre">ContentTypeError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.Cookie"><code class="docutils literal notranslate"><span class="pre">Cookie</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Cookie.as_header"><code class="docutils literal notranslate"><span class="pre">Cookie.as_header()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Cookie.expired"><code class="docutils literal notranslate"><span class="pre">Cookie.expired</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Cookie.from_binary"><code class="docutils literal notranslate"><span class="pre">Cookie.from_binary()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Cookie.from_header"><code class="docutils literal notranslate"><span class="pre">Cookie.from_header()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Cookie.to_binary"><code class="docutils literal notranslate"><span class="pre">Cookie.to_binary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#module-httpy.errors">httpy.errors module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.AuthError"><code class="docutils literal notranslate"><span class="pre">AuthError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.ClientError"><code class="docutils literal notranslate"><span class="pre">ClientError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.ConnectionClosedError"><code class="docutils literal notranslate"><span class="pre">ConnectionClosedError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.ConnectionExpiredError"><code class="docutils literal notranslate"><span class="pre">ConnectionExpiredError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.ConnectionLimitError"><code class="docutils literal notranslate"><span class="pre">ConnectionLimitError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.ContentTypeError"><code class="docutils literal notranslate"><span class="pre">ContentTypeError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.DeadConnectionError"><code class="docutils literal notranslate"><span class="pre">DeadConnectionError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.HTTPyError"><code class="docutils literal notranslate"><span class="pre">HTTPyError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.OldCacheFileWarning"><code class="docutils literal notranslate"><span class="pre">OldCacheFileWarning</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.ServerError"><code class="docutils literal notranslate"><span class="pre">ServerError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.StatusError"><code class="docutils literal notranslate"><span class="pre">StatusError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.TooManyRedirectsError"><code class="docutils literal notranslate"><span class="pre">TooManyRedirectsError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.WebSocketClientError"><code class="docutils literal notranslate"><span class="pre">WebSocketClientError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.WebSocketError"><code class="docutils literal notranslate"><span class="pre">WebSocketError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.errors.WebSocketHandshakeError"><code class="docutils literal notranslate"><span class="pre">WebSocketHandshakeError</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.CookieDomain"><code class="docutils literal notranslate"><span class="pre">CookieDomain</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CookieDomain.add_cookie"><code class="docutils literal notranslate"><span class="pre">CookieDomain.add_cookie()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CookieDomain.as_binary"><code class="docutils literal notranslate"><span class="pre">CookieDomain.as_binary()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CookieDomain.check_expired"><code class="docutils literal notranslate"><span class="pre">CookieDomain.check_expired()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CookieDomain.delete_cookie"><code class="docutils literal notranslate"><span class="pre">CookieDomain.delete_cookie()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#module-httpy.httpy">httpy.httpy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.AsyncProtoVersion"><code class="docutils literal notranslate"><span class="pre">AsyncProtoVersion</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.AsyncProtoVersion.recv_response"><code class="docutils literal notranslate"><span class="pre">AsyncProtoVersion.recv_response()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.AsyncProtoVersion.send_request"><code class="docutils literal notranslate"><span class="pre">AsyncProtoVersion.send_request()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.CookieJar"><code class="docutils literal notranslate"><span class="pre">CookieJar</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CookieJar.add_domain"><code class="docutils literal notranslate"><span class="pre">CookieJar.add_domain()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CookieJar.get_cookies"><code class="docutils literal notranslate"><span class="pre">CookieJar.get_cookies()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.CookieJar.update"><code class="docutils literal notranslate"><span class="pre">CookieJar.update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.Cache"><code class="docutils literal notranslate"><span class="pre">Cache</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Cache.updateCache"><code class="docutils literal notranslate"><span class="pre">Cache.updateCache()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.DeadConnectionError"><code class="docutils literal notranslate"><span class="pre">DeadConnectionError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ETag"><code class="docutils literal notranslate"><span class="pre">ETag</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.ETag.add_header"><code class="docutils literal notranslate"><span class="pre">ETag.add_header()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.CacheControl"><code class="docutils literal notranslate"><span class="pre">CacheControl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.CacheFile"><code class="docutils literal notranslate"><span class="pre">CacheFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CacheFile.add_header"><code class="docutils literal notranslate"><span class="pre">CacheFile.add_header()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CacheFile.expired"><code class="docutils literal notranslate"><span class="pre">CacheFile.expired</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.File"><code class="docutils literal notranslate"><span class="pre">File</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.File.open"><code class="docutils literal notranslate"><span class="pre">File.open()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.File.read"><code class="docutils literal notranslate"><span class="pre">File.read()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.File.save"><code class="docutils literal notranslate"><span class="pre">File.save()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.File.seek"><code class="docutils literal notranslate"><span class="pre">File.seek()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.File.tell"><code class="docutils literal notranslate"><span class="pre">File.tell()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.File.value"><code class="docutils literal notranslate"><span class="pre">File.value()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.File.write"><code class="docutils literal notranslate"><span class="pre">File.write()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.Connection"><code class="docutils literal notranslate"><span class="pre">Connection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Connection.close"><code class="docutils literal notranslate"><span class="pre">Connection.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Connection.sock"><code class="docutils literal notranslate"><span class="pre">Connection.sock</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.HTTP11"><code class="docutils literal notranslate"><span class="pre">HTTP11</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.HTTP11.recver"><code class="docutils literal notranslate"><span class="pre">HTTP11.recver</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.HTTP11.sender"><code class="docutils literal notranslate"><span class="pre">HTTP11.sender</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.HTTP11.version"><code class="docutils literal notranslate"><span class="pre">HTTP11.version</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.Cookie"><code class="docutils literal notranslate"><span class="pre">Cookie</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Cookie.as_header"><code class="docutils literal notranslate"><span class="pre">Cookie.as_header()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Cookie.expired"><code class="docutils literal notranslate"><span class="pre">Cookie.expired</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Cookie.from_binary"><code class="docutils literal notranslate"><span class="pre">Cookie.from_binary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Cookie.from_header"><code class="docutils literal notranslate"><span class="pre">Cookie.from_header()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Cookie.to_binary"><code class="docutils literal notranslate"><span class="pre">Cookie.to_binary()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.HTTP11Recver"><code class="docutils literal notranslate"><span class="pre">HTTP11Recver</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.HTTP11Sender"><code class="docutils literal notranslate"><span class="pre">HTTP11Sender</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.HTTP11Sender.send"><code class="docutils literal notranslate"><span class="pre">HTTP11Sender.send()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.CookieDomain"><code class="docutils literal notranslate"><span class="pre">CookieDomain</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CookieDomain.add_cookie"><code class="docutils literal notranslate"><span class="pre">CookieDomain.add_cookie()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CookieDomain.as_binary"><code class="docutils literal notranslate"><span class="pre">CookieDomain.as_binary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CookieDomain.check_expired"><code class="docutils literal notranslate"><span class="pre">CookieDomain.check_expired()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CookieDomain.delete_cookie"><code class="docutils literal notranslate"><span class="pre">CookieDomain.delete_cookie()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.HTTPyError"><code class="docutils literal notranslate"><span class="pre">HTTPyError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.Headers"><code class="docutils literal notranslate"><span class="pre">Headers</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.KeepAlive"><code class="docutils literal notranslate"><span class="pre">KeepAlive</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.NonceCounter"><code class="docutils literal notranslate"><span class="pre">NonceCounter</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.PendingRequest"><code class="docutils literal notranslate"><span class="pre">PendingRequest</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.PendingRequest.empty"><code class="docutils literal notranslate"><span class="pre">PendingRequest.empty</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.PendingRequest.finished"><code class="docutils literal notranslate"><span class="pre">PendingRequest.finished</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.PendingRequest.response"><code class="docutils literal notranslate"><span class="pre">PendingRequest.response</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.PendingRequest.wait"><code class="docutils literal notranslate"><span class="pre">PendingRequest.wait()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.CookieJar"><code class="docutils literal notranslate"><span class="pre">CookieJar</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CookieJar.add_domain"><code class="docutils literal notranslate"><span class="pre">CookieJar.add_domain()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CookieJar.get_cookies"><code class="docutils literal notranslate"><span class="pre">CookieJar.get_cookies()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.CookieJar.update"><code class="docutils literal notranslate"><span class="pre">CookieJar.update()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.PickleFile"><code class="docutils literal notranslate"><span class="pre">PickleFile</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.PickleFile.update"><code class="docutils literal notranslate"><span class="pre">PickleFile.update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.Dir"><code class="docutils literal notranslate"><span class="pre">Dir</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Dir.request"><code class="docutils literal notranslate"><span class="pre">Dir.request()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ProtoVersion"><code class="docutils literal notranslate"><span class="pre">ProtoVersion</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.ProtoVersion.recv_response"><code class="docutils literal notranslate"><span class="pre">ProtoVersion.recv_response()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.ProtoVersion.send_request"><code class="docutils literal notranslate"><span class="pre">ProtoVersion.send_request()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.ETag"><code class="docutils literal notranslate"><span class="pre">ETag</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.ETag.add_header"><code class="docutils literal notranslate"><span class="pre">ETag.add_header()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.Response"><code class="docutils literal notranslate"><span class="pre">Response</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Response.cacheload"><code class="docutils literal notranslate"><span class="pre">Response.cacheload()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Response.charset"><code class="docutils literal notranslate"><span class="pre">Response.charset</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Response.json"><code class="docutils literal notranslate"><span class="pre">Response.json</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Response.plain"><code class="docutils literal notranslate"><span class="pre">Response.plain()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Response.string"><code class="docutils literal notranslate"><span class="pre">Response.string</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.File"><code class="docutils literal notranslate"><span class="pre">File</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.File.open"><code class="docutils literal notranslate"><span class="pre">File.open()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.File.read"><code class="docutils literal notranslate"><span class="pre">File.read()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.File.save"><code class="docutils literal notranslate"><span class="pre">File.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.File.seek"><code class="docutils literal notranslate"><span class="pre">File.seek()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.File.tell"><code class="docutils literal notranslate"><span class="pre">File.tell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.File.value"><code class="docutils literal notranslate"><span class="pre">File.value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.File.write"><code class="docutils literal notranslate"><span class="pre">File.write()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.ServerError"><code class="docutils literal notranslate"><span class="pre">ServerError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.Session"><code class="docutils literal notranslate"><span class="pre">Session</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.Session.request"><code class="docutils literal notranslate"><span class="pre">Session.request()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP11"><code class="docutils literal notranslate"><span class="pre">HTTP11</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP11.recver"><code class="docutils literal notranslate"><span class="pre">HTTP11.recver</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP11.sender"><code class="docutils literal notranslate"><span class="pre">HTTP11.sender</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP11.version"><code class="docutils literal notranslate"><span class="pre">HTTP11.version</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.Status"><code class="docutils literal notranslate"><span class="pre">Status</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.StatusError"><code class="docutils literal notranslate"><span class="pre">StatusError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.TooManyRedirectsError"><code class="docutils literal notranslate"><span class="pre">TooManyRedirectsError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.WWW_Authenticate"><code class="docutils literal notranslate"><span class="pre">WWW_Authenticate</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WWW_Authenticate.basic_auth"><code class="docutils literal notranslate"><span class="pre">WWW_Authenticate.basic_auth()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WWW_Authenticate.digest_auth"><code class="docutils literal notranslate"><span class="pre">WWW_Authenticate.digest_auth()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WWW_Authenticate.encode_password"><code class="docutils literal notranslate"><span class="pre">WWW_Authenticate.encode_password()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP11Recver"><code class="docutils literal notranslate"><span class="pre">HTTP11Recver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP11Sender"><code class="docutils literal notranslate"><span class="pre">HTTP11Sender</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP11Sender.send"><code class="docutils literal notranslate"><span class="pre">HTTP11Sender.send()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.WebSocket"><code class="docutils literal notranslate"><span class="pre">WebSocket</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocket.close"><code class="docutils literal notranslate"><span class="pre">WebSocket.close()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocket.makefile"><code class="docutils literal notranslate"><span class="pre">WebSocket.makefile()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocket.reconnect"><code class="docutils literal notranslate"><span class="pre">WebSocket.reconnect()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocket.recv"><code class="docutils literal notranslate"><span class="pre">WebSocket.recv()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocket.send"><code class="docutils literal notranslate"><span class="pre">WebSocket.send()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP2"><code class="docutils literal notranslate"><span class="pre">HTTP2</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP2.recver"><code class="docutils literal notranslate"><span class="pre">HTTP2.recver</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP2.sender"><code class="docutils literal notranslate"><span class="pre">HTTP2.sender</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.HTTP2.version"><code class="docutils literal notranslate"><span class="pre">HTTP2.version</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.WebSocketClientError"><code class="docutils literal notranslate"><span class="pre">WebSocketClientError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.WebSocketError"><code class="docutils literal notranslate"><span class="pre">WebSocketError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.WebSocketFile"><code class="docutils literal notranslate"><span class="pre">WebSocketFile</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocketFile.close"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.close()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocketFile.read"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.read()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocketFile.seek"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.seek()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocketFile.tell"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.tell()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.WebSocketFile.write"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.write()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.Headers"><code class="docutils literal notranslate"><span class="pre">Headers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.KeepAlive"><code class="docutils literal notranslate"><span class="pre">KeepAlive</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.NonceCounter"><code class="docutils literal notranslate"><span class="pre">NonceCounter</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.PendingRequest"><code class="docutils literal notranslate"><span class="pre">PendingRequest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.PendingRequest.empty"><code class="docutils literal notranslate"><span class="pre">PendingRequest.empty</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.PendingRequest.finished"><code class="docutils literal notranslate"><span class="pre">PendingRequest.finished</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.PendingRequest.response"><code class="docutils literal notranslate"><span class="pre">PendingRequest.response</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.PendingRequest.wait"><code class="docutils literal notranslate"><span class="pre">PendingRequest.wait()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.WebSocketHandshakeError"><code class="docutils literal notranslate"><span class="pre">WebSocketHandshakeError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.absolute_path"><code class="docutils literal notranslate"><span class="pre">absolute_path()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.byte_length"><code class="docutils literal notranslate"><span class="pre">byte_length()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.cacheWrite"><code class="docutils literal notranslate"><span class="pre">cacheWrite()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.capitalize"><code class="docutils literal notranslate"><span class="pre">capitalize()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.chain_functions"><code class="docutils literal notranslate"><span class="pre">chain_functions()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.create_connection"><code class="docutils literal notranslate"><span class="pre">create_connection()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.decode_content"><code class="docutils literal notranslate"><span class="pre">decode_content()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.deslash"><code class="docutils literal notranslate"><span class="pre">deslash()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.determine_charset"><code class="docutils literal notranslate"><span class="pre">determine_charset()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.encode_form_data"><code class="docutils literal notranslate"><span class="pre">encode_form_data()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.find_session_by_id"><code class="docutils literal notranslate"><span class="pre">find_session_by_id()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.force_bytes"><code class="docutils literal notranslate"><span class="pre">force_bytes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.force_string"><code class="docutils literal notranslate"><span class="pre">force_string()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.generate_cnonce"><code class="docutils literal notranslate"><span class="pre">generate_cnonce()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.generate_session_id"><code class="docutils literal notranslate"><span class="pre">generate_session_id()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.generate_websocket_key"><code class="docutils literal notranslate"><span class="pre">generate_websocket_key()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.get_content_type"><code class="docutils literal notranslate"><span class="pre">get_content_type()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.get_encoding_chain"><code class="docutils literal notranslate"><span class="pre">get_encoding_chain()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.get_host"><code class="docutils literal notranslate"><span class="pre">get_host()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.getbytes"><code class="docutils literal notranslate"><span class="pre">getbytes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.hashing_function"><code class="docutils literal notranslate"><span class="pre">hashing_function()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.int2bytes"><code class="docutils literal notranslate"><span class="pre">int2bytes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.makehost"><code class="docutils literal notranslate"><span class="pre">makehost()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.mask"><code class="docutils literal notranslate"><span class="pre">mask()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.mk_header"><code class="docutils literal notranslate"><span class="pre">mk_header()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.mkbits"><code class="docutils literal notranslate"><span class="pre">mkbits()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.mkdict"><code class="docutils literal notranslate"><span class="pre">mkdict()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.multipart"><code class="docutils literal notranslate"><span class="pre">multipart()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.request"><code class="docutils literal notranslate"><span class="pre">request()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.reslash"><code class="docutils literal notranslate"><span class="pre">reslash()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.session_count"><code class="docutils literal notranslate"><span class="pre">session_count()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.set_debug"><code class="docutils literal notranslate"><span class="pre">set_debug()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.setup_session"><code class="docutils literal notranslate"><span class="pre">setup_session()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.strarray"><code class="docutils literal notranslate"><span class="pre">strarray</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.strarray.append"><code class="docutils literal notranslate"><span class="pre">strarray.append()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.strarray.extend"><code class="docutils literal notranslate"><span class="pre">strarray.extend()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.PickleFile"><code class="docutils literal notranslate"><span class="pre">PickleFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.PickleFile.update"><code class="docutils literal notranslate"><span class="pre">PickleFile.update()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.urlencode"><code class="docutils literal notranslate"><span class="pre">urlencode()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="httpy.html#httpy.websocket_handshake"><code class="docutils literal notranslate"><span class="pre">websocket_handshake()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.ProtoVersion"><code class="docutils literal notranslate"><span class="pre">ProtoVersion</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.ProtoVersion.recv_response"><code class="docutils literal notranslate"><span class="pre">ProtoVersion.recv_response()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.ProtoVersion.send_request"><code class="docutils literal notranslate"><span class="pre">ProtoVersion.send_request()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.Request"><code class="docutils literal notranslate"><span class="pre">Request</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Request.async_perform"><code class="docutils literal notranslate"><span class="pre">Request.async_perform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Request.perform"><code class="docutils literal notranslate"><span class="pre">Request.perform()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.Response"><code class="docutils literal notranslate"><span class="pre">Response</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Response.cacheload"><code class="docutils literal notranslate"><span class="pre">Response.cacheload()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Response.charset"><code class="docutils literal notranslate"><span class="pre">Response.charset</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Response.json"><code class="docutils literal notranslate"><span class="pre">Response.json</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Response.plain"><code class="docutils literal notranslate"><span class="pre">Response.plain()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Response.string"><code class="docutils literal notranslate"><span class="pre">Response.string</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.Session"><code class="docutils literal notranslate"><span class="pre">Session</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Session.async_request"><code class="docutils literal notranslate"><span class="pre">Session.async_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Session.close"><code class="docutils literal notranslate"><span class="pre">Session.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Session.initiate_http2_connection"><code class="docutils literal notranslate"><span class="pre">Session.initiate_http2_connection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.Session.request"><code class="docutils literal notranslate"><span class="pre">Session.request()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.WWW_Authenticate"><code class="docutils literal notranslate"><span class="pre">WWW_Authenticate</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WWW_Authenticate.basic_auth"><code class="docutils literal notranslate"><span class="pre">WWW_Authenticate.basic_auth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WWW_Authenticate.digest_auth"><code class="docutils literal notranslate"><span class="pre">WWW_Authenticate.digest_auth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WWW_Authenticate.encode_password"><code class="docutils literal notranslate"><span class="pre">WWW_Authenticate.encode_password()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocket"><code class="docutils literal notranslate"><span class="pre">WebSocket</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocket.close"><code class="docutils literal notranslate"><span class="pre">WebSocket.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocket.close_with_errcode"><code class="docutils literal notranslate"><span class="pre">WebSocket.close_with_errcode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocket.makefile"><code class="docutils literal notranslate"><span class="pre">WebSocket.makefile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocket.reconnect"><code class="docutils literal notranslate"><span class="pre">WebSocket.reconnect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocket.recv"><code class="docutils literal notranslate"><span class="pre">WebSocket.recv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocket.send"><code class="docutils literal notranslate"><span class="pre">WebSocket.send()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocketFile"><code class="docutils literal notranslate"><span class="pre">WebSocketFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocketFile.close"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocketFile.read"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.read()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocketFile.seek"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.seek()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocketFile.tell"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.tell()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.WebSocketFile.write"><code class="docutils literal notranslate"><span class="pre">WebSocketFile.write()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.absolute_path"><code class="docutils literal notranslate"><span class="pre">absolute_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.async_request"><code class="docutils literal notranslate"><span class="pre">async_request()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.cacheWrite"><code class="docutils literal notranslate"><span class="pre">cacheWrite()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.close_all"><code class="docutils literal notranslate"><span class="pre">close_all()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.create_async_h2_connection"><code class="docutils literal notranslate"><span class="pre">create_async_h2_connection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.create_connection"><code class="docutils literal notranslate"><span class="pre">create_connection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.deslash"><code class="docutils literal notranslate"><span class="pre">deslash()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.determine_charset"><code class="docutils literal notranslate"><span class="pre">determine_charset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.dir_count"><code class="docutils literal notranslate"><span class="pre">dir_count()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.encode_form_data"><code class="docutils literal notranslate"><span class="pre">encode_form_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.find_dir_by_id"><code class="docutils literal notranslate"><span class="pre">find_dir_by_id()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.generate_cnonce"><code class="docutils literal notranslate"><span class="pre">generate_cnonce()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.generate_dir_id"><code class="docutils literal notranslate"><span class="pre">generate_dir_id()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.generate_websocket_key"><code class="docutils literal notranslate"><span class="pre">generate_websocket_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.get_connection"><code class="docutils literal notranslate"><span class="pre">get_connection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.get_content_type"><code class="docutils literal notranslate"><span class="pre">get_content_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.hashing_function"><code class="docutils literal notranslate"><span class="pre">hashing_function()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.initiate_http2_connection"><code class="docutils literal notranslate"><span class="pre">initiate_http2_connection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.makehost"><code class="docutils literal notranslate"><span class="pre">makehost()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.md5"><code class="docutils literal notranslate"><span class="pre">md5()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.mkdict"><code class="docutils literal notranslate"><span class="pre">mkdict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.multipart"><code class="docutils literal notranslate"><span class="pre">multipart()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.request"><code class="docutils literal notranslate"><span class="pre">request()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.reslash"><code class="docutils literal notranslate"><span class="pre">reslash()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.set_debug"><code class="docutils literal notranslate"><span class="pre">set_debug()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.setup_dir"><code class="docutils literal notranslate"><span class="pre">setup_dir()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.sha1"><code class="docutils literal notranslate"><span class="pre">sha1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.sha256"><code class="docutils literal notranslate"><span class="pre">sha256()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.sha512"><code class="docutils literal notranslate"><span class="pre">sha512()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.strarray"><code class="docutils literal notranslate"><span class="pre">strarray</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.strarray.append"><code class="docutils literal notranslate"><span class="pre">strarray.append()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.httpy.strarray.extend"><code class="docutils literal notranslate"><span class="pre">strarray.extend()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.urlencode"><code class="docutils literal notranslate"><span class="pre">urlencode()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.httpy.websocket_handshake"><code class="docutils literal notranslate"><span class="pre">websocket_handshake()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#module-httpy.patterns">httpy.patterns module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#module-httpy.status">httpy.status module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.status.Status"><code class="docutils literal notranslate"><span class="pre">Status</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.status.status_from_int"><code class="docutils literal notranslate"><span class="pre">status_from_int()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#module-httpy.utils">httpy.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.CaseInsensitiveDict"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.utils.CaseInsensitiveDict.get"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.get()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.utils.CaseInsensitiveDict.items"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.items()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.utils.CaseInsensitiveDict.keys"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.keys()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.utils.CaseInsensitiveDict.update"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.html#httpy.utils.CaseInsensitiveDict.values"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.byte_length"><code class="docutils literal notranslate"><span class="pre">byte_length()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.capitalize"><code class="docutils literal notranslate"><span class="pre">capitalize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.decode_content"><code class="docutils literal notranslate"><span class="pre">decode_content()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.force_bytes"><code class="docutils literal notranslate"><span class="pre">force_bytes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.force_string"><code class="docutils literal notranslate"><span class="pre">force_string()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.get_host"><code class="docutils literal notranslate"><span class="pre">get_host()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.getbytes"><code class="docutils literal notranslate"><span class="pre">getbytes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.int2bytes"><code class="docutils literal notranslate"><span class="pre">int2bytes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.mask"><code class="docutils literal notranslate"><span class="pre">mask()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.mk_header"><code class="docutils literal notranslate"><span class="pre">mk_header()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.mkbits"><code class="docutils literal notranslate"><span class="pre">mkbits()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.html#httpy.utils.read_until"><code class="docutils literal notranslate"><span class="pre">read_until()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="httpy.html#module-httpy">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -266,7 +344,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, Adam Jenca.</p>
+    <p>&#169; Copyright 2022-2023, Adam Jenca.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -1,0 +1,47 @@
+
+.. role:: raw-html-m2r(raw)
+   :format: html
+
+
+
+.. image:: https://badgen.net/github/release/jenca-adam/httpy?color=green
+   :target: https://github.com/jenca-adam/httpy/releases/latest
+   :alt: Latest Release
+
+.. image:: https://badgen.net/github/stars/jenca-adam/httpy?color=red
+   :target: https://github.com/jenca-adam/httpy/
+   :alt: Stars
+
+.. image:: https://badgen.net/github/tags/jenca-adam/httpy?color=cyan
+   :target: https://github.com/jenca-adam/httpy/tags
+   :alt: Tags
+
+.. image:: https://badgen.net/github/releases/jenca-adam/httpy?color=yellow
+   :target: https://github.com/jenca-adam/httpy/releases
+   :alt: Releases Count
+
+.. image:: https://badgen.net/github/license/jenca-adam/httpy?color=black
+   :target: https://github.com/jenca-adam/httpy/blob/main/LICENSE
+   :alt: License
+
+.. image:: https://badgen.net/badge/icon/github?icon=github&label
+   :target: https://github.com/jenca-adam/httpy/
+   :alt: GitHub
+
+.. image:: https://badgen.net/badge/icon/pypi?icon=pypi&label&color=purple
+   :target: https://pypi.org/project/httpy
+   :alt: PyPI
+
+.. image:: https://readthedocs.org/projects/httpy/badge/?version=latest
+   :target: https://httpy.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
+.. image:: https://badgen.net/badgesize/normal/jenca-adam/httpy/master/httpy/__init__.py
+   :target: https://github.com/jenca-adam/httpy
+   :alt: Size
+
+
+.. image:: https://img.shields.io/pypi/dm/httpy.svg
+   :target: https://pypi.org/project/httpy
+   :alt: Downloads/Month
+:raw-html-m2r:`<br>`

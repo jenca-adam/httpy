@@ -1,23 +1,19 @@
-"""setup.py module"""
+"""setup.py"""
+
 import sys
 import setuptools
 
-ld = """A lightweight socket-based library to create HTTP(s) and WebSocket connections.
-## Features
-   * Cookies support
-   * Caching support
-   * Easy debugging
-   * HTTP authentication
-   * Form support
-   * No requirements(save Python)
-   * Keep-Alive and connection pooling
-## License
-    GPLv3
-Docs at <https://httpy.readthedocs.io/>"""
+PROJECT_URLS = {
+    "GitHub": "https://github.com/jenca-adam/httpy",
+    "PyPI": "https://pypi.python.org/project/httpy",
+    "Bug Tracker": "https://github.com/jenca-adam/httpy/issues",
+    "Download": "https://github.com/jenca-adam/httpy/releases/latest",
+}
+
 try:
-    ld = open("README.md").read()
+    ld = open("README.rst").read()
 except:
-    pass
+    ld = ""
 
 
 class VersionError(Exception):
@@ -35,9 +31,9 @@ setuptools.setup(
     author="Adam Jenca",
     description="Lightweight socket-based HTTP(s) and WebSocket client.",
     long_description=ld,
-    version="1.8.2",
-    long_description_content_type="text/markdown",
-    packages=["httpy"],
+    version="2.0.0",
+    long_description_content_type="text/x-rst",
+    packages=["httpy", "httpy.http2", "httpy.http2.hpack", "httpy.http2.hpack.static"],
     author_email="jenca.a@gjh.sk",
     url="https://github.com/jenca-adam/httpy",
     classifiers=[
@@ -49,6 +45,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Topic :: Internet :: WWW/HTTP",
         "Environment :: Web Environment",

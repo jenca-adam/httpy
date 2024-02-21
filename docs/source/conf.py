@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "httpy"
-copyright = "2022, Adam Jenca"
+copyright = "2022-2023, Adam Jenca"
 author = "Adam Jenca"
 
 # The full version, including alpha/beta/rc tags
-release = "1.8.1"
+release = "1.8.2"
 
 
 # -- General configuration ---------------------------------------------------
@@ -31,7 +31,7 @@ release = "1.8.1"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["myst_parser", "sphinx.ext.autodoc", "sphinx.ext.napoleon"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
