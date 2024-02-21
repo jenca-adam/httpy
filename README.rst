@@ -44,7 +44,10 @@
 .. image:: https://img.shields.io/pypi/dm/httpy.svg
    :target: https://pypi.org/project/httpy
    :alt: Downloads/Month
+
 :raw-html-m2r:`<br>`
+
+
 =====
 httpy
 =====
