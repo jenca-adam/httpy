@@ -8,6 +8,7 @@ BUILD=./build
 SETUP_PY=./setup.py
 SETUP_PYARGS=sdist bdist bdist_wheel
 TESTDIR=./tests
+LATEST=./latest_release/latest.whl
 SPHINX_APIDOC=sphinx-apidoc
 BADGES=./\.badges.rst
 DOCS_INDEX=./docs/source/index.rst
@@ -34,5 +35,5 @@ build:  $(SETUP_PY)
 	for file in $(DIST)/* ; do \
 		cp -f $$file $(ALL_DIST); \
 	done
-	cp $(DIST)/*.whl $(DIST)/latest # BADGE FIX
+	cp $(DIST)/*.whl $(LATEST) # BADGE FIX
 	rm -rf $(BUILD)
