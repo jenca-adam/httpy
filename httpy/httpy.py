@@ -55,7 +55,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "dirs", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "2.0.0"
+VERSION = "2.0.2"
 
 HTTPY_CACHEABLE_METHODS = ["GET", "HEAD"]
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
@@ -1389,9 +1389,17 @@ def setup_dir(dir_path, name):
     return name
 
 
-def find_dir_by_id(sessid):
+def find_dir_by_id(sessid, name):
     if sessid in os.listdir(HTTPY_DIR / "dirs"):
         return HTTPY_DIR / "dirs" / sessid
+    else:
+        for q in os.listdir(HTTPY_DIR / "dirs"):
+            try:
+                with open(os.path.join(HTTPY_DIR, "dirs", q, "meta.json")) as f:
+                    if json.load(f)["name"] == name:
+                        return HTTPY_DIR / "dirs" / q
+            except (FileNotFoundError, KeyError):
+                raise
 
 
 def dir_count():
@@ -1501,15 +1509,17 @@ class _HTTP2Async(AsyncProtoVersion):
 
 
 class Dir:
-    def __init__(self, dir_id=None, path=None, name=None):
+    def __init__(self, path=None, dir_id=None, name=None):
         if dir_id is None:
             dir_id = generate_dir_id()
 
         if path is None:
-            path = find_dir_by_id(dir_id)
+            path = find_dir_by_id(dir_id, name)
+            dir_id = os.path.split(path)[-1]
             if path is None:
                 path = HTTPY_DIR / "dirs" / dir_id
-        self.new = os.path.exists(path)
+        path = pathlib.Path(path)
+        self.new = not os.path.exists(path)
         name = setup_dir(path, name)
         self.name = name
         self.dir_id = dir_id
@@ -1523,6 +1533,8 @@ class Dir:
     def request(self, url, **kwargs):
         if "base_dir" in kwargs:
             del kwargs["base_dir"]
+        kwargs["enable_cache"] = kwargs.get("enable_cache", True)
+        kwargs["enable_cookies"] = kwargs.get("enable_cookies", True)
         return request(url, **kwargs, base_dir=self.path)
 
     def __repr__(self):
@@ -1563,7 +1575,7 @@ async def _async_raw_request(
     data=b"",
     content_type=None,
     timeout=32,
-    enable_cache=True,
+    enable_cache=False,
     headers={},
     auth={},
     history=[],
@@ -1574,7 +1586,7 @@ async def _async_raw_request(
     http_version="2",
     disabled_headers=[],
     force_keep_alive=False,
-    enable_cookies=True,
+    enable_cookies=False,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -1783,7 +1795,7 @@ def _raw_request(
     data=b"",
     content_type=None,
     timeout=32,
-    enable_cache=True,
+    enable_cache=False,
     headers={},
     auth={},
     history=[],
@@ -1794,7 +1806,7 @@ def _raw_request(
     http_version=None,
     disabled_headers=[],
     force_keep_alive=False,
-    enable_cookies=True,
+    enable_cookies=False,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -2034,13 +2046,13 @@ def request(
     throw_on_error=False,
     debug=False,
     pure_headers=False,
-    enable_cache=True,
+    enable_cache=False,
     base_dir=HTTPY_DIR / "default",
     http_version=None,
     disabled_headers=[],
     blocking=True,
     force_keep_alive=False,
-    enable_cookies=True,
+    enable_cookies=False,
 ):
     """
 
@@ -2242,12 +2254,12 @@ async def async_request(
     throw_on_error=False,
     debug=False,
     pure_headers=False,
-    enable_cache=True,
+    enable_cache=False,
     base_dir=HTTPY_DIR / "default",
     http_version="2",
     disabled_headers=[],
     force_keep_alive=False,
-    enable_cookies=True,
+    enable_cookies=False,
 ):
     """
 

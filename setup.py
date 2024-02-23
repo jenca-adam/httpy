@@ -31,9 +31,15 @@ setuptools.setup(
     author="Adam Jenca",
     description="A lightweight socket-based HTTP(s) and WebSocket client.",
     long_description=ld,
-    version="2.0.1",
+    version="2.0.2",
     long_description_content_type="text/x-rst",
-    packages=["httpy", "httpy.http2", "httpy.http2.hpack", "httpy.http2.hpack.static", "httpy.http2.hpack.utils"],
+    packages=[
+        "httpy",
+        "httpy.http2",
+        "httpy.http2.hpack",
+        "httpy.http2.hpack.static",
+        "httpy.http2.hpack.utils",
+    ],
     author_email="jenca.a@gjh.sk",
     url="https://github.com/jenca-adam/httpy",
     classifiers=[

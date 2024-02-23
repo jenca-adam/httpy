@@ -6,7 +6,7 @@ import traceback
 import sys
 import asyncio
 
-from ..utils import force_bytes, _create_connection_and_handle_errors
+from ..utils import force_bytes, _create_connection_and_handle_errors, _extract_sslobj
 from . import hpack, frame, stream, settings
 from .streams import Streams
 from .frame_queue import FrameQueue, AsyncFrameQueue
@@ -64,7 +64,7 @@ async def async_start_connection(host, port, client_settings, alpn=True):
     Starts an asynchronous connection to a given server
     """
     context = ssl._create_default_https_context()
-    context.check_hostname = False
+    context.check_hostname = False  # ???
     if alpn:
         context.set_alpn_protocols(["h2"])
     try:
@@ -86,10 +86,12 @@ async def async_start_connection(host, port, client_settings, alpn=True):
 
         debugger.warn(f"unknown errno {errno!r}")
         raise
-    if (
-        reader._transport._ssl_protocol._sslpipe.ssl_object.selected_alpn_protocol()
-        != "h2"
-    ):
+    ssl_obj = _extract_sslobj(reader, writer)
+    if ssl_obj is None:
+        debugger.error("SSLObject extraction failed")
+        return False, (reader, writer), None
+    if ssl_obj.selected_alpn_protocol() != "h2":
+        debugger.error("ALPN failed (not h2)")
         return False, (reader, writer), None
     return await async_initiate_connection(reader, writer, client_settings)
 
@@ -207,7 +209,7 @@ class Connection:
         fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
         try:
             self._send_frame(fr)
-        except ssl.SSLError:
+        except:  # ignore ALL errors on close since these happen fairly frequently
             pass
         self.close_socket()
 
@@ -437,7 +439,7 @@ class AsyncConnection:
         fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
         try:
             await self._send_frame(fr)
-        except ssl.SSLError:
+        except:  # see above
             pass
         await self.close_socket()
 

@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "httpy"
-copyright = "2022-2023, Adam Jenca"
+copyright = "2022-2024, Adam Jenca"
 author = "Adam Jenca"
 
 # The full version, including alpha/beta/rc tags
-release = "2.0.1"
+release = "2.0.2"
 
 
 # -- General configuration ---------------------------------------------------

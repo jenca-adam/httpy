@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy &mdash; httpy 1.8.2 documentation</title>
+  <title>httpy &mdash; httpy 2.0.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=8209df7b" />
 
@@ -223,14 +223,14 @@ check if the request is already done using <code class="docutils literal notrans
 <h4>I want cookies!<a class="headerlink" href="#i-want-cookies" title="Link to this heading"></a></h4>
 <p>The <code class="docutils literal notranslate"><span class="pre">Dir</span></code> class allows you to store httpy’s data (cache and cookies)
 on the path of your choice. By default, the data is stored in
-<code class="docutils literal notranslate"><span class="pre">~/.cache/httpy</span></code>. If you don’t want to store the data, use the
-<code class="docutils literal notranslate"><span class="pre">enable_cookies</span></code> or <code class="docutils literal notranslate"><span class="pre">enable_cache</span></code> argument of <code class="docutils literal notranslate"><span class="pre">request</span></code>. ..
-code-block:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
-<span class="n">directory</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">Dir</span><span class="p">(</span><span class="s2">&quot;your/path&quot;</span><span class="p">)</span>
-<span class="n">directory</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span> <span class="c1"># ...</span>
-</pre></div>
-</div>
+<code class="docutils literal notranslate"><span class="pre">~/.cache/httpy</span></code>. If you want to store the data without using the <code class="docutils literal notranslate"><span class="pre">Dir</span></code> class, use the
+<code class="docutils literal notranslate"><span class="pre">enable_cookies</span></code> or <code class="docutils literal notranslate"><span class="pre">enable_cache</span></code> argument of <code class="docutils literal notranslate"><span class="pre">request</span></code>.
+.. code-block:: python</p>
+<blockquote>
+<div><p>import httpy
+directory = httpy.Dir(“your/path”)
+directory.request(”<a class="reference external" href="https://example.com/">https://example.com/</a>”) # …</p>
+</div></blockquote>
 </section>
 <section id="keep-alive-requests">
 <h4>Keep-Alive requests<a class="headerlink" href="#keep-alive-requests" title="Link to this heading"></a></h4>
@@ -568,7 +568,7 @@ warned!</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022-2023, Adam Jenca.</p>
+    <p>&#169; Copyright 2022-2024, Adam Jenca.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

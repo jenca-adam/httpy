@@ -19,7 +19,7 @@ try:
 except:
     pass
 try:
-    from .. import httpy
+    import httpy
 except:
     httpy = None
 try:
@@ -29,7 +29,7 @@ except:
 
 
 def test_HTTPy_imports():
-    from .. import httpy
+    import httpy
 
 
 def test_http_200_ok():
