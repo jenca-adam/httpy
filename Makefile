@@ -34,4 +34,5 @@ build:  $(SETUP_PY)
 	for file in $(DIST)/* ; do \
 		cp -f $$file $(ALL_DIST); \
 	done
+	cp $(DIST)/*.whl $(DIST)/latest # BADGE FIX
 	rm -rf $(BUILD)
