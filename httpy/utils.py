@@ -292,18 +292,8 @@ def _zlib_decompress(data):
 
 
 def _extract_sslobj(reader, writer):
-    """
-    The methods for extracting the SSL object from an async connection vary from version to version and are undocumented.
-    These have been found via trial and error, so this is expected to produce errors.
-    If the extraction has failed, returns None(!!)
-    """
-    try:
-        return writer.transport._ssl_protocol._sslobj  # should work in most cases
-    except AttributeError:
-        try:
-            return reader._transport._ssl_protocol._sslpipe.ssl_object  # idk
-        except AttributeError:
-            return None  # oops
+    ### LMAO
+    return writer.transport.get_extra_info("ssl_object")
 
 
 encodings = {

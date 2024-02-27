@@ -31,7 +31,7 @@ setuptools.setup(
     author="Adam Jenca",
     description="A lightweight socket-based HTTP(s) and WebSocket client.",
     long_description=ld,
-    version="2.0.2",
+    version="2.0.3",
     long_description_content_type="text/x-rst",
     packages=[
         "httpy",
