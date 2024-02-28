@@ -1427,16 +1427,27 @@ class HTTP11Sender:
 
 
 class HTTP11Recver:
-    def __call__(self, sock, debug, timeout):
-        file = sock.makefile("b")
-        statusline = file.readline()
+    def __init__(self, sock, debug, timeout):
+        self.sock=sock
+        self.debug=debug
+        self.timeout=timeout
+        self.__joined_body=None
+        self._headers=None
+        self._body=[]
+        self._decoded_body=None
+        self._status=None
+        self._chunked=False
+        self.bytes_read=0
+        self.finished=False
+        self.file=sock.makefile("b")
+    def load_headers(self):
+        statusline = self.file.readline()
         _debugprint(debug, "\nresponse: ")
         _debugprint(debug, statusline)
         if not statusline:
             debugger.warn("dead connection")
             raise DeadConnectionError("peer did not send a response")
-
-        status = Status(statusline)
+        self._status = Status(statusline)
         headers = []
         while True:
             line = file.readline()
@@ -1444,40 +1455,50 @@ class HTTP11Recver:
                 break
             _debugprint(debug, line.decode(), end="")
             headers.append(line)
-        headers = Headers(headers)
-        body = b""
-        chunked = headers.get("transfer-encoding", "").strip() == "chunked"
-        if not chunked:
+        self._headers = Headers(headers) 
+        self._chunked = self.headers.get("transfer-encoding", "").strip().lower() == "chunked"
+        return self._headers
+    def load_body(self):
+        if not self._chunked:
             cl = int(headers.get("content-length", -1))
             if cl == -1:
                 warnings.warn(
                     "no content-length nor transfer-encoding, setting socket timeout"
                 )
-                sock.settimeout(0.5)
+                self.sock.settimeout(0.5)
+                body = []
                 while True:
                     try:
-                        b = file.read(1)  # recv 1 byte
+                        b = self.file.read(1)  # recv 1 byte
                         if not b:
                             break
                     except socket.timeout:  # end of response??
                         break
-                    body += b
-                sock.settimeout(timeout)
+                    body.append(b)
+                self._body = body
+                self.sock.settimeout(timeout)
             else:
-                body = file.read(cl)  # recv <content-length> bytes
+                self._body = file.read(cl)  # recv <content-length> bytes
         else:  # chunked read
-            while True:
-                chunksize = int(file.readline().strip(), base=16)  # get chunk size
-                if chunksize == 0:  # final byte
-                    break
-                chunk = file.read(chunksize)
-                file.read(2)  # discard CLRF
-                body += chunk
-        content_encoding = headers.get("content-encoding", "identity")
-        decoded_body = decode_content(body, content_encoding)
-        return status, headers, decoded_body, body
-
-
+            self._body = [_read_chunked(self.file)]
+        content_encoding = self._headers.get("content-encoding", "identity")
+        self._decoded_body = decode_content(self.body, content_encoding)
+    @property
+    def body(self):
+        if self.__joined_body is not None and self.finished:
+            return self.__joined_body
+        self.__joined_body = b''.join(self._body)
+        return self.__joined_body
+    def stream(self):
+        raise NotImplementedError
+        """if self._chunked:
+            next_chunk = _read_one_chunk(self.file)
+            if not next_chunk:
+                self.finished=True
+                return
+            self.bytes_read+=len(next_chunk)
+            self._body.append(next_chunk)"""
+        
 class HTTP11(ProtoVersion):
     """
     A sender/receiver for HTTP/1.1 requests
