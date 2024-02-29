@@ -46,7 +46,7 @@ from .status import *
 from .alpn import alpn_negotiate
 from .patterns import *
 from .debugger import _Debugger
-
+from .proto import HTTP11, HTTP2, _HTTP2Async
 try:
     import chardet  # to detect charsets
 except ImportError:
@@ -1404,130 +1404,6 @@ def find_dir_by_id(sessid, name):
 
 def dir_count():
     return len(os.listdir(HTTPY_DIR / "dirs"))
-
-
-class HTTP11Sender:
-    def __init__(self, method, headers, body, path, debug):
-        self.method = method
-        self.headers = headers
-        self.body = body
-        self.path = path
-        self.debug = debug
-        headers = "\r\n".join([mk_header(i) for i in self.headers.items()])
-        request_data = f"{method} {path} HTTP/1.1" + "\r\n"
-        request_data += headers
-        request_data += "\r\n\r\n"
-        self.request_data = request_data
-
-    def send(self, sock):
-        _debugprint(self.debug, "\nsend:\n" + self.request_data)
-        sock.send(self.request_data.encode())
-        if self.body:
-            sock.send(self.body)
-
-
-class HTTP11Recver:
-    def __init__(self, sock, debug, timeout):
-        self.sock=sock
-        self.debug=debug
-        self.timeout=timeout
-        self.__joined_body=None
-        self._headers=None
-        self._body=[]
-        self._decoded_body=None
-        self._status=None
-        self._chunked=False
-        self.bytes_read=0
-        self.finished=False
-        self.file=sock.makefile("b")
-    def load_headers(self):
-        statusline = self.file.readline()
-        _debugprint(debug, "\nresponse: ")
-        _debugprint(debug, statusline)
-        if not statusline:
-            debugger.warn("dead connection")
-            raise DeadConnectionError("peer did not send a response")
-        self._status = Status(statusline)
-        headers = []
-        while True:
-            line = file.readline()
-            if line == b"\r\n":
-                break
-            _debugprint(debug, line.decode(), end="")
-            headers.append(line)
-        self._headers = Headers(headers) 
-        self._chunked = self.headers.get("transfer-encoding", "").strip().lower() == "chunked"
-        return self._headers
-    def load_body(self):
-        if not self._chunked:
-            cl = int(headers.get("content-length", -1))
-            if cl == -1:
-                warnings.warn(
-                    "no content-length nor transfer-encoding, setting socket timeout"
-                )
-                self.sock.settimeout(0.5)
-                body = []
-                while True:
-                    try:
-                        b = self.file.read(1)  # recv 1 byte
-                        if not b:
-                            break
-                    except socket.timeout:  # end of response??
-                        break
-                    body.append(b)
-                self._body = body
-                self.sock.settimeout(timeout)
-            else:
-                self._body = file.read(cl)  # recv <content-length> bytes
-        else:  # chunked read
-            self._body = [_read_chunked(self.file)]
-        content_encoding = self._headers.get("content-encoding", "identity")
-        self._decoded_body = decode_content(self.body, content_encoding)
-    @property
-    def body(self):
-        if self.__joined_body is not None and self.finished:
-            return self.__joined_body
-        self.__joined_body = b''.join(self._body)
-        return self.__joined_body
-    def stream(self):
-        raise NotImplementedError
-        """if self._chunked:
-            next_chunk = _read_one_chunk(self.file)
-            if not next_chunk:
-                self.finished=True
-                return
-            self.bytes_read+=len(next_chunk)
-            self._body.append(next_chunk)"""
-        
-class HTTP11(ProtoVersion):
-    """
-    A sender/receiver for HTTP/1.1 requests
-    """
-
-    version = "1.1"
-    sender = HTTP11Sender
-    recver = HTTP11Recver()
-
-
-class HTTP2(ProtoVersion):
-    """
-    A sender/receiver for synchronous HTTP/2 requests
-    """
-
-    version = "2"
-    sender = http2.proto.HTTP2Sender
-    recver = http2.proto.HTTP2Recver()
-
-
-class _HTTP2Async(AsyncProtoVersion):
-    """
-    A sender/receiver for asynchronous HTTP/2 requests
-    """
-
-    version = "2"
-    sender = http2.proto.AsyncHTTP2Sender
-    recver = http2.proto.AsyncHTTP2Recver()
-
 
 class Dir:
     def __init__(self, path=None, dir_id=None, name=None):
