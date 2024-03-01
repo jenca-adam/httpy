@@ -117,16 +117,25 @@ class HTTP2Recver:
     """
     A synchronous HTTP/2 receiver implementation.
     """
+    def __init__(self, connection, streamid, *_, **_):
+        self.connection = connection
+        self.streamid = streamid
+        self._status = None
+        self._headers = None
+        self._body = None
+        self.__joined_body = None
+        #self._chunked = None
+        self._finished = False
+        self._bytes_read = 0
 
-    def __call__(self, connection, streamid, *_, **__):
+    def load_headers(self, *_, **__):
         """
         Receives a response on a stream with a given ID.
         """
         headers = {}
-        body = b""
-        stream = connection.streams[streamid]
-        connection.debugger.info(f"Listening on {streamid}")
-        connection.debugger.debugprint("recv:")
+        stream = self.connection.streams[self.streamid]
+        self.connection.debugger.info(f"Listening on {streamid}")
+        self.connection.debugger.debugprint("recv:")
         while True:
             next_frame = stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
@@ -141,14 +150,13 @@ class HTTP2Recver:
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
                 connection.debugger.ok("Response fully received (no body)")
-                return (
-                    status_from_int(headers[":status"]),
-                    HTTP2Headers(headers),
-                    b"",
-                    b"",
-                )
             if next_frame.end_headers:
                 break
+        self._headers = HTTP2Headers(headers)
+        self._status = status_from_int(headers[":status"])
+    def load_body():
+        raise NotImplementedError
+        """
         while True:
             next_frame = stream.recv_frame(
                 frame_filter=[frame.DataFrame], enable_closed=True
@@ -163,7 +171,7 @@ class HTTP2Recver:
         content_encoding = headers_object.get("content-encoding", "identity")
         decoded_body = decode_content(body, content_encoding)
 
-        return status_from_int(headers[":status"]), headers_object, decoded_body, body
+        return status_from_int(headers[":status"]), headers_object, decoded_body, body"""
 
 
 class AsyncHTTP2Sender:
