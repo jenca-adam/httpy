@@ -117,67 +117,74 @@ class HTTP2Recver:
     """
     A synchronous HTTP/2 receiver implementation.
     """
-    def __init__(self, connection, streamid, *_, **_):
+
+    def __init__(self, connection, streamid, *_, **__):
         self.connection = connection
         self.streamid = streamid
         self._status = None
         self._headers = None
         self._body = None
         self.__joined_body = None
-        #self._chunked = None
-        self._finished = False
-        self._bytes_read = 0
+        self.finished = False
+        self.bytes_read = 0
+        self._decoded_body = None
 
     def load_headers(self, *_, **__):
         """
-        Receives a response on a stream with a given ID.
+        Loads the headers for a response
         """
         headers = {}
-        stream = self.connection.streams[self.streamid]
-        self.connection.debugger.info(f"Listening on {streamid}")
+        self.stream = self.connection.streams[self.streamid]
+        self.connection.debugger.info(f"Listening on {self.streamid}")
         self.connection.debugger.debugprint("recv:")
         while True:
-            next_frame = stream.recv_frame(
+            next_frame = self.stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
                 enable_closed=True,
             )
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
             # next_frame.decode_headers(connection.hpack)
-            connection.debugger.debugprint(
+            self.connection.debugger.debugprint(
                 "\n".join(mk_header(kvp) for kvp in next_frame.decoded_headers.items())
             )
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
-                connection.debugger.ok("Response fully received (no body)")
+                self.connection.debugger.ok("Response fully received (no body)")
             if next_frame.end_headers:
                 break
         self._headers = HTTP2Headers(headers)
         self._status = status_from_int(headers[":status"])
-    def load_body():
-        raise NotImplementedError
-        """
+
+    def load_body(self):
+        """Loads the response body"""
+        self._body = []
         while True:
-            next_frame = stream.recv_frame(
+            next_frame = self.stream.recv_frame(
                 frame_filter=[frame.DataFrame], enable_closed=True
             )
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
-            body += next_frame.data
+            self._body.append(next_frame.data)
+            self.bytes_read += next_frame.payload_length
             if next_frame.end_stream:
-                connection.debugger.ok("Response fully received (with body)")
+                self.connection.debugger.ok("Response fully received (with body)")
                 break
-        headers_object = HTTP2Headers(headers)
-        content_encoding = headers_object.get("content-encoding", "identity")
-        decoded_body = decode_content(body, content_encoding)
+        self.finished = True
+        content_encoding = self._headers.get("content-encoding", "identity")
+        self._decoded_body = decode_content(self.body, content_encoding)
 
-        return status_from_int(headers[":status"]), headers_object, decoded_body, body"""
+    @property
+    def body(self):
+        if self.__joined_body is not None and self.finished:
+            return self.__joined_body
+        self.__joined_body = b"".join(self._body)
+        return self.__joined_body
 
 
 class AsyncHTTP2Sender:
     """
-    Asynchronous HTTP/2 sender implementation.
-    For method details, see HTTP2Sender.__doc__
+    An asynchronous HTTP/2 sender.
     """
 
     def __init__(self, method, headers, body, path, debugger, authority=None, *_, **__):
@@ -199,6 +206,10 @@ class AsyncHTTP2Sender:
 
     async def send(self, connection):
         """Creates a new stream and sends the frames to it"""
+        self.debugger.debugprint("send:")
+        self.debugger.debugprint(
+            "\n".join(mk_header(kvp) for kvp in self.headers.items())
+        )
         self.data_frames = serialize_data(
             self.body, connection.settings.server_settings["max_frame_size"]
         )
@@ -217,46 +228,68 @@ class AsyncHTTP2Sender:
 
 class AsyncHTTP2Recver:
     """
-    Asynchronous HTTP/2 receiver implementation.
-    For method details, see HTTP2Recver.__doc__
+    An  asynchronous HTTP/2 receiver implementation.
     """
 
-    async def __call__(self, connection, streamid, *_, **__):
+    def __init__(self, connection, streamid, *_, **__):
+        self.connection = connection
+        self.streamid = streamid
+        self._status = None
+        self._headers = None
+        self._body = None
+        self.__joined_body = None
+        self.finished = False
+        self.bytes_read = 0
+        self._decoded_body = None
+
+    async def load_headers(self, *_, **__):
+        """
+        Loads the headers for a response
+        """
         headers = {}
-        body = b""
-        stream = connection.streams[streamid]
-        connection.debugger.info(f"Listening on {streamid}")
+        self.stream = self.connection.streams[self.streamid]
+        self.connection.debugger.info(f"Listening on {self.streamid}")
+        self.connection.debugger.debugprint("recv:")
         while True:
-            next_frame = await stream.recv_frame(
+            next_frame = await self.stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
                 enable_closed=True,
             )
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
             # next_frame.decode_headers(connection.hpack)
+            self.connection.debugger.debugprint(
+                "\n".join(mk_header(kvp) for kvp in next_frame.decoded_headers.items())
+            )
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
-                connection.debuger.ok("Response fully received (no body)")
-                return (
-                    status_from_int(headers[":status"]),
-                    HTTP2Headers(headers),
-                    b"",
-                    b"",
-                )
+                self.connection.debugger.ok("Response fully received (no body)")
             if next_frame.end_headers:
                 break
+        self._headers = HTTP2Headers(headers)
+        self._status = status_from_int(headers[":status"])
+
+    async def load_body(self):
+        """Loads the response body"""
+        self._body = []
         while True:
-            next_frame = await stream.recv_frame(
+            next_frame = await self.stream.recv_frame(
                 frame_filter=[frame.DataFrame], enable_closed=True
             )
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
                 raise ConnectionClosedError
-            body += next_frame.data
+            self._body.append(next_frame.data)
+            self.bytes_read += next_frame.payload_length
             if next_frame.end_stream:
-                connection.debugger.ok("Response fully received (with body)")
+                self.connection.debugger.ok("Response fully received (with body)")
                 break
-        headers_object = HTTP2Headers(headers)
-        content_encoding = headers_object.get("content-encoding", "identity")
-        decoded_body = decode_content(body, content_encoding)
+        self.finished = True
+        content_encoding = self._headers.get("content-encoding", "identity")
+        self._decoded_body = decode_content(self.body, content_encoding)
 
-        return status_from_int(headers[":status"]), headers_object, decoded_body, body
+    @property
+    def body(self):
+        if self.__joined_body is not None and self.finished:
+            return self.__joined_body
+        self.__joined_body = b"".join(self._body)
+        return self.__joined_body

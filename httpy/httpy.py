@@ -47,6 +47,7 @@ from .alpn import alpn_negotiate
 from .patterns import *
 from .debugger import _Debugger
 from .proto import HTTP11, HTTP2, _HTTP2Async
+
 try:
     import chardet  # to detect charsets
 except ImportError:
@@ -1289,11 +1290,6 @@ def generate_cnonce(length=16):
     return hex(random.randrange(16**length))[2:]
 
 
-def _debugprint(debug, what, *args, **kwargs):
-    if debug:
-        print(force_string(what), *args, **kwargs)
-
-
 def create_connection(
     host, port, last_response, http_version, scheme, do_keep_alive, session
 ):
@@ -1404,6 +1400,7 @@ def find_dir_by_id(sessid, name):
 
 def dir_count():
     return len(os.listdir(HTTPY_DIR / "dirs"))
+
 
 class Dir:
     def __init__(self, path=None, dir_id=None, name=None):
@@ -1659,9 +1656,9 @@ async def _async_raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        session.connections[host, port]._sock = (
-            sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
-        )
+        session.connections[
+            host, port
+        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -1886,9 +1883,9 @@ def _raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        session.connections[host, port]._sock = (
-            sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
-        )
+        session.connections[
+            host, port
+        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
     end_time = time.time()
     elapsed_time = end_time - start_time
 
