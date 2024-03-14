@@ -21,11 +21,10 @@ def initiate_connection(sock, client_settings):
     Initiates the connection on a socket by sending the connection preface and exchanging settings frames
     """
     sf = sock.makefile("b")
-    sock.send(PREFACE)
+    sock.sendall(PREFACE + frame.SettingsFrame(**client_settings.settings).tobytes())
     sett = frame.parse(sf).dict
     server_settings = settings.Settings(sett, {}, sett)
-    sock.send(frame.SettingsFrame(ack=True).tobytes())
-    sock.send(frame.SettingsFrame(**client_settings.settings).tobytes())
+    sock.sendall(frame.SettingsFrame(ack=True).tobytes())
     return True, sock, server_settings
 
 

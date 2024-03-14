@@ -1,7 +1,27 @@
-from . import http
-from .utils import mk_header
+from .utils import mk_header, decode_content
+from .headers import Headers
 from .debugger import _debugprint
 from .status import Status
+from . import http2
+
+
+def _read_one_chunk(file):
+    chunksize = int(file.readline().strip(), base=16)  # get chunk size
+    if chunksize == 0:  # final byte
+        return
+    chunk = file.read(chunksize)
+    file.readline()  # discard CLRF (but be more permissive)
+    return chunk
+
+
+def _read_chunked(file):
+    body = []
+    while True:
+        next_chunk = _read_one_chunk(file)
+        if next_chunk is None:
+            break
+        body.append(next_chunk)
+    return b"".join(body)
 
 
 class ProtoVersion:
@@ -104,11 +124,11 @@ class HTTP11Recver:
             line = self.file.readline()
             if not line.strip(b"\r\n"):
                 break
-            _debugprint(debug, line.decode(), end="")
+            _debugprint(self.debug, line.decode(), end="")
             headers.append(line)
         self._headers = Headers(headers)
         self._chunked = (
-            self.headers.get("transfer-encoding", "").strip().lower() == "chunked"
+            self._headers.get("transfer-encoding", "").strip().lower() == "chunked"
         )
         if not self._chunked and "content-length" not in self._headers:
             warnings.warn(
@@ -136,7 +156,7 @@ class HTTP11Recver:
                 finally:
                     self.sock.settimeout(self.timeout)
             else:
-                self._body = self.file.read(cl)  # recv <content-length> bytes
+                self._body = [self.file.read(cl)]  # recv <content-length> bytes
         else:  # chunked read
             self._body = [_read_chunked(self.file)]
         content_encoding = self._headers.get("content-encoding", "identity")
@@ -146,6 +166,7 @@ class HTTP11Recver:
     def body(self):
         if self.__joined_body is not None and self.finished:
             return self.__joined_body
+        print(self._body)
         self.__joined_body = b"".join(self._body)
         return self.__joined_body
 

@@ -39,6 +39,7 @@ import asyncio  # for async requests
 import atexit  # to add exit handlers
 
 from . import http2
+from .headers import Headers
 from .utils import *
 from .utils import _create_connection_and_handle_errors, is_closed
 from .errors import *
@@ -547,32 +548,6 @@ class File(io.IOBase):
     def open(self, file):
         reader = open(file, "rb")
         return File(reader.read(), file)
-
-
-class Headers(CaseInsensitiveDict):
-    """Class for HTTP headers"""
-
-    def __init__(self, h):
-        h = filter(None, h)
-        _headers = mkdict(
-            (
-                force_string(a).split(":", 1)[0].strip().lower(),
-                force_string(a).split(":", 1)[1].strip(),
-            )
-            for a in h
-        )
-        self.headers = {
-            k: v
-            for k, v in filter(lambda h: not h[0].startswith(":"), _headers.items())
-        }
-        self.h2_headers = {
-            k: v for k, v in filter(lambda h: h[0].startswith(":"), _headers.items())
-        }
-
-        super().__init__(self.headers)
-
-    def __setitem__(self, item, value):
-        raise NotImplementedError
 
 
 class Request:
@@ -1155,141 +1130,6 @@ def cacheWrite(response, base_dir, expires_override=None):
         f.write(gzip.compress(data))
 
 
-def mkdict(kvp):
-    """Makes dict from key/value pairs"""
-    d = {}
-    kvp = list(kvp)
-    for k, v in kvp:
-        k = k.lower()
-        if k in d:
-            if isinstance(d[k], list):
-                d[k].append(v)
-            else:
-                d[k] = [d[k]] + [v]
-        else:
-            d[k] = v
-    return d
-
-
-def urlencode(data):
-    """Creates urlencoded string from dict data"""
-    return b"&".join(b"=".join(force_bytes(i) for i in x) for x in data.items())
-
-
-def _generate_boundary():
-    return (
-        b"--"
-        + "".join(random.choices(string.ascii_letters + string.digits, k=10)).encode()
-        + b"\r\n"
-    )
-
-
-def get_content_type(data):
-    """Used to automatically get request content type"""
-    if isinstance(data, bytes):
-        return "application/octet-stream"
-    elif isinstance(data, str):
-        return "text/plain"
-    elif isinstance(data, dict):
-        for x in data.values():
-            if isinstance(x, File):
-                return "multipart/form-data"
-        return "application/x-www-form-urlencoded"
-    raise TypeError(
-        "could not get content type(can encode only bytes,str and dict). Please specify raw data and set content_type argument"
-    )
-
-
-def _unpk_float(bs):
-    return struct.unpack("f", bs)[0]
-
-
-def multipart(form, boundary=_generate_boundary()):
-    """Builds multipart/form-data from form"""
-    built = b""
-    for i in form.items():
-        built += boundary
-        disp = b'Content-Disposition: form-data; name="' + force_bytes(i[0]) + b'"'
-        val = i[1]
-        if isinstance(val, File):
-            disp += b'; filename="' + force_bytes(val.name) + b'"'
-            val = val.read()
-        disp += b"\r\n\r\n"
-        val = force_bytes(val)
-        disp += val
-        disp += b"\r\n"
-        built += disp
-    built += boundary.strip() + b"--\r\n"
-    return built, "multipart/form-data; boundary=" + boundary[2:].strip().decode()
-
-
-def _encode_form_data(data, content_type=None):
-    if content_type is None:
-        debugger.info("no content_type specified, getting automatically")
-        content_type = get_content_type(data)
-    if content_type in ("text/plain", "application/octet-stream"):
-        debugger.info("content_type text/plain or application/octet-stream")
-        return force_bytes(data), content_type
-    elif content_type == "application/x-www-form-urlencoded":
-        debugger.info("content_type urlencoded")
-        return urlencode(data), content_type
-    elif content_type == "multipart/form-data":
-        debugger.info("content_type multipart")
-        return multipart(data)
-    elif content_type == "application/json":
-        debugger.info("content_type json")
-        return json.dumps(data).encode(), content_type
-    debugger.warn("unknown content_type")
-    return force_bytes(data), content_type
-
-
-def encode_form_data(data, content_type=None):
-    """Encodes form data according to content type"""
-
-    encoded, content_type = _encode_form_data(data, content_type)
-    return force_bytes(encoded), {
-        "Content-Type": content_type,
-        "Content-Length": len(encoded),
-    }
-
-
-def determine_charset(headers):
-    """Gets charset from headers"""
-    if "Content-Type" in headers:
-        charset = headers["Content-Type"].split(";")[-1].strip()
-        if not charset.startswith("charset"):
-            return None
-        return charset.split("=")[-1].strip()
-    return None
-
-
-def makehost(host, port):
-    """Creates hostname from host and port"""
-    if int(port) in [443, 80]:
-        return host
-    return host + ":" + str(port)
-
-
-def reslash(url):
-    """Adds trailing slash to the end of URL"""
-    url = force_string(url)
-    if url.endswith("/"):
-        return url
-    return url + "/"
-
-
-def deslash(url):
-    """Removes trailing slash from the end of URL"""
-    url = force_string(url)
-    if url.endswith("/"):
-        return url[:-1]
-    return url
-
-
-def generate_cnonce(length=16):
-    return hex(random.randrange(16**length))[2:]
-
-
 def create_connection(
     host, port, last_response, http_version, scheme, do_keep_alive, session
 ):
@@ -1298,6 +1138,8 @@ def create_connection(
     """
     debugger.info("calling socket.create_connection")
     conn = _create_connection_and_handle_errors((host, port))
+    if http_version is not None and http_version not in ALPN_PROTOCOLS:
+        raise LookupError(f"Unknown HTTP version: {http_version!r}")
     if scheme == "http":
         http_version = "1.1"
     if http_version is None:
@@ -1322,6 +1164,9 @@ def create_connection(
             except ConnectionClosedError:
                 debugger.warn("Connection already expired.")
     if is_http2:
+        if conn.selected_alpn_protocol() != "h2":
+            raise ConnectionError("failed to connect: server does not support http2")
+
         debugger.info("instancing http2 connection")
         conn = http2.Connection.from_socket(conn, debugger, host, port)
         conn.start()
