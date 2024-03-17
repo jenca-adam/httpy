@@ -48,7 +48,7 @@ from .alpn import alpn_negotiate
 from .patterns import *
 from .debugger import _Debugger
 from .proto import HTTP11, HTTP2, _HTTP2Async
-
+from .stream import Stream
 try:
     import chardet  # to detect charsets
 except ImportError:

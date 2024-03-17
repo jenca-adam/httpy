@@ -9,7 +9,7 @@ class Stream:
                 self.buffer.extend(next(self.gen))
             except StopIteration:
                 break
-        self.buffer, result = self.buffer[:nbytes], self.buffer[nbytes:]
+        result, self.buffer = self.buffer[:nbytes], self.buffer[nbytes:]
         return bytes(result)
 
 
@@ -24,5 +24,5 @@ class AsyncStream:
                 self.buffer.extend(await anext(self.gen))
             except StopIteration:
                 break
-        self.buffer, result = self.buffer[:nbytes], self.buffer[nbytes:]
+        result, self.buffer = self.buffer[:nbytes], self.buffer[nbytes:]
         return bytes(result)
