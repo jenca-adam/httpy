@@ -1326,6 +1326,7 @@ async def _async_raw_request(
     disabled_headers=[],
     force_keep_alive=False,
     enable_cookies=False,
+    stream=False,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -1447,10 +1448,15 @@ async def _async_raw_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
+                enable_cookies=enable_cookies,
+                stream=stream
             )
 
         args = (sock, ret_val)
-
+        if stream:
+            q = await proto.stream_response(*args)
+            await q.load_headers()
+            return q
         status, resp_headers, decoded_body, body = await proto.recv_response(*args)
 
         if status == 304:
@@ -1493,7 +1499,8 @@ async def _async_raw_request(
                 base_dir=base_dir,
                 http_version=http_version,
                 disabled_headers=disabled_headers,
-                force_keep_alive=force_keep_alive,
+                force_keep_alive=force_keep_alive
+                ,
             )
         raise
     except:
@@ -1546,6 +1553,7 @@ def _raw_request(
     disabled_headers=[],
     force_keep_alive=False,
     enable_cookies=False,
+    stream=False
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -1671,13 +1679,15 @@ def _raw_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
+                stream=stream
             )
 
         if is_http2:
             args = (sock, ret_val)
         else:
             args = (sock, dbg, timeout)
-
+        if stream:
+            return proto.stream_response(*args)
         status, resp_headers, decoded_body, body = proto.recv_response(*args)
 
         if status == 304:
@@ -1721,6 +1731,7 @@ def _raw_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
+                stream=stream
             )
         raise
     except:
@@ -1792,6 +1803,7 @@ def request(
     blocking=True,
     force_keep_alive=False,
     enable_cookies=False,
+    stream=False
 ):
     """
 
@@ -1886,6 +1898,7 @@ def request(
             disabled_headers=disabled_headers,
             force_keep_alive=force_keep_alive,
             enable_cookies=enable_cookies,
+            stream=stream,
         )
     else:  # PendingRequest
         return PendingRequest(
@@ -1938,6 +1951,7 @@ def request(
                 disabled_headers=disabled_headers,
                 blocking=blocking,
                 enable_cookies=enable_cookies,
+                stream=stream
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -1960,6 +1974,7 @@ def request(
             http_version=http_version,
             blocking=blocking,
             enable_cookies=enable_cookies,
+            stream=stream
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -1999,6 +2014,7 @@ async def async_request(
     disabled_headers=[],
     force_keep_alive=False,
     enable_cookies=False,
+    stream=False
 ):
     """
 
@@ -2089,6 +2105,7 @@ async def async_request(
         disabled_headers=disabled_headers,
         force_keep_alive=force_keep_alive,
         enable_cookies=enable_cookies,
+        stream=stream,
     )
     if 300 <= resp.status < 400:
         debugger.info("Redirect")
@@ -2119,6 +2136,7 @@ async def async_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 enable_cookies=enable_cookies,
+                stream=stream
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -2140,6 +2158,7 @@ async def async_request(
             base_dir=base_dir,
             http_version=http_version,
             enable_cookies=enable_cookies,
+            stream=stream
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
