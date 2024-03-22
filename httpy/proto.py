@@ -5,6 +5,7 @@ from .status import Status
 from .stream import Stream, AsyncStream
 from . import http2
 
+
 def _read_one_chunk(file):
     chunksize = int(file.readline().strip(), base=16)  # get chunk size
     if chunksize == 0:  # final byte
@@ -44,15 +45,17 @@ class ProtoVersion:
 
     def _stream_response(self, sock, *args):
         _recverobj = self.recver(sock, *args)
-        print(type(_recverobj))
         _recverobj.load_headers()
         yield _recverobj._status, _recverobj._headers
         while True:
+            if _recverobj.finished:
+                return
             yield _recverobj.stream(), _recverobj
 
     def stream_response(self, sock, *args):
         _gen = self._stream_response(sock, *args)
         return Stream(_gen)
+
 
 class AsyncProtoVersion:
     async def send_request(self, sock, *args):
@@ -77,11 +80,14 @@ class AsyncProtoVersion:
         await _recverobj.load_headers()
         yield _recverobj._status, _recverobj._headers
         while True:
+            if _recverobj.finished:
+                return
             yield await _recverobj.stream(), _recverobj
-        
+
     async def stream_response(self, sock, *args):
         _agen = self._stream_response(sock, *args)
         return AsyncStream(_agen)
+
 
 class HTTP11Sender:
     def __init__(self, method, headers, body, path, debug):
@@ -206,6 +212,7 @@ class HTTP11Recver:
             self._body.append(next_byte)
             self.bytes_read += 1
             return next_byte
+
 
 class HTTP11(ProtoVersion):
     """

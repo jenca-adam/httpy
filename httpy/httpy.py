@@ -49,6 +49,7 @@ from .patterns import *
 from .debugger import _Debugger
 from .proto import HTTP11, HTTP2, _HTTP2Async
 from .stream import Stream
+
 try:
     import chardet  # to detect charsets
 except ImportError:
@@ -1449,7 +1450,7 @@ async def _async_raw_request(
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
                 enable_cookies=enable_cookies,
-                stream=stream
+                stream=stream,
             )
 
         args = (sock, ret_val)
@@ -1499,8 +1500,7 @@ async def _async_raw_request(
                 base_dir=base_dir,
                 http_version=http_version,
                 disabled_headers=disabled_headers,
-                force_keep_alive=force_keep_alive
-                ,
+                force_keep_alive=force_keep_alive,
             )
         raise
     except:
@@ -1553,7 +1553,7 @@ def _raw_request(
     disabled_headers=[],
     force_keep_alive=False,
     enable_cookies=False,
-    stream=False
+    stream=False,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -1679,7 +1679,7 @@ def _raw_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
-                stream=stream
+                stream=stream,
             )
 
         if is_http2:
@@ -1731,7 +1731,7 @@ def _raw_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
-                stream=stream
+                stream=stream,
             )
         raise
     except:
@@ -1803,7 +1803,7 @@ def request(
     blocking=True,
     force_keep_alive=False,
     enable_cookies=False,
-    stream=False
+    stream=False,
 ):
     """
 
@@ -1951,7 +1951,7 @@ def request(
                 disabled_headers=disabled_headers,
                 blocking=blocking,
                 enable_cookies=enable_cookies,
-                stream=stream
+                stream=stream,
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -1974,7 +1974,7 @@ def request(
             http_version=http_version,
             blocking=blocking,
             enable_cookies=enable_cookies,
-            stream=stream
+            stream=stream,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2014,7 +2014,7 @@ async def async_request(
     disabled_headers=[],
     force_keep_alive=False,
     enable_cookies=False,
-    stream=False
+    stream=False,
 ):
     """
 
@@ -2136,7 +2136,7 @@ async def async_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 enable_cookies=enable_cookies,
-                stream=stream
+                stream=stream,
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -2158,7 +2158,7 @@ async def async_request(
             base_dir=base_dir,
             http_version=http_version,
             enable_cookies=enable_cookies,
-            stream=stream
+            stream=stream,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")

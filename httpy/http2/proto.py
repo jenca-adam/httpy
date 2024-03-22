@@ -123,7 +123,7 @@ class HTTP2Recver:
         self.streamid = streamid
         self._status = None
         self._headers = None
-        self._body = None
+        self._body = []
         self.__joined_body = None
         self.finished = False
         self.bytes_read = 0
@@ -134,11 +134,11 @@ class HTTP2Recver:
         Loads the headers for a response
         """
         headers = {}
-        self.stream = self.connection.streams[self.streamid]
+        self._stream = self.connection.streams[self.streamid]
         self.connection.debugger.info(f"Listening on {self.streamid}")
         self.connection.debugger.debugprint("recv:")
         while True:
-            next_frame = self.stream.recv_frame(
+            next_frame = self._stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
                 enable_closed=True,
             )
@@ -160,7 +160,7 @@ class HTTP2Recver:
         """Loads the response body"""
         self._body = []
         while True:
-            next_frame = self.stream.recv_frame(
+            next_frame = self._stream.recv_frame(
                 frame_filter=[frame.DataFrame], enable_closed=True
             )
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
@@ -180,6 +180,18 @@ class HTTP2Recver:
             return self.__joined_body
         self.__joined_body = b"".join(self._body)
         return self.__joined_body
+
+    def stream(self):
+        next_frame = self._stream.recv_frame(
+            frame_filter=[frame.DataFrame], enable_closed=True
+        )
+        if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
+            raise ConnectionClosedError
+        self._body.append(next_frame.data)
+        self.bytes_read += next_frame.payload_length
+        if next_frame.end_stream:
+            self.finished = True
+        return next_frame.data
 
 
 class AsyncHTTP2Sender:
@@ -236,7 +248,7 @@ class AsyncHTTP2Recver:
         self.streamid = streamid
         self._status = None
         self._headers = None
-        self._body = None
+        self._body = []
         self.__joined_body = None
         self.finished = False
         self.bytes_read = 0
@@ -247,11 +259,11 @@ class AsyncHTTP2Recver:
         Loads the headers for a response
         """
         headers = {}
-        self.stream = self.connection.streams[self.streamid]
+        self._stream = self.connection.streams[self.streamid]
         self.connection.debugger.info(f"Listening on {self.streamid}")
         self.connection.debugger.debugprint("recv:")
         while True:
-            next_frame = await self.stream.recv_frame(
+            next_frame = await self._stream.recv_frame(
                 frame_filter=[frame.HeadersFrame, frame.ContinuationFrame],
                 enable_closed=True,
             )
@@ -273,7 +285,7 @@ class AsyncHTTP2Recver:
         """Loads the response body"""
         self._body = []
         while True:
-            next_frame = await self.stream.recv_frame(
+            next_frame = await self._stream.recv_frame(
                 frame_filter=[frame.DataFrame], enable_closed=True
             )
             if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
@@ -286,6 +298,18 @@ class AsyncHTTP2Recver:
         self.finished = True
         content_encoding = self._headers.get("content-encoding", "identity")
         self._decoded_body = decode_content(self.body, content_encoding)
+
+    async def stream(self):
+        next_frame = await self._stream.recv_frame(
+            frame_filter=[frame.DataFrame], enable_closed=True
+        )
+        if next_frame == frame.ConnectionToken.CONNECTION_CLOSE:
+            raise ConnectionClosedError
+        self._body.append(next_frame.data)
+        self.bytes_read += next_frame.payload_length
+        if next_frame.end_stream:
+            self.finished = True
+        return next_frame.data
 
     @property
     def body(self):
