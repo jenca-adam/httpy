@@ -58,7 +58,7 @@ except ImportError:
 HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "dirs", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "2.1.0"
+VERSION = "2.0.3"
 
 HTTPY_CACHEABLE_METHODS = ["GET", "HEAD"]
 WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
