@@ -3,8 +3,8 @@ from .headers import Headers
 from .debugger import _debugprint
 from .status import Status
 from .stream import Stream, AsyncStream
+from .cache import cache_write
 from . import http2
-
 
 def _read_one_chunk(file):
     chunksize = int(file.readline().strip(), base=16)  # get chunk size
@@ -46,7 +46,8 @@ class ProtoVersion:
     def _stream_response(self, sock, *args):
         _recverobj = self.recver(sock, *args)
         _recverobj.load_headers()
-        yield _recverobj._status, _recverobj._headers
+        yield _recverobj._status # FIRST PASS - internal (don't return the stream object unless the response is OK)
+        yield _recverobj._status, _recverobj._headers # SECOND PASS - stream class (set attributes)
         while True:
             if _recverobj.finished:
                 return
@@ -54,7 +55,10 @@ class ProtoVersion:
 
     def stream_response(self, sock, *args):
         _gen = self._stream_response(sock, *args)
-        return Stream(_gen)
+        status=next(_gen)
+        if status==200:
+            return Stream(_gen)
+        
 
 
 class AsyncProtoVersion:
