@@ -6,6 +6,7 @@ from .stream import Stream, AsyncStream
 from .cache import cache_write
 from . import http2
 
+
 def _read_one_chunk(file):
     chunksize = int(file.readline().strip(), base=16)  # get chunk size
     if chunksize == 0:  # final byte
@@ -46,8 +47,8 @@ class ProtoVersion:
     def _stream_response(self, sock, *args):
         _recverobj = self.recver(sock, *args)
         _recverobj.load_headers()
-        yield _recverobj._status # FIRST PASS - internal (don't return the stream object unless the response is OK)
-        yield _recverobj._status, _recverobj._headers # SECOND PASS - stream class (set attributes)
+        yield _recverobj  # FIRST PASS - internal (don't return the stream object unless the response is OK)
+        yield _recverobj._status, _recverobj._headers  # SECOND PASS - stream class (set attributes)
         while True:
             if _recverobj.finished:
                 return
@@ -55,16 +56,17 @@ class ProtoVersion:
 
     def stream_response(self, sock, *args):
         _gen = self._stream_response(sock, *args)
-        status=next(_gen)
-        if status==200:
+        _recver = next(_gen)
+        if _recver._status == 200:
             return Stream(_gen)
-        
+        _recver.load_body()  # Just return a response if it's not 200
+        return (_recver._status, _recver._headers, _recver._decoded_body, _recver.body)
 
 
 class AsyncProtoVersion:
     async def send_request(self, sock, *args):
         _senderobj = self.sender(*args)
-        await _senderobj.send(sock)
+        return await _senderobj.send(sock)
 
     async def recv_response(self, sock, *args):
         _recverobj = self.recver(sock, *args)
@@ -80,8 +82,9 @@ class AsyncProtoVersion:
     ### GENERATOR
 
     async def _stream_response(self, sock, *args):
-        _recverobj = self.recver(sock)
+        _recverobj = self.recver(sock, *args)
         await _recverobj.load_headers()
+        yield _recverobj  # FIRST PASS - internal (don't return the stream object unless the response is OK)
         yield _recverobj._status, _recverobj._headers
         while True:
             if _recverobj.finished:
@@ -90,6 +93,12 @@ class AsyncProtoVersion:
 
     async def stream_response(self, sock, *args):
         _agen = self._stream_response(sock, *args)
+        _recver = await anext(_agen)
+        if _recver._status == 200:
+            return Stream(_gen)
+        await _recver.load_body()  # Just return a response if it's not 200
+        return (_recver._status, _recver._headers, _recver._decoded_body, _recver.body)
+
         return AsyncStream(_agen)
 
 

@@ -1,14 +1,17 @@
 import json
+import math
+
 try:
     import chardet
 except ModuleNotFoundError:
-    chardet=None
-from .utils import determine_charset #
-from .errors import ContentTypeError #
-from .request import Request
-from .status import Status #
-from .headers import Headers #
+    chardet = None
+from .utils import *  #
+from .errors import ContentTypeError  #
+from .status import Status  #
+from .headers import Headers  #
 from .cache import cache_write
+from .common import HTTPY_DIR
+
 
 class Response:
     """
@@ -89,7 +92,7 @@ class Response:
             cache_write(self, base_dir, expires_override=headers.get("Expires", None))
 
     @classmethod
-    def cacheload(self, cache_file):
+    def cacheload(self, cache_file, request_class):
         """
         Loads response from CacheFile.
 
@@ -105,7 +108,7 @@ class Response:
             cache_file.url,
             True,
             cache_file.content,
-            Request(
+            request_class(
                 cache_file.url,
                 cache_file.request_headers,
                 cache_file.method,
@@ -133,7 +136,7 @@ class Response:
             "",
             False,
             b"",
-            Request("", Headers({}), "", None, False, None),
+            None,
         )
 
     @property
@@ -160,4 +163,3 @@ class Response:
 
     def __repr__(self):
         return f"<Response {self.method} [{self.status} {self.reason}] ({self.url})>"
-

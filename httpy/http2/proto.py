@@ -129,6 +129,7 @@ class HTTP2Recver:
         self.bytes_read = 0
         self._decoded_body = None
         self._has_body = True
+
     def load_headers(self, *_, **__):
         """
         Loads the headers for a response
@@ -151,8 +152,8 @@ class HTTP2Recver:
             headers.update(next_frame.decoded_headers)
             if next_frame.end_stream:
                 self.connection.debugger.ok("Response fully received (no body)")
-                self._has_body=False
-                break # Just in case
+                self._has_body = False
+                break  # Just in case
             if next_frame.end_headers:
                 break
         self._headers = HTTP2Headers(headers)
@@ -161,7 +162,9 @@ class HTTP2Recver:
     def load_body(self):
         """Loads the response body"""
         self._body = []
-        if self._has_body: # BUGFIX: http2 receiver hanging after a response with no body was received
+        if (
+            self._has_body
+        ):  # BUGFIX: http2 receiver hanging after a response with no body was received
             while True:
                 next_frame = self._stream.recv_frame(
                     frame_filter=[frame.DataFrame], enable_closed=True

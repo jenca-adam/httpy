@@ -5,6 +5,7 @@ class Stream:
         self.buffer = bytearray()
         self.status, self.headers = next(self.gen)
         self.ok = self.status == 200
+
     def read(self, nbytes):
         while len(self.buffer) < nbytes:
             try:

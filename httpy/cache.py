@@ -1,6 +1,16 @@
-from .utils import *
-from .error
+import os
+import time
+import email.utils
+import datetime
 import gzip
+import struct
+
+from .utils import *
+from .errors import *
+from .common import *
+from .status import Status
+from .headers import Headers
+
 
 class ETag:
     """Class for HTTP ETags"""
@@ -202,3 +212,61 @@ class Cache:
     def __contains__(self, u):
         return self[u] is not None
 
+
+def cache_write(response, base_dir, expires_override=None):
+    """
+    Writes a response to cache
+
+    :param response: the response to save
+    :type response: Response"""
+    debugger.info("cache_write  called")
+    data = b""
+    data += _binappendfloat(time.time())
+    data += _binappendfloat(response._time_elapsed)
+    data += _binappendstr(f"{response.status:03} {response.reason}")
+    data += b"\150+"
+    data += _binappendstr(response.method)
+    if expires_override is not None:
+        expires_tup = email.utils.parsedate(expires_override)
+        if expires_tup is None:
+            debugger.warn("wrong Expires header format!")
+            has_expires = False
+        else:
+            expires = time.mktime(expires_tup)
+            if expires < time.time():
+                debugger.info("Expired Cache. Aborting cache_write.")
+                return
+            has_expires = True
+            expires_bin = _binappendfloat(expires)
+            # data += expires_bin
+    else:
+        has_expires = False
+    cfconfig = (
+        0b1100010
+        | has_expires
+        | [None, "1.1", "2"].index(response.request.http_version) << 2
+    )
+    data += struct.pack("B", cfconfig)
+    if has_expires:
+        data += expires_bin
+    data += struct.pack(
+        "!H", sum(1 for h in response.request.headers if not h.startswith(":"))
+    )
+    data += "\r".join(
+        [
+            mk_header(i)
+            for i in filter(
+                lambda x: not x[0].startswith(":"), response.request.headers.items()
+            )
+        ]
+    ).encode()  # remove h2 hf
+    data += b"\r"
+    data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
+    data += b"\x00"
+    data += response.content
+
+    with open(
+        base_dir / "sites" / (response.url.replace("://", "\xfe").replace("/", "\xff")),
+        "wb",
+    ) as f:
+        f.write(gzip.compress(data))

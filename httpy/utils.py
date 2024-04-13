@@ -1,4 +1,5 @@
-import gzip, zlib, io, struct, ctypes, socket
+import gzip, zlib, io, struct, ctypes, socket, struct
+
 from .patterns import URLPATTERN
 from .errors import *
 import math
@@ -33,6 +34,8 @@ __all__ = [
     "reslash",
     "deslash",
     "generate_cnonce",
+    "_binappendstr",
+    "_binappendfloat",
 ]
 
 
@@ -184,6 +187,16 @@ class CaseInsensitiveString(str):
             return self._stl == oth.lower()
         except:
             return False
+
+
+def _binappendstr(s):
+    return struct.pack("!H", len(force_bytes(s))) + force_bytes(s)
+
+
+def _binappendfloat(b):
+    b = float(b)
+    ba = struct.pack("f", b)
+    return bytes([len(ba)]) + ba
 
 
 def _mk_string(a):
