@@ -5,6 +5,7 @@ import threading
 import traceback
 import sys
 import asyncio
+import ctypes
 
 from ..utils import force_bytes, _create_connection_and_handle_errors, _extract_sslobj
 from . import hpack, frame, stream, settings

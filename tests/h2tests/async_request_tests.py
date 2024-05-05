@@ -4,7 +4,9 @@ import asyncio
 
 
 async def perform_request():
-    return await httpy.async_request("https://www.example.com/", enable_cache=False)
+    return await httpy.async_request(
+        "https://www.example.com/", debug=True, enable_cache=False
+    )
 
 
 async def test():

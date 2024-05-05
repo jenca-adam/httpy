@@ -910,6 +910,8 @@ async def _async_raw_request(
             "Accept": "*/*",
         }
     )
+    if stream:
+        defhdr["Accept-Encoding"] = "identity"  # bugfx
     if data:
         debugger.info("Adding form data")
         data, cth = encode_form_data(data, content_type)
@@ -1126,6 +1128,8 @@ def _raw_request(
     else:
         debugger.info("Cache disabled.")
         cf = None
+
+    ### TODO BUILD_HEADERS FUNCTION TO MAKE THE CODE DRIER
     defhdr = CaseInsensitiveDict(
         {
             "Accept-Encoding": "gzip, deflate, identity",
@@ -1135,6 +1139,8 @@ def _raw_request(
             "Accept": "*/*",
         }
     )
+    if stream:
+        defhdr["Accept-Encoding"] = "identity"
     if data:
         debugger.info("Adding form data")
         data, cth = encode_form_data(data, content_type)

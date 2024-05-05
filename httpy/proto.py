@@ -50,9 +50,9 @@ class ProtoVersion:
         yield _recverobj  # FIRST PASS - internal (don't return the stream object unless the response is OK)
         yield _recverobj._status, _recverobj._headers  # SECOND PASS - stream class (set attributes)
         while True:
+            yield _recverobj.stream(), _recverobj
             if _recverobj.finished:
                 return
-            yield _recverobj.stream(), _recverobj
 
     def stream_response(self, sock, *args):
         _gen = self._stream_response(sock, *args)
@@ -84,22 +84,24 @@ class AsyncProtoVersion:
     async def _stream_response(self, sock, *args):
         _recverobj = self.recver(sock, *args)
         await _recverobj.load_headers()
+
         yield _recverobj  # FIRST PASS - internal (don't return the stream object unless the response is OK)
+
         yield _recverobj._status, _recverobj._headers
+
         while True:
+            next_chunk = await _recverobj.stream()
+            yield next_chunk, _recverobj
             if _recverobj.finished:
                 return
-            yield await _recverobj.stream(), _recverobj
 
     async def stream_response(self, sock, *args):
         _agen = self._stream_response(sock, *args)
         _recver = await anext(_agen)
         if _recver._status == 200:
-            return Stream(_gen)
+            return AsyncStream(_agen)
         await _recver.load_body()  # Just return a response if it's not 200
         return (_recver._status, _recver._headers, _recver._decoded_body, _recver.body)
-
-        return AsyncStream(_agen)
 
 
 class HTTP11Sender:
@@ -192,7 +194,6 @@ class HTTP11Recver:
     def body(self):
         if self.__joined_body is not None and self.finished:
             return self.__joined_body
-        print(self._body)
         self.__joined_body = b"".join(self._body)
         return self.__joined_body
 
