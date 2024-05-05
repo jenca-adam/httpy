@@ -34,7 +34,6 @@ def start_connection(host, port, client_settings, alpn=True):
     Starts a connection to a given server.
     """
     context = ssl._create_default_https_context()
-    context.check_hostname = False
     if alpn:
         context.set_alpn_protocols(["h2"])
     sock = context.wrap_socket(
