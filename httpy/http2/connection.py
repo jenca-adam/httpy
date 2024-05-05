@@ -200,7 +200,6 @@ class Connection:
         self.settings = settings.merge_client_settings(new_settings, self.settings)
         self.send_frame(frame.SettingsFrame(**new_settings))
 
-    @_after_start
     def close(self, errcode=0x0, debug=b""):
         """
         Closes the connection by sending a GOAWAY frame
@@ -433,24 +432,23 @@ class AsyncConnection:
         self.settings = settings.merge_client_settings(new_settings, self.settings)
         self.send_frame(frame.SettingsFrame(**new_settings))
 
-    @_after_start
     async def close(self, errcode=0x0, debug=b""):
-        self.debugger.info("Sending GOAWAY frame")
-        fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
-        try:
-            await self._send_frame(fr)
-        except:  # see above
-            pass
-        await self.close_socket()
+        if self.open:
+            self.debugger.info("Sending GOAWAY frame")
+            fr = frame.GoAwayFrame(self._last_stream_id, errcode, force_bytes(debug))
+            try:
+                await self._send_frame(fr)
+            except:  # see above
+                pass
+            await self.close_socket()
 
-    @_after_start
     async def close_on_error(self, err):
         self.debugger.info(f"{err}: closing connection")
         await self.close(err.code, str(err))
 
-    @_after_start
     async def close_socket(self, quit=True):
         self.debugger.info("Closing socket")
+        self.open=False
         reader, writer = self.sock
         try:
             writer.close()
@@ -458,12 +456,10 @@ class AsyncConnection:
         except ssl.SSLError:  # application data after close notify
             pass
         # await writer.transport.connection_lost()
-        self.open = False
 
         await self.out_queue.put(None)
         await self.processing_queue.quit()
 
-    @_after_start
     async def close_on_internal_error(self, e):
         await self.close_on_error(INTERNAL_ERROR(f"{e.__class__.__name__}: {str(e)}"))
 
