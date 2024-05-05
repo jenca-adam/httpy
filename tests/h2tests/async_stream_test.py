@@ -3,7 +3,7 @@ from httpy.httpy import async_request
 import asyncio
 
 
-async def main():
+async def test():
     stream = await async_request("https://example.com/", stream=True, debug=True)
     output = bytearray()
     while True:
@@ -16,4 +16,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    print(asyncio.run(main()))
+    print(asyncio.run(test()))
