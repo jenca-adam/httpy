@@ -5,6 +5,8 @@ from .status import Status
 from .stream import Stream, AsyncStream
 from .cache import cache_write
 from . import http2
+import warnings
+import socket
 
 
 def _read_one_chunk(file):

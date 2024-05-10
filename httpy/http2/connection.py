@@ -447,7 +447,7 @@ class AsyncConnection:
 
     async def close_socket(self, quit=True):
         self.debugger.info("Closing socket")
-        self.open=False
+        self.open = False
         reader, writer = self.sock
         try:
             writer.close()

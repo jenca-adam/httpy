@@ -4,6 +4,7 @@ import email.utils
 import datetime
 import gzip
 import struct
+import warnings
 
 from .utils import *
 from .errors import *
