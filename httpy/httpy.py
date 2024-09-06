@@ -52,6 +52,7 @@ from .proto import HTTP11, HTTP2, _HTTP2Async
 from .stream import Stream
 from .response import Response
 from .cache import *
+from .ssl_context import generate_ssl_context
 
 try:
     import chardet  # to detect charsets
@@ -614,31 +615,57 @@ def hashing_function(function_name):
 md5, sha256, sha512, sha1 = (
     hashing_function(i) for i in ("md5", "sha256", "sha512", "sha1")
 )
-ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512}
+ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512, "sha1": sha1}
+
+
+def create_socket(host, port, cert, verify, check_hostname, alpn_protocols, https):
+    conn = _create_connection_and_handle_errors((host, port))
+    if https:
+        context = generate_ssl_context(
+            check_hostname=check_hostname,
+            verify=verify,
+            cert=cert,
+            alpn_protocols=alpn_protocols,
+        )
+        protocol, conn = alpn_negotiate(conn, context, host)
+    else:
+        protocol = "http/1.1"
+    return protocol, conn
 
 
 def create_connection(
-    host, port, last_response, http_version, scheme, do_keep_alive, session
+    host,
+    port,
+    last_response,
+    http_version,
+    scheme,
+    do_keep_alive,
+    session,
+    cert,
+    verify,
+    check_hostname,
 ):
     """
     Creates a connection to a given host and port
     """
     debugger.info("calling socket.create_connection")
-    conn = _create_connection_and_handle_errors((host, port))
     if http_version is not None and http_version not in ALPN_PROTOCOLS:
         raise LookupError(f"Unknown HTTP version: {http_version!r}")
-    if scheme == "http":
-        http_version = "1.1"
+    protocol, conn = create_socket(
+        host,
+        port,
+        cert,
+        verify,
+        check_hostname,
+        ALPN_PROTOCOLS[http_version or "*"],
+        scheme == "https",
+    )
+    http_version = {"http/1.1": "1.1", "h2": "2"}.get(protocol, None)
     if http_version is None:
-        debugger.info("running ALPN")
-        protocol, conn = alpn_negotiate(conn, default_context, host)  # wraps socket too
-        http_version = {"http/1.1": "1.1", "h2": "2"}.get(protocol, None)
-        if http_version is None:
-            raise HTTPyError("server doesn't support http")
-    elif scheme == "https":
-        context = ssl._create_default_https_context()
-        context.set_alpn_protocols([ALPN_PROTOCOLS[http_version]])
-        conn = context.wrap_socket(conn, server_hostname=host)
+        raise HTTPyError(
+            f"server doesn't support http: unknown alpn result: {protocol!r}"
+        )
+
     debugger.info(f"http version: {http_version}")
     is_http2 = http_version == "2"
     is_async = False
@@ -814,6 +841,9 @@ async def _async_raw_request(
     force_keep_alive=False,
     enable_cookies=False,
     stream=False,
+    check_hostname=True,
+    verify=None,
+    cert=None,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -996,9 +1026,9 @@ async def _async_raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        session.connections[
-            host, port
-        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        session.connections[host, port]._sock = (
+            sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        )
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -1042,6 +1072,9 @@ def _raw_request(
     force_keep_alive=False,
     enable_cookies=False,
     stream=False,
+    cert=None,
+    verify=True,
+    check_hostname=True,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -1133,6 +1166,9 @@ def _raw_request(
         scheme,
         defhdr.get("connection") == "keep-alive",
         session,
+        cert,
+        verify,
+        check_hostname,
     )
     is_http2 = http_version == "2"
     start_time = time.time()
@@ -1172,6 +1208,9 @@ def _raw_request(
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
                 stream=stream,
+                check_hostname=check_hostname,
+                cert=cert,
+                verify=verify,
             )
 
         if is_http2:
@@ -1228,6 +1267,9 @@ def _raw_request(
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
                 stream=stream,
+                check_hostname=check_hostname,
+                verify=verify,
+                cert=cert,
             )
         raise
     except:
@@ -1235,9 +1277,9 @@ def _raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        session.connections[
-            host, port
-        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        session.connections[host, port]._sock = (
+            sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        )
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -1300,6 +1342,9 @@ def request(
     force_keep_alive=False,
     enable_cookies=False,
     stream=False,
+    cert=None,
+    verify=None,
+    check_hostname=True,
 ):
     """
 
@@ -1395,6 +1440,9 @@ def request(
             force_keep_alive=force_keep_alive,
             enable_cookies=enable_cookies,
             stream=stream,
+            cert=cert,
+            verify=verify,
+            check_hostname=check_hostname,
         )
     else:  # PendingRequest
         return PendingRequest(
@@ -1415,6 +1463,9 @@ def request(
             blocking=False,
             force_keep_alive=force_keep_alive,
             enable_cookies=enable_cookies,
+            cert=cert,
+            verify=verify,
+            check_hostname=check_hostname,
         )
 
     if 300 <= resp.status < 400:

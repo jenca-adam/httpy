@@ -8,6 +8,7 @@ import asyncio
 import ctypes
 
 from ..utils import force_bytes, _create_connection_and_handle_errors, _extract_sslobj
+from ..ssl_context import generate_ssl_context
 from . import hpack, frame, stream, settings
 from .streams import Streams
 from .frame_queue import FrameQueue, AsyncFrameQueue
@@ -29,13 +30,18 @@ def initiate_connection(sock, client_settings):
     return True, sock, server_settings
 
 
-def start_connection(host, port, client_settings, alpn=True):
+def start_connection(
+    host, port, client_settings, check_hostname, cert, verify, alpn=True
+):
     """
     Starts a connection to a given server.
     """
-    context = ssl._create_default_https_context()
-    if alpn:
-        context.set_alpn_protocols(["h2"])
+    context = generate_ssl_context(
+        check_hostname=check_hostname,
+        cert=cert,
+        verify=verify,
+        alpn_protocols=["h2"] if alpn else [],
+    )
     sock = context.wrap_socket(
         _create_connection_and_handle_errors((host, port)), server_hostname=host
     )
@@ -58,14 +64,18 @@ async def async_initiate_connection(reader, writer, client_settings):
     return True, (reader, writer), server_settings
 
 
-async def async_start_connection(host, port, client_settings, alpn=True):
+async def async_start_connection(
+    host, port, client_settings, check_hostname, cert, verify, alpn=True
+):
     """
     Starts an asynchronous connection to a given server
     """
-    context = ssl._create_default_https_context()
-    context.check_hostname = False  # ???
-    if alpn:
-        context.set_alpn_protocols(["h2"])
+    context = generate_ssl_context(
+        check_hostname=check_hostname,
+        verify=verify,
+        cert=cert,
+        alpn_protocols=["h2"] if alpn else None,
+    )
     try:
         reader, writer = await asyncio.open_connection(
             host, port, ssl=context, server_hostname=host
@@ -77,7 +87,7 @@ async def async_start_connection(host, port, client_settings, alpn=True):
             errno = ctypes.c_int.in_dll(ctypes.pythonapi, "errno").value
 
         else:
-            errno = -72
+            errno = -1
             if str(gai).startswith("[Errno -2]") or str(gai).startswith("[Errno -3]"):
                 errno = 2
         if errno in [2, 3]:
@@ -100,7 +110,17 @@ class Connection:
     A synchronous HTTP/2 Conection implementation
     """
 
-    def __init__(self, host, port, debugger, client_settings={}, sock=None):
+    def __init__(
+        self,
+        host,
+        port,
+        debugger,
+        cert=None,
+        verify=None,
+        check_hostname=True,
+        client_settings={},
+        sock=None,
+    ):
         self.debugger = debugger
         self.host = host
         self.port = port
@@ -130,11 +150,30 @@ class Connection:
         return _wrapper
 
     @classmethod
-    def from_socket(self, socket, debugger, host, port, client_settings={}):
+    def from_socket(
+        self,
+        socket,
+        debugger,
+        host,
+        port,
+        cert=None,
+        verify=None,
+        check_hostname=True,
+        client_settings={},
+    ):
         """
         Builds a `Connection` from a socket
         """
-        return self(host, port, debugger, client_settings, socket)
+        return self(
+            host,
+            port,
+            debugger,
+            client_settings=client_settings,
+            cert=cert,
+            verify=verify,
+            check_hostname=check_hostname,
+            sock=socket,
+        )
 
     @property
     def _sock(self):
@@ -344,7 +383,17 @@ class AsyncConnection:
     For method description, see Connection.__doc__
     """
 
-    def __init__(self, host, port, debugger, client_settings={}, sock=None):
+    def __init__(
+        self,
+        host,
+        port,
+        debugger,
+        check_hostname=True,
+        cert=None,
+        verify=None,
+        client_settings={},
+        sock=None,
+    ):
         self.debugger = debugger
         self.debugger.do_debug = True
         self.processed = asyncio.Event()
@@ -366,6 +415,9 @@ class AsyncConnection:
         self.window = None
         self.outbound_window = None
         self.from_socket = self.sock is not None
+        self.check_hostname = check_hostname
+        self.cert = cert
+        self.verify = verify
 
     def _after_start(fun):
         def _wrapper(self, *args, **kwargs):
@@ -404,7 +456,12 @@ class AsyncConnection:
         else:
             self.debugger.info("starting connection")
             success, self.sock, self.server_settings = await async_start_connection(
-                self.host, self.port, self.settings
+                self.host,
+                self.port,
+                self.settings,
+                self.check_hostname,
+                self.cert,
+                self.verify,
             )
             if not success:
                 self.debugger.warn("no h2 in ALPN")

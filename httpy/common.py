@@ -29,4 +29,4 @@ WEBSOCKET_CLOSE_CODES = {
     1015: "TLS handshake",
 }
 
-ALPN_PROTOCOLS = {"1.1": "http/1.1", "2": "h2"}
+ALPN_PROTOCOLS = {"1.1": ["http/1.1"], "2": ["h2"], "*": ["http/1.1", "h2"]}
