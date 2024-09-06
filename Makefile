@@ -5,8 +5,8 @@ DOCS_MAKEARGS=html
 MAKE=make
 DIST=./dist
 BUILD=./build
-SETUP_PY=./setup.py
-SETUP_PYARGS=sdist bdist bdist_wheel
+BUILD_MODULE=-m build
+BUILD_MODULE_ARGS=--sdist --wheel
 TESTDIR=./tests
 LATEST=./latest_release/latest.whl
 SPHINX_APIDOC=sphinx-apidoc
@@ -17,6 +17,7 @@ HTTPY_SOURCE=./httpy
 REQUIREMENTS=requirements.txt 
 MAKE_REQS=make_reqs.txt
 ALL_DIST=./all_dist
+PYPROJECT_TOML=pyproject.toml
 all: black docs
 black:
 	$(BLACK_CMD)
@@ -29,9 +30,9 @@ test:
 		bash ./run_all.sh
 setup:  $(REQUIREMENTS) $(MAKE_REQS)
 	pip install -r $(REQUIREMENTS) -r $(MAKE_REQS)
-build:  $(SETUP_PY)
+build:  $(PYPROJECT_TOML)
 	rm -rf $(DIST) $(BUILD) 
-	$(PYTHON) $(SETUP_PY) $(SETUP_PYARGS)
+	$(PYTHON) $(BUILD_MODULE) $(BUILD_MODULE_ARGS)
 	for file in $(DIST)/* ; do \
 		cp -f $$file $(ALL_DIST); \
 	done

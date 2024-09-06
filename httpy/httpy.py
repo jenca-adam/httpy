@@ -2131,5 +2131,3 @@ class WebSocket:
 
 
 atexit.register(close_all)
-__version__ = VERSION
-__author__ = "Adam Jenca"
