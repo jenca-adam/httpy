@@ -50,7 +50,7 @@ class ProtoVersion:
         _recverobj = self.recver(sock, *args)
         _recverobj.load_headers()
         yield _recverobj  # FIRST PASS - internal (don't return the stream object unless the response is OK)
-        yield _recverobj._status, _recverobj._headers  # SECOND PASS - stream class (set attributes)
+        yield _recverobj._status, _recverobj._headers, _recverobj  # SECOND PASS - stream class (set attributes)
         while True:
             yield _recverobj.stream(), _recverobj
             if _recverobj.finished:
@@ -89,7 +89,7 @@ class AsyncProtoVersion:
 
         yield _recverobj  # FIRST PASS - internal (don't return the stream object unless the response is OK)
 
-        yield _recverobj._status, _recverobj._headers
+        yield _recverobj._status, _recverobj._headers, _recverobj
 
         while True:
             next_chunk = await _recverobj.stream()

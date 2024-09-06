@@ -146,6 +146,7 @@ The ``Dir`` class allows you to store httpy's data (cache and cookies)
 on the path of your choice. By default, the data is stored in
 ``~/.cache/httpy``. If you want to store the data without using the ``Dir`` class, use the
 ``enable_cookies`` or ``enable_cache`` argument of ``request``. 
+
 .. code-block:: python
 
    import httpy
@@ -199,6 +200,40 @@ method of ``Session``:
 
 ``Session`` and ``Dir`` and everything with a ``request()`` method has
 an ``async_request()`` equivalent.
+
+Streams
+~~~~~~~
+
+If you want to receive the response as a stream, set the `stream` argument of `request` to True.
+A `Stream` or `AsyncStream` is returned.
+They both have the `read()` method.
+It returns the given number of bytes of the response body. If no arguments are given, the entire rest of the body is read and returned.
+
+You can access the current stream state using `stream.state`. It contains some useful information about the stream. Status and headers are also available directly (`stream.status`, `stream.headers`).
+In order to access these from the `AsyncStream`, you need to call `AsyncStream.load_state()` first.
+
+Stream state
+^^^^^^^^^^^^
+
+Attributes:
+* `bytes_read`
+* `body`
+* `connection`
+* `finished`
+
+.. warning::
+   The `stream.state.bytes_read` attribute represents the amount of bytes received from the server and is not representative of the actual number of bytes read from the stream. For this use `stream.bytes_read` instead.
+   The same applies for `stream.state.body`
+
+.. code-block:: python
+
+   import httpy
+   stream = httpy.request("https://example.com/big-file", stream=True)
+   stream.read(1) # read 1 byte
+   stream.read(6) # read 6 bytes
+   stream.bytes_read # 7
+   stream.read()  # read the rest
+   stream.state.finished #True
 
 ``Response`` class attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
