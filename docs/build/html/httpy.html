@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy package &mdash; httpy 2.0.3 documentation</title>
+  <title>httpy package &mdash; httpy 2.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=8209df7b" />
 
@@ -74,21 +74,6 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#module-httpy.httpy">httpy.httpy module</a><ul>
-<li><a class="reference internal" href="#httpy.httpy.AsyncProtoVersion"><code class="docutils literal notranslate"><span class="pre">AsyncProtoVersion</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.AsyncProtoVersion.recv_response"><code class="docutils literal notranslate"><span class="pre">AsyncProtoVersion.recv_response()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.AsyncProtoVersion.send_request"><code class="docutils literal notranslate"><span class="pre">AsyncProtoVersion.send_request()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#httpy.httpy.Cache"><code class="docutils literal notranslate"><span class="pre">Cache</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.Cache.updateCache"><code class="docutils literal notranslate"><span class="pre">Cache.updateCache()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#httpy.httpy.CacheControl"><code class="docutils literal notranslate"><span class="pre">CacheControl</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.CacheFile"><code class="docutils literal notranslate"><span class="pre">CacheFile</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.CacheFile.add_header"><code class="docutils literal notranslate"><span class="pre">CacheFile.add_header()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.CacheFile.expired"><code class="docutils literal notranslate"><span class="pre">CacheFile.expired</span></code></a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#httpy.httpy.Connection"><code class="docutils literal notranslate"><span class="pre">Connection</span></code></a><ul>
 <li><a class="reference internal" href="#httpy.httpy.Connection.close"><code class="docutils literal notranslate"><span class="pre">Connection.close()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.Connection.sock"><code class="docutils literal notranslate"><span class="pre">Connection.sock</span></code></a></li>
@@ -119,38 +104,6 @@
 <li><a class="reference internal" href="#httpy.httpy.Dir.request"><code class="docutils literal notranslate"><span class="pre">Dir.request()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#httpy.httpy.ETag"><code class="docutils literal notranslate"><span class="pre">ETag</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.ETag.add_header"><code class="docutils literal notranslate"><span class="pre">ETag.add_header()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#httpy.httpy.File"><code class="docutils literal notranslate"><span class="pre">File</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.File.open"><code class="docutils literal notranslate"><span class="pre">File.open()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.File.read"><code class="docutils literal notranslate"><span class="pre">File.read()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.File.save"><code class="docutils literal notranslate"><span class="pre">File.save()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.File.seek"><code class="docutils literal notranslate"><span class="pre">File.seek()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.File.tell"><code class="docutils literal notranslate"><span class="pre">File.tell()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.File.value"><code class="docutils literal notranslate"><span class="pre">File.value()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.File.write"><code class="docutils literal notranslate"><span class="pre">File.write()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#httpy.httpy.HTTP11"><code class="docutils literal notranslate"><span class="pre">HTTP11</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.HTTP11.recver"><code class="docutils literal notranslate"><span class="pre">HTTP11.recver</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.HTTP11.sender"><code class="docutils literal notranslate"><span class="pre">HTTP11.sender</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.HTTP11.version"><code class="docutils literal notranslate"><span class="pre">HTTP11.version</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#httpy.httpy.HTTP11Recver"><code class="docutils literal notranslate"><span class="pre">HTTP11Recver</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.HTTP11Sender"><code class="docutils literal notranslate"><span class="pre">HTTP11Sender</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.HTTP11Sender.send"><code class="docutils literal notranslate"><span class="pre">HTTP11Sender.send()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#httpy.httpy.HTTP2"><code class="docutils literal notranslate"><span class="pre">HTTP2</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.HTTP2.recver"><code class="docutils literal notranslate"><span class="pre">HTTP2.recver</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.HTTP2.sender"><code class="docutils literal notranslate"><span class="pre">HTTP2.sender</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.HTTP2.version"><code class="docutils literal notranslate"><span class="pre">HTTP2.version</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#httpy.httpy.Headers"><code class="docutils literal notranslate"><span class="pre">Headers</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.KeepAlive"><code class="docutils literal notranslate"><span class="pre">KeepAlive</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.NonceCounter"><code class="docutils literal notranslate"><span class="pre">NonceCounter</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.PendingRequest"><code class="docutils literal notranslate"><span class="pre">PendingRequest</span></code></a><ul>
@@ -164,22 +117,9 @@
 <li><a class="reference internal" href="#httpy.httpy.PickleFile.update"><code class="docutils literal notranslate"><span class="pre">PickleFile.update()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#httpy.httpy.ProtoVersion"><code class="docutils literal notranslate"><span class="pre">ProtoVersion</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.ProtoVersion.recv_response"><code class="docutils literal notranslate"><span class="pre">ProtoVersion.recv_response()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.ProtoVersion.send_request"><code class="docutils literal notranslate"><span class="pre">ProtoVersion.send_request()</span></code></a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#httpy.httpy.Request"><code class="docutils literal notranslate"><span class="pre">Request</span></code></a><ul>
 <li><a class="reference internal" href="#httpy.httpy.Request.async_perform"><code class="docutils literal notranslate"><span class="pre">Request.async_perform()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.Request.perform"><code class="docutils literal notranslate"><span class="pre">Request.perform()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#httpy.httpy.Response"><code class="docutils literal notranslate"><span class="pre">Response</span></code></a><ul>
-<li><a class="reference internal" href="#httpy.httpy.Response.cacheload"><code class="docutils literal notranslate"><span class="pre">Response.cacheload()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.Response.charset"><code class="docutils literal notranslate"><span class="pre">Response.charset</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.Response.json"><code class="docutils literal notranslate"><span class="pre">Response.json</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.Response.plain"><code class="docutils literal notranslate"><span class="pre">Response.plain()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.Response.string"><code class="docutils literal notranslate"><span class="pre">Response.string</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#httpy.httpy.Session"><code class="docutils literal notranslate"><span class="pre">Session</span></code></a><ul>
@@ -214,28 +154,19 @@
 </li>
 <li><a class="reference internal" href="#httpy.httpy.absolute_path"><code class="docutils literal notranslate"><span class="pre">absolute_path()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.async_request"><code class="docutils literal notranslate"><span class="pre">async_request()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.cacheWrite"><code class="docutils literal notranslate"><span class="pre">cacheWrite()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.close_all"><code class="docutils literal notranslate"><span class="pre">close_all()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.create_async_h2_connection"><code class="docutils literal notranslate"><span class="pre">create_async_h2_connection()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.create_connection"><code class="docutils literal notranslate"><span class="pre">create_connection()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.deslash"><code class="docutils literal notranslate"><span class="pre">deslash()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.determine_charset"><code class="docutils literal notranslate"><span class="pre">determine_charset()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.httpy.create_socket"><code class="docutils literal notranslate"><span class="pre">create_socket()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.dir_count"><code class="docutils literal notranslate"><span class="pre">dir_count()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.encode_form_data"><code class="docutils literal notranslate"><span class="pre">encode_form_data()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.find_dir_by_id"><code class="docutils literal notranslate"><span class="pre">find_dir_by_id()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.generate_cnonce"><code class="docutils literal notranslate"><span class="pre">generate_cnonce()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.generate_dir_id"><code class="docutils literal notranslate"><span class="pre">generate_dir_id()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.generate_websocket_key"><code class="docutils literal notranslate"><span class="pre">generate_websocket_key()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.get_connection"><code class="docutils literal notranslate"><span class="pre">get_connection()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.get_content_type"><code class="docutils literal notranslate"><span class="pre">get_content_type()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.hashing_function"><code class="docutils literal notranslate"><span class="pre">hashing_function()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.initiate_http2_connection"><code class="docutils literal notranslate"><span class="pre">initiate_http2_connection()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.makehost"><code class="docutils literal notranslate"><span class="pre">makehost()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.md5"><code class="docutils literal notranslate"><span class="pre">md5()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.mkdict"><code class="docutils literal notranslate"><span class="pre">mkdict()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.multipart"><code class="docutils literal notranslate"><span class="pre">multipart()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.request"><code class="docutils literal notranslate"><span class="pre">request()</span></code></a></li>
-<li><a class="reference internal" href="#httpy.httpy.reslash"><code class="docutils literal notranslate"><span class="pre">reslash()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.set_debug"><code class="docutils literal notranslate"><span class="pre">set_debug()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.setup_dir"><code class="docutils literal notranslate"><span class="pre">setup_dir()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.sha1"><code class="docutils literal notranslate"><span class="pre">sha1()</span></code></a></li>
@@ -246,7 +177,6 @@
 <li><a class="reference internal" href="#httpy.httpy.strarray.extend"><code class="docutils literal notranslate"><span class="pre">strarray.extend()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#httpy.httpy.urlencode"><code class="docutils literal notranslate"><span class="pre">urlencode()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.httpy.websocket_handshake"><code class="docutils literal notranslate"><span class="pre">websocket_handshake()</span></code></a></li>
 </ul>
 </li>
@@ -265,18 +195,38 @@
 <li><a class="reference internal" href="#httpy.utils.CaseInsensitiveDict.values"><code class="docutils literal notranslate"><span class="pre">CaseInsensitiveDict.values()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#httpy.utils.File"><code class="docutils literal notranslate"><span class="pre">File</span></code></a><ul>
+<li><a class="reference internal" href="#httpy.utils.File.open"><code class="docutils literal notranslate"><span class="pre">File.open()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.File.read"><code class="docutils literal notranslate"><span class="pre">File.read()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.File.save"><code class="docutils literal notranslate"><span class="pre">File.save()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.File.seek"><code class="docutils literal notranslate"><span class="pre">File.seek()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.File.tell"><code class="docutils literal notranslate"><span class="pre">File.tell()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.File.value"><code class="docutils literal notranslate"><span class="pre">File.value()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.File.write"><code class="docutils literal notranslate"><span class="pre">File.write()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#httpy.utils.byte_length"><code class="docutils literal notranslate"><span class="pre">byte_length()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.capitalize"><code class="docutils literal notranslate"><span class="pre">capitalize()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.decode_content"><code class="docutils literal notranslate"><span class="pre">decode_content()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.deslash"><code class="docutils literal notranslate"><span class="pre">deslash()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.determine_charset"><code class="docutils literal notranslate"><span class="pre">determine_charset()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.encode_form_data"><code class="docutils literal notranslate"><span class="pre">encode_form_data()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.force_bytes"><code class="docutils literal notranslate"><span class="pre">force_bytes()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.force_string"><code class="docutils literal notranslate"><span class="pre">force_string()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.generate_cnonce"><code class="docutils literal notranslate"><span class="pre">generate_cnonce()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.get_content_type"><code class="docutils literal notranslate"><span class="pre">get_content_type()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.get_host"><code class="docutils literal notranslate"><span class="pre">get_host()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.getbytes"><code class="docutils literal notranslate"><span class="pre">getbytes()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.int2bytes"><code class="docutils literal notranslate"><span class="pre">int2bytes()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.makehost"><code class="docutils literal notranslate"><span class="pre">makehost()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.mask"><code class="docutils literal notranslate"><span class="pre">mask()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.mk_header"><code class="docutils literal notranslate"><span class="pre">mk_header()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.mkbits"><code class="docutils literal notranslate"><span class="pre">mkbits()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.mkdict"><code class="docutils literal notranslate"><span class="pre">mkdict()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.multipart"><code class="docutils literal notranslate"><span class="pre">multipart()</span></code></a></li>
 <li><a class="reference internal" href="#httpy.utils.read_until"><code class="docutils literal notranslate"><span class="pre">read_until()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.reslash"><code class="docutils literal notranslate"><span class="pre">reslash()</span></code></a></li>
+<li><a class="reference internal" href="#httpy.utils.urlencode"><code class="docutils literal notranslate"><span class="pre">urlencode()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-httpy">Module contents</a></li>
@@ -494,13 +444,25 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="httpy.http2.html#module-httpy.http2.proto">httpy.http2.proto module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver"><code class="docutils literal notranslate"><span class="pre">AsyncHTTP2Recver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver"><code class="docutils literal notranslate"><span class="pre">AsyncHTTP2Recver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver.body"><code class="docutils literal notranslate"><span class="pre">AsyncHTTP2Recver.body</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver.load_body"><code class="docutils literal notranslate"><span class="pre">AsyncHTTP2Recver.load_body()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver.load_headers"><code class="docutils literal notranslate"><span class="pre">AsyncHTTP2Recver.load_headers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver.stream"><code class="docutils literal notranslate"><span class="pre">AsyncHTTP2Recver.stream()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Sender"><code class="docutils literal notranslate"><span class="pre">AsyncHTTP2Sender</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Sender.send"><code class="docutils literal notranslate"><span class="pre">AsyncHTTP2Sender.send()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Headers"><code class="docutils literal notranslate"><span class="pre">HTTP2Headers</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Recver"><code class="docutils literal notranslate"><span class="pre">HTTP2Recver</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Recver"><code class="docutils literal notranslate"><span class="pre">HTTP2Recver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Recver.body"><code class="docutils literal notranslate"><span class="pre">HTTP2Recver.body</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Recver.load_body"><code class="docutils literal notranslate"><span class="pre">HTTP2Recver.load_body()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Recver.load_headers"><code class="docutils literal notranslate"><span class="pre">HTTP2Recver.load_headers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Recver.stream"><code class="docutils literal notranslate"><span class="pre">HTTP2Recver.stream()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Sender"><code class="docutils literal notranslate"><span class="pre">HTTP2Sender</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Sender.send"><code class="docutils literal notranslate"><span class="pre">HTTP2Sender.send()</span></code></a></li>
 </ul>
@@ -710,65 +672,6 @@
 <span id="httpy-httpy-module"></span><h2>httpy.httpy module<a class="headerlink" href="#module-httpy.httpy" title="Link to this heading"></a></h2>
 <p>HTTPy is a lightweight socket-based HTTP and WebSocket client.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.AsyncProtoVersion">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">AsyncProtoVersion</span></span><a class="headerlink" href="#httpy.httpy.AsyncProtoVersion" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.AsyncProtoVersion.recv_response">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">recv_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.AsyncProtoVersion.recv_response" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.AsyncProtoVersion.send_request">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">send_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.AsyncProtoVersion.send_request" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.Cache">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">Cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/adam/.cache/httpy/default/sites')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Cache" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Cache Class</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.Cache.updateCache">
-<span class="sig-name descname"><span class="pre">updateCache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Cache.updateCache" title="Link to this definition"></a></dt>
-<dd><p>Updates self.files according to /sites directory content and removes expired ones</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.CacheControl">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">CacheControl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directives</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.CacheControl" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class for parsing Cache-Control HTTP Headers</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.CacheFile">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">CacheFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.CacheFile" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>HTTPy cache file parser</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.CacheFile.add_header">
-<span class="sig-name descname"><span class="pre">add_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.CacheFile.add_header" title="Link to this definition"></a></dt>
-<dd><p>Adds If-None-Match and If-Modified-Since headers to request.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>headers</strong> – Headers to add into</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="httpy.httpy.CacheFile.expired">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">expired</span></span><a class="headerlink" href="#httpy.httpy.CacheFile.expired" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="httpy.httpy.Connection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">Connection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_http2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Connection" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -890,142 +793,6 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.ETag">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">ETag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.ETag" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class for HTTP ETags</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.ETag.add_header">
-<span class="sig-name descname"><span class="pre">add_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.ETag.add_header" title="Link to this definition"></a></dt>
-<dd><p>Appends this ETag in If-None-Match header.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.File">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">File</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.File" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IOBase</span></code></p>
-<p>Class  used to upload files</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.File.open">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.File.open" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.File.read">
-<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.File.read" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.File.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">destination</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.File.save" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.File.seek">
-<span class="sig-name descname"><span class="pre">seek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.File.seek" title="Link to this definition"></a></dt>
-<dd><p>Change stream position.</p>
-<p>Change the stream position to the given byte offset. The offset is
-interpreted relative to the position indicated by whence.  Values
-for whence are:</p>
-<ul class="simple">
-<li><p>0 – start of stream (the default); offset should be zero or positive</p></li>
-<li><p>1 – current stream position; offset may be negative</p></li>
-<li><p>2 – end of stream; offset is usually negative</p></li>
-</ul>
-<p>Return the new absolute position.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.File.tell">
-<span class="sig-name descname"><span class="pre">tell</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.File.tell" title="Link to this definition"></a></dt>
-<dd><p>Return current stream position.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.File.value">
-<span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.File.value" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.File.write">
-<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anything</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.File.write" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP11">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">HTTP11</span></span><a class="headerlink" href="#httpy.httpy.HTTP11" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#httpy.httpy.ProtoVersion" title="httpy.httpy.ProtoVersion"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProtoVersion</span></code></a></p>
-<p>A sender/receiver for HTTP/1.1 requests</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP11.recver">
-<span class="sig-name descname"><span class="pre">recver</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;httpy.httpy.HTTP11Recver</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#httpy.httpy.HTTP11.recver" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP11.sender">
-<span class="sig-name descname"><span class="pre">sender</span></span><a class="headerlink" href="#httpy.httpy.HTTP11.sender" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="#httpy.httpy.HTTP11Sender" title="httpy.httpy.HTTP11Sender"><code class="xref py py-class docutils literal notranslate"><span class="pre">HTTP11Sender</span></code></a></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP11.version">
-<span class="sig-name descname"><span class="pre">version</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'1.1'</span></em><a class="headerlink" href="#httpy.httpy.HTTP11.version" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP11Recver">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">HTTP11Recver</span></span><a class="headerlink" href="#httpy.httpy.HTTP11Recver" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP11Sender">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">HTTP11Sender</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.HTTP11Sender" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP11Sender.send">
-<span class="sig-name descname"><span class="pre">send</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.HTTP11Sender.send" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP2">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">HTTP2</span></span><a class="headerlink" href="#httpy.httpy.HTTP2" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#httpy.httpy.ProtoVersion" title="httpy.httpy.ProtoVersion"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProtoVersion</span></code></a></p>
-<p>A sender/receiver for synchronous HTTP/2 requests</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP2.recver">
-<span class="sig-name descname"><span class="pre">recver</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;httpy.http2.proto.HTTP2Recver</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#httpy.httpy.HTTP2.recver" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP2.sender">
-<span class="sig-name descname"><span class="pre">sender</span></span><a class="headerlink" href="#httpy.httpy.HTTP2.sender" title="Link to this definition"></a></dt>
-<dd><p>alias of <a class="reference internal" href="httpy.http2.html#httpy.http2.proto.HTTP2Sender" title="httpy.http2.proto.HTTP2Sender"><code class="xref py py-class docutils literal notranslate"><span class="pre">HTTP2Sender</span></code></a></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="httpy.httpy.HTTP2.version">
-<span class="sig-name descname"><span class="pre">version</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2'</span></em><a class="headerlink" href="#httpy.httpy.HTTP2.version" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.Headers">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">Headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Headers" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#httpy.utils.CaseInsensitiveDict" title="httpy.utils.CaseInsensitiveDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">CaseInsensitiveDict</span></code></a></p>
-<p>Class for HTTP headers</p>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="httpy.httpy.KeepAlive">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">KeepAlive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">header</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.KeepAlive" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -1080,22 +847,6 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.ProtoVersion">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">ProtoVersion</span></span><a class="headerlink" href="#httpy.httpy.ProtoVersion" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.ProtoVersion.recv_response">
-<span class="sig-name descname"><span class="pre">recv_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.ProtoVersion.recv_response" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.ProtoVersion.send_request">
-<span class="sig-name descname"><span class="pre">send_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sock</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.ProtoVersion.send_request" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="httpy.httpy.Request">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">Request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">socket</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Request" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -1107,72 +858,6 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="httpy.httpy.Request.perform">
 <span class="sig-name descname"><span class="pre">perform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enable_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Request.perform" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="httpy.httpy.Response">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">Response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fromcache</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_elapsed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/adam/.cache/httpy/default')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Response" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class for HTTP Response.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>status</strong> (<a class="reference internal" href="#httpy.status.Status" title="httpy.status.Status"><em>Status</em></a>) – Status returned by server</p></li>
-<li><p><strong>headers</strong> (<a class="reference internal" href="#httpy.httpy.Headers" title="httpy.httpy.Headers"><em>Headers</em></a>) – Headers attached to the document</p></li>
-<li><p><strong>content</strong> (<em>bytes</em>) – Document content</p></li>
-<li><p><strong>history</strong> (<em>list</em>) – Response history</p></li>
-<li><p><strong>fromcache</strong> (<em>bool</em>) – Indicates whether or not  was response loaded from cache</p></li>
-<li><p><strong>request</strong> (<a class="reference internal" href="#httpy.httpy.Request" title="httpy.httpy.Request"><em>Request</em></a>) – The Request object for this response</p></li>
-<li><p><strong>original_content</strong> (<em>bytes</em>) – Document content before any Content-Encoding was applied.</p></li>
-<li><p><strong>time_elapsed</strong> (<em>float</em>) – Total request time</p></li>
-</ul>
-</dd>
-<dt class="field-even">Variables<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>status</strong> – Status returned by server</p></li>
-<li><p><strong>headers</strong> – Headers attached to the document</p></li>
-<li><p><strong>content</strong> – Document content</p></li>
-<li><p><strong>history</strong> – Response history</p></li>
-<li><p><strong>fromcache</strong> – Indicates whether or not was response loaded from cache</p></li>
-<li><p><strong>charset</strong> – Document charset</p></li>
-<li><p><strong>speed</strong> – Average download speed in bytes per second</p></li>
-<li><p><strong>request</strong> – The Request object for this response</p></li>
-<li><p><strong>method</strong> – Indicates HTTP method used to request</p></li>
-<li><p><strong>ok</strong> – <cite>self.status==200</cite></p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.Response.cacheload">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cacheload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Response.cacheload" title="Link to this definition"></a></dt>
-<dd><p>Loads response from CacheFile.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cache_file</strong> (<a class="reference internal" href="#httpy.httpy.CacheFile" title="httpy.httpy.CacheFile"><em>CacheFile</em></a>) – CacheFile to load from</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="httpy.httpy.Response.charset">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">charset</span></span><a class="headerlink" href="#httpy.httpy.Response.charset" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="httpy.httpy.Response.json">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">json</span></span><a class="headerlink" href="#httpy.httpy.Response.json" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="httpy.httpy.Response.plain">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">plain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.Response.plain" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="httpy.httpy.Response.string">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">string</span></span><a class="headerlink" href="#httpy.httpy.Response.string" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1317,7 +1002,7 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.httpy.async_request">
-<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">async_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session=&lt;httpy.httpy.Session</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body=b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit=20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout=30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure_headers=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cache=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir=PosixPath('/home/adam/.cache/httpy/default')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version='2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disabled_headers=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_keep_alive=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cookies=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.async_request" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">async_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session=&lt;httpy.httpy.Session</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body=b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit=20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout=30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure_headers=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cache=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir=PosixPath('/home/adam/.cache/httpy/default')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version='2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disabled_headers=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_keep_alive=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cookies=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.async_request" title="Link to this definition"></a></dt>
 <dd><p>Performs an asynchronous request.
 Asynchronous requests are always HTTP/2.</p>
 <p><cite>Note:</cite> all arguments but <code class="docutils literal notranslate"><span class="pre">url</span></code> are keyword-only</p>
@@ -1346,17 +1031,6 @@ Asynchronous requests are always HTTP/2.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.cacheWrite">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">cacheWrite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expires_override</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.cacheWrite" title="Link to this definition"></a></dt>
-<dd><p>Writes response to cache</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>response</strong> (<a class="reference internal" href="#httpy.httpy.Response" title="httpy.httpy.Response"><em>Response</em></a>) – response to save</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="httpy.httpy.close_all">
 <span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">close_all</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.close_all" title="Link to this definition"></a></dt>
 <dd><p>Closes all sessions.
@@ -1370,21 +1044,14 @@ Always called at program exit.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.httpy.create_connection">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">create_connection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_keep_alive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.create_connection" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">create_connection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_keep_alive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_hostname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.create_connection" title="Link to this definition"></a></dt>
 <dd><p>Creates a connection to a given host and port</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.deslash">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">deslash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.deslash" title="Link to this definition"></a></dt>
-<dd><p>Removes trailing slash from the end of URL</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.determine_charset">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">determine_charset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.determine_charset" title="Link to this definition"></a></dt>
-<dd><p>Gets charset from headers</p>
-</dd></dl>
+<dt class="sig sig-object py" id="httpy.httpy.create_socket">
+<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">create_socket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_hostname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpn_protocols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">https</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.create_socket" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.httpy.dir_count">
@@ -1392,19 +1059,8 @@ Always called at program exit.</p>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.encode_form_data">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">encode_form_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.encode_form_data" title="Link to this definition"></a></dt>
-<dd><p>Encodes form data according to content type</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="httpy.httpy.find_dir_by_id">
 <span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">find_dir_by_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sessid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.find_dir_by_id" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.generate_cnonce">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">generate_cnonce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.generate_cnonce" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -1425,12 +1081,6 @@ Always called at program exit.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.get_content_type">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">get_content_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.get_content_type" title="Link to this definition"></a></dt>
-<dd><p>Used to automatically get request content type</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="httpy.httpy.hashing_function">
 <span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">hashing_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.hashing_function" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1440,12 +1090,6 @@ Always called at program exit.</p>
 <em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">initiate_http2_connection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session=&lt;httpy.httpy.Session</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.initiate_http2_connection" title="Link to this definition"></a></dt>
 <dd><p>Starts a HTTP/2 connection and adds it to a session.
 Used to send multiple asynchronous requests on one connection.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.makehost">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">makehost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.makehost" title="Link to this definition"></a></dt>
-<dd><p>Creates hostname from host and port</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1463,20 +1107,8 @@ errors defaults to ‘strict’.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.mkdict">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">mkdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kvp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.mkdict" title="Link to this definition"></a></dt>
-<dd><p>Makes dict from key/value pairs</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.multipart">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">b'--4R1RGTjMs6\r\n'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.multipart" title="Link to this definition"></a></dt>
-<dd><p>Builds multipart/form-data from form</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="httpy.httpy.request">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session=&lt;httpy.httpy.Session</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body=b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit=20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout=30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure_headers=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cache=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir=PosixPath('/home/adam/.cache/httpy/default')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disabled_headers=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_keep_alive=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cookies=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.request" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session=&lt;httpy.httpy.Session</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method='GET'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body=b''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth=()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirlimit=20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout=30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">throw_on_error=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure_headers=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cache=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir=PosixPath('/home/adam/.cache/httpy/default')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_version=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disabled_headers=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_keep_alive=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_cookies=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cert=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_hostname=True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.request" title="Link to this definition"></a></dt>
 <dd><p>Performs request.</p>
 <p><cite>Note:</cite> all arguments but <code class="docutils literal notranslate"><span class="pre">url</span></code> are keyword-only</p>
 <dl class="field-list simple">
@@ -1502,12 +1134,6 @@ errors defaults to ‘strict’.</p>
 </dd>
 </dl>
 <p>:type force_keep_alive:<code class="docutils literal notranslate"><span class="pre">bool</span></code></p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.reslash">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">reslash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.reslash" title="Link to this definition"></a></dt>
-<dd><p>Adds trailing slash to the end of URL</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1576,12 +1202,6 @@ errors defaults to ‘strict’.</p>
 <span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.strarray.extend" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="httpy.httpy.urlencode">
-<span class="sig-prename descclassname"><span class="pre">httpy.httpy.</span></span><span class="sig-name descname"><span class="pre">urlencode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.httpy.urlencode" title="Link to this definition"></a></dt>
-<dd><p>Creates urlencoded string from dict data</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1663,6 +1283,66 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="httpy.utils.File">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">File</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.File" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IOBase</span></code></p>
+<p>Class  used to upload files</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.utils.File.open">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">open</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.File.open" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.utils.File.read">
+<span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.File.read" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.utils.File.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">destination</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.File.save" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.utils.File.seek">
+<span class="sig-name descname"><span class="pre">seek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.File.seek" title="Link to this definition"></a></dt>
+<dd><p>Change the stream position to the given byte offset.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>offset</dt><dd><p>The stream position, relative to ‘whence’.</p>
+</dd>
+<dt>whence</dt><dd><p>The relative position to seek from.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>The offset is interpreted relative to the position indicated by whence.
+Values for whence are:</p>
+<ul class="simple">
+<li><p>os.SEEK_SET or 0 – start of stream (the default); offset should be zero or positive</p></li>
+<li><p>os.SEEK_CUR or 1 – current stream position; offset may be negative</p></li>
+<li><p>os.SEEK_END or 2 – end of stream; offset is usually negative</p></li>
+</ul>
+<p>Return the new absolute position.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.utils.File.tell">
+<span class="sig-name descname"><span class="pre">tell</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.File.tell" title="Link to this definition"></a></dt>
+<dd><p>Return current stream position.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.utils.File.value">
+<span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.File.value" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="httpy.utils.File.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anything</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.File.write" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="httpy.utils.byte_length">
 <span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">byte_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.byte_length" title="Link to this definition"></a></dt>
@@ -1680,6 +1360,24 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.deslash">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">deslash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.deslash" title="Link to this definition"></a></dt>
+<dd><p>Removes trailing slash from the end of URL</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.determine_charset">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">determine_charset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.determine_charset" title="Link to this definition"></a></dt>
+<dd><p>Gets charset from headers</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.encode_form_data">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">encode_form_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.encode_form_data" title="Link to this definition"></a></dt>
+<dd><p>Encodes form data according to content type</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="httpy.utils.force_bytes">
 <span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">force_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anything</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.force_bytes" title="Link to this definition"></a></dt>
 <dd><p>Converts bytes or string to bytes</p>
@@ -1689,6 +1387,17 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 <dt class="sig sig-object py" id="httpy.utils.force_string">
 <span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">force_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anything</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.force_string" title="Link to this definition"></a></dt>
 <dd><p>Converts string or bytes to string</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.generate_cnonce">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">generate_cnonce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.generate_cnonce" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.get_content_type">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">get_content_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.get_content_type" title="Link to this definition"></a></dt>
+<dd><p>Used to automatically get request content type</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1707,6 +1416,12 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.makehost">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">makehost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.makehost" title="Link to this definition"></a></dt>
+<dd><p>Creates hostname from host and port</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="httpy.utils.mask">
 <span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.mask" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1723,9 +1438,33 @@ In either case, this is followed by: for k in F:  D[k] = F[k]</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.mkdict">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">mkdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kvp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.mkdict" title="Link to this definition"></a></dt>
+<dd><p>Makes dict from key/value pairs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.multipart">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">multipart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.multipart" title="Link to this definition"></a></dt>
+<dd><p>Builds multipart/form-data from form</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="httpy.utils.read_until">
 <span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">read_until</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.read_until" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.reslash">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">reslash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.reslash" title="Link to this definition"></a></dt>
+<dd><p>Adds trailing slash to the end of URL</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="httpy.utils.urlencode">
+<span class="sig-prename descclassname"><span class="pre">httpy.utils.</span></span><span class="sig-name descname"><span class="pre">urlencode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#httpy.utils.urlencode" title="Link to this definition"></a></dt>
+<dd><p>Creates urlencoded string from dict data</p>
+</dd></dl>
 
 </section>
 <section id="module-httpy">

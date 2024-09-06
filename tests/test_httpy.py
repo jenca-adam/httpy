@@ -42,15 +42,15 @@ def test_https_200_ok():
     assert resp.status == 200
 
 
-
-
 def test_httpy_auth_basic():
     httpy.request("https://httpbin.org/basic-auth/root/pass/", auth=("root", "pass"))
 
 
 def test_httpy_redirect_limit():
     with pytest.raises(httpy.TooManyRedirectsError):
-        httpy.request("https://httpbin.org/redirect/8", redirlimit=5, enable_cache=False)
+        httpy.request(
+            "https://httpbin.org/redirect/8", redirlimit=5, enable_cache=False
+        )
 
 
 """def test_httpy_cache():

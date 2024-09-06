@@ -146,7 +146,6 @@ The ``Dir`` class allows you to store httpy's data (cache and cookies)
 on the path of your choice. By default, the data is stored in
 ``~/.cache/httpy``. If you want to store the data without using the ``Dir`` class, use the
 ``enable_cookies`` or ``enable_cache`` argument of ``request``. 
-
 .. code-block:: python
 
    import httpy

@@ -1508,9 +1508,9 @@ async def _async_raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        session.connections[
-            host, port
-        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        session.connections[host, port]._sock = (
+            sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        )
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -1739,9 +1739,9 @@ def _raw_request(
         raise
 
     if headers.get("connection") == "keep-alive":
-        session.connections[
-            host, port
-        ]._sock = sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        session.connections[host, port]._sock = (
+            sock  # Fix bug #23 -- New  connections in keep-alive mode slowing down requests
+        )
     end_time = time.time()
     elapsed_time = end_time - start_time
 

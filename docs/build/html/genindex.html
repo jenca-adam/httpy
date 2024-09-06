@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; httpy 2.0.3 documentation</title>
+  <title>Index &mdash; httpy 2.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=8209df7b" />
 
@@ -79,8 +79,8 @@
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
- | <a href="#J"><strong>J</strong></a>
  | <a href="#K"><strong>K</strong></a>
+ | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
@@ -105,12 +105,6 @@
 </li>
       <li><a href="httpy.html#httpy.httpy.CookieJar.add_domain">add_domain() (httpy.httpy.CookieJar method)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.CacheFile.add_header">add_header() (httpy.httpy.CacheFile method)</a>
-
-      <ul>
-        <li><a href="httpy.html#httpy.httpy.ETag.add_header">(httpy.httpy.ETag method)</a>
-</li>
-      </ul></li>
       <li><a href="httpy.http2.html#httpy.http2.frame_queue.AsyncFrameQueue.add_stream">add_stream() (httpy.http2.frame_queue.AsyncFrameQueue method)</a>
 
       <ul>
@@ -155,8 +149,6 @@
 </li>
       <li><a href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Sender">AsyncHTTP2Sender (class in httpy.http2.proto)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.AsyncProtoVersion">AsyncProtoVersion (class in httpy.httpy)</a>
-</li>
       <li><a href="httpy.http2.html#httpy.http2.stream.AsyncStream">AsyncStream (class in httpy.http2.stream)</a>
 </li>
       <li><a href="httpy.html#httpy.errors.AuthError">AuthError</a>
@@ -169,6 +161,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.httpy.WWW_Authenticate.basic_auth">basic_auth() (httpy.httpy.WWW_Authenticate method)</a>
 </li>
+      <li><a href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver.body">body (httpy.http2.proto.AsyncHTTP2Recver property)</a>
+
+      <ul>
+        <li><a href="httpy.http2.html#httpy.http2.proto.HTTP2Recver.body">(httpy.http2.proto.HTTP2Recver property)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.utils.byte_length">byte_length() (in module httpy.utils)</a>
@@ -179,16 +177,6 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.Cache">Cache (class in httpy.httpy)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.CacheControl">CacheControl (class in httpy.httpy)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.CacheFile">CacheFile (class in httpy.httpy)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.Response.cacheload">cacheload() (httpy.httpy.Response class method)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.cacheWrite">cacheWrite() (in module httpy.httpy)</a>
-</li>
       <li><a href="httpy.http2.html#httpy.http2.error.CANCEL">CANCEL (in module httpy.http2.error)</a>
 </li>
       <li><a href="httpy.html#httpy.utils.capitalize">capitalize() (in module httpy.utils)</a>
@@ -196,8 +184,6 @@
       <li><a href="httpy.html#httpy.utils.CaseInsensitiveDict">CaseInsensitiveDict (class in httpy.utils)</a>
 </li>
       <li><a href="httpy.http2.hpack.html#httpy.http2.hpack.table.Table.change_size">change_size() (httpy.http2.hpack.table.Table method)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.Response.charset">charset (httpy.httpy.Response property)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.CookieDomain.check_expired">check_expired() (httpy.httpy.CookieDomain method)</a>
 </li>
@@ -237,8 +223,6 @@
         <li><a href="httpy.http2.html#httpy.http2.connection.Connection.close_socket">(httpy.http2.connection.Connection method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.http2.html#httpy.http2.streams.Streams.close_stream">close_stream() (httpy.http2.streams.Streams method)</a>
 </li>
       <li><a href="httpy.http2.html#httpy.http2.stream.StreamToken.CLOSE_TOKEN">CLOSE_TOKEN (httpy.http2.stream.StreamToken attribute)</a>
@@ -247,6 +231,8 @@
 </li>
       <li><a href="httpy.http2.html#httpy.http2.socket_reader.SocketReader.closed">closed (httpy.http2.socket_reader.SocketReader property)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.http2.html#httpy.http2.stream.StreamState.CLOSED">CLOSED (httpy.http2.stream.StreamState attribute)</a>
 </li>
       <li><a href="httpy.http2.html#httpy.http2.error.HTTP2Error.code">code (httpy.http2.error.HTTP2Error attribute)</a>
@@ -291,6 +277,8 @@
 </li>
       <li><a href="httpy.html#httpy.httpy.create_connection">create_connection() (in module httpy.httpy)</a>
 </li>
+      <li><a href="httpy.html#httpy.httpy.create_socket">create_socket() (in module httpy.httpy)</a>
+</li>
       <li><a href="httpy.http2.html#httpy.http2.connection.AsyncConnection.create_stream">create_stream() (httpy.http2.connection.AsyncConnection method)</a>
 
       <ul>
@@ -327,9 +315,9 @@
 </li>
       <li><a href="httpy.html#httpy.httpy.CookieDomain.delete_cookie">delete_cookie() (httpy.httpy.CookieDomain method)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.deslash">deslash() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.deslash">deslash() (in module httpy.utils)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.determine_charset">determine_charset() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.determine_charset">determine_charset() (in module httpy.utils)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.WWW_Authenticate.digest_auth">digest_auth() (httpy.httpy.WWW_Authenticate method)</a>
 </li>
@@ -345,7 +333,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.httpy.PendingRequest.empty">empty (httpy.httpy.PendingRequest property)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.encode_form_data">encode_form_data() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.encode_form_data">encode_form_data() (in module httpy.utils)</a>
 </li>
       <li><a href="httpy.http2.hpack.html#httpy.http2.hpack.hpack.Encoder.encode_header">encode_header() (httpy.http2.hpack.hpack.Encoder method)</a>
 </li>
@@ -361,10 +349,10 @@
 </li>
       <li><a href="httpy.http2.hpack.html#httpy.http2.hpack.errors.EncodingError">EncodingError</a>
 </li>
-      <li><a href="httpy.http2.html#httpy.http2.error.ENHANCE_YOUR_CALM">ENHANCE_YOUR_CALM (in module httpy.http2.error)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.http2.html#httpy.http2.error.ENHANCE_YOUR_CALM">ENHANCE_YOUR_CALM (in module httpy.http2.error)</a>
+</li>
       <li><a href="httpy.http2.hpack.html#httpy.http2.hpack.table.Entry">Entry (class in httpy.http2.hpack.table)</a>
 </li>
       <li><a href="httpy.http2.html#httpy.http2.stream.AsyncStream.error_check">error_check() (httpy.http2.stream.AsyncStream method)</a>
@@ -383,14 +371,8 @@
         <li><a href="httpy.http2.html#httpy.http2.error.UNKNOWN_ERROR.errtype">(httpy.http2.error.UNKNOWN_ERROR attribute)</a>
 </li>
       </ul></li>
-      <li><a href="httpy.html#httpy.httpy.ETag">ETag (class in httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.httpy.Cookie.expired">expired (httpy.httpy.Cookie property)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.CacheFile.expired">expired (httpy.httpy.CacheFile property)</a>
-
-      <ul>
-        <li><a href="httpy.html#httpy.httpy.Cookie.expired">(httpy.httpy.Cookie property)</a>
-</li>
-      </ul></li>
       <li><a href="httpy.html#httpy.httpy.strarray.extend">extend() (httpy.httpy.strarray method)</a>
 </li>
   </ul></td>
@@ -399,7 +381,7 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.File">File (class in httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.File">File (class in httpy.utils)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.find_dir_by_id">find_dir_by_id() (in module httpy.httpy)</a>
 </li>
@@ -483,7 +465,7 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.generate_cnonce">generate_cnonce() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.generate_cnonce">generate_cnonce() (in module httpy.utils)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.generate_dir_id">generate_dir_id() (in module httpy.httpy)</a>
 </li>
@@ -495,7 +477,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.get_content_type">get_content_type() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.get_content_type">get_content_type() (in module httpy.utils)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.CookieJar.get_cookies">get_cookies() (httpy.httpy.CookieJar method)</a>
 </li>
@@ -519,21 +501,11 @@
 </li>
       <li><a href="httpy.html#httpy.httpy.hashing_function">hashing_function() (in module httpy.httpy)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.Headers">Headers (class in httpy.httpy)</a>
-</li>
       <li><a href="httpy.http2.html#httpy.http2.frame.HeadersFrame">HeadersFrame (class in httpy.http2.frame)</a>
 </li>
       <li><a href="httpy.http2.hpack.html#httpy.http2.hpack.hpack.HPACK">HPACK (class in httpy.http2.hpack.hpack)</a>
 </li>
       <li><a href="httpy.http2.hpack.html#httpy.http2.hpack.errors.HPackError">HPackError</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.HTTP11">HTTP11 (class in httpy.httpy)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.HTTP11Recver">HTTP11Recver (class in httpy.httpy)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.HTTP11Sender">HTTP11Sender (class in httpy.httpy)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.HTTP2">HTTP2 (class in httpy.httpy)</a>
 </li>
       <li><a href="httpy.http2.html#httpy.http2.error.HTTP2Error">HTTP2Error</a>
 </li>
@@ -624,8 +596,6 @@
         <li><a href="httpy.http2.hpack.html#module-httpy.http2.hpack.const">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     httpy.http2.hpack.errors
 
@@ -633,6 +603,8 @@
         <li><a href="httpy.http2.hpack.html#module-httpy.http2.hpack.errors">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     httpy.http2.hpack.hpack
 
@@ -786,14 +758,6 @@
   </ul></td>
 </tr></table>
 
-<h2 id="J">J</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.Response.json">json (httpy.httpy.Response property)</a>
-</li>
-  </ul></td>
-</tr></table>
-
 <h2 id="K">K</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -806,12 +770,32 @@
   </ul></td>
 </tr></table>
 
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver.load_body">load_body() (httpy.http2.proto.AsyncHTTP2Recver method)</a>
+
+      <ul>
+        <li><a href="httpy.http2.html#httpy.http2.proto.HTTP2Recver.load_body">(httpy.http2.proto.HTTP2Recver method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver.load_headers">load_headers() (httpy.http2.proto.AsyncHTTP2Recver method)</a>
+
+      <ul>
+        <li><a href="httpy.http2.html#httpy.http2.proto.HTTP2Recver.load_headers">(httpy.http2.proto.HTTP2Recver method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.httpy.WebSocket.makefile">makefile() (httpy.httpy.WebSocket method)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.makehost">makehost() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.makehost">makehost() (in module httpy.utils)</a>
 </li>
       <li><a href="httpy.html#httpy.utils.mask">mask() (in module httpy.utils)</a>
 </li>
@@ -825,7 +809,7 @@
 </li>
       <li><a href="httpy.html#httpy.utils.mkbits">mkbits() (in module httpy.utils)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.mkdict">mkdict() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.mkdict">mkdict() (in module httpy.utils)</a>
 </li>
       <li>
     module
@@ -890,7 +874,7 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.multipart">multipart() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.multipart">multipart() (in module httpy.utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -922,7 +906,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.http2.html#httpy.http2.stream.StreamState.OPEN">OPEN (httpy.http2.stream.StreamState attribute)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.File.open">open() (httpy.httpy.File class method)</a>
+      <li><a href="httpy.html#httpy.utils.File.open">open() (httpy.utils.File class method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -944,8 +928,6 @@
 </li>
       <li><a href="httpy.http2.html#httpy.http2.frame.PingFrame">PingFrame (class in httpy.http2.frame)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.Response.plain">plain() (httpy.httpy.Response class method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.http2.html#httpy.http2.frame.PriorityFrame">PriorityFrame (class in httpy.http2.frame)</a>
@@ -965,8 +947,6 @@
 </li>
       </ul></li>
       <li><a href="httpy.http2.html#httpy.http2.error.PROTOCOL_ERROR">PROTOCOL_ERROR (in module httpy.http2.error)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.ProtoVersion">ProtoVersion (class in httpy.httpy)</a>
 </li>
       <li><a href="httpy.http2.html#httpy.http2.frame.PushPromiseFrame">PushPromiseFrame (class in httpy.http2.frame)</a>
 </li>
@@ -991,9 +971,9 @@
       <li><a href="httpy.http2.html#httpy.http2.socket_reader.SocketReader.read">read() (httpy.http2.socket_reader.SocketReader method)</a>
 
       <ul>
-        <li><a href="httpy.html#httpy.httpy.File.read">(httpy.httpy.File method)</a>
-</li>
         <li><a href="httpy.html#httpy.httpy.WebSocketFile.read">(httpy.httpy.WebSocketFile method)</a>
+</li>
+        <li><a href="httpy.html#httpy.utils.File.read">(httpy.utils.File method)</a>
 </li>
       </ul></li>
       <li><a href="httpy.html#httpy.utils.read_until">read_until() (in module httpy.utils)</a>
@@ -1010,22 +990,10 @@
         <li><a href="httpy.http2.html#httpy.http2.stream.Stream.recv_frame">(httpy.http2.stream.Stream method)</a>
 </li>
       </ul></li>
-      <li><a href="httpy.html#httpy.httpy.AsyncProtoVersion.recv_response">recv_response() (httpy.httpy.AsyncProtoVersion method)</a>
-
-      <ul>
-        <li><a href="httpy.html#httpy.httpy.ProtoVersion.recv_response">(httpy.httpy.ProtoVersion method)</a>
-</li>
-      </ul></li>
-      <li><a href="httpy.html#httpy.httpy.HTTP11.recver">recver (httpy.httpy.HTTP11 attribute)</a>
-
-      <ul>
-        <li><a href="httpy.html#httpy.httpy.HTTP2.recver">(httpy.httpy.HTTP2 attribute)</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.http2.html#httpy.http2.error.Refuse">Refuse</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.http2.html#httpy.http2.error.REFUSED_STREAM">REFUSED_STREAM (in module httpy.http2.error)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.Request">Request (class in httpy.httpy)</a>
@@ -1042,9 +1010,7 @@
 </li>
       <li><a href="httpy.http2.html#httpy.http2.stream.StreamState.RESERVED_REMOTE">RESERVED_REMOTE (httpy.http2.stream.StreamState attribute)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.reslash">reslash() (in module httpy.httpy)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.Response">Response (class in httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.reslash">reslash() (in module httpy.utils)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.PendingRequest.response">response (httpy.httpy.PendingRequest property)</a>
 </li>
@@ -1056,20 +1022,18 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.File.save">save() (httpy.httpy.File method)</a>
+      <li><a href="httpy.html#httpy.utils.File.save">save() (httpy.utils.File method)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.File.seek">seek() (httpy.httpy.File method)</a>
+      <li><a href="httpy.html#httpy.httpy.WebSocketFile.seek">seek() (httpy.httpy.WebSocketFile method)</a>
 
       <ul>
-        <li><a href="httpy.html#httpy.httpy.WebSocketFile.seek">(httpy.httpy.WebSocketFile method)</a>
+        <li><a href="httpy.html#httpy.utils.File.seek">(httpy.utils.File method)</a>
 </li>
       </ul></li>
       <li><a href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Sender.send">send() (httpy.http2.proto.AsyncHTTP2Sender method)</a>
 
       <ul>
         <li><a href="httpy.http2.html#httpy.http2.proto.HTTP2Sender.send">(httpy.http2.proto.HTTP2Sender method)</a>
-</li>
-        <li><a href="httpy.html#httpy.httpy.HTTP11Sender.send">(httpy.httpy.HTTP11Sender method)</a>
 </li>
         <li><a href="httpy.html#httpy.httpy.WebSocket.send">(httpy.httpy.WebSocket method)</a>
 </li>
@@ -1082,18 +1046,6 @@
         <li><a href="httpy.http2.html#httpy.http2.stream.AsyncStream.send_frame">(httpy.http2.stream.AsyncStream method)</a>
 </li>
         <li><a href="httpy.http2.html#httpy.http2.stream.Stream.send_frame">(httpy.http2.stream.Stream method)</a>
-</li>
-      </ul></li>
-      <li><a href="httpy.html#httpy.httpy.AsyncProtoVersion.send_request">send_request() (httpy.httpy.AsyncProtoVersion method)</a>
-
-      <ul>
-        <li><a href="httpy.html#httpy.httpy.ProtoVersion.send_request">(httpy.httpy.ProtoVersion method)</a>
-</li>
-      </ul></li>
-      <li><a href="httpy.html#httpy.httpy.HTTP11.sender">sender (httpy.httpy.HTTP11 attribute)</a>
-
-      <ul>
-        <li><a href="httpy.html#httpy.httpy.HTTP2.sender">(httpy.httpy.HTTP2 attribute)</a>
 </li>
       </ul></li>
       <li><a href="httpy.http2.html#httpy.http2.proto.serialize_data">serialize_data() (in module httpy.http2.proto)</a>
@@ -1112,14 +1064,14 @@
 </li>
       <li><a href="httpy.http2.html#httpy.http2.frame.SettingsFrame">SettingsFrame (class in httpy.http2.frame)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.httpy.setup_dir">setup_dir() (in module httpy.httpy)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.sha1">sha1() (in module httpy.httpy)</a>
 </li>
       <li><a href="httpy.html#httpy.httpy.sha256">sha256() (in module httpy.httpy)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.html#httpy.httpy.sha512">sha512() (in module httpy.httpy)</a>
 </li>
       <li><a href="httpy.http2.hpack.html#httpy.http2.hpack.table.Entry.size">size (httpy.http2.hpack.table.Entry property)</a>
@@ -1148,6 +1100,12 @@
 </li>
       <li><a href="httpy.http2.html#httpy.http2.error.ErrType.STREAM">STREAM (httpy.http2.error.ErrType attribute)</a>
 </li>
+      <li><a href="httpy.http2.html#httpy.http2.proto.AsyncHTTP2Recver.stream">stream() (httpy.http2.proto.AsyncHTTP2Recver method)</a>
+
+      <ul>
+        <li><a href="httpy.http2.html#httpy.http2.proto.HTTP2Recver.stream">(httpy.http2.proto.HTTP2Recver method)</a>
+</li>
+      </ul></li>
       <li><a href="httpy.http2.html#httpy.http2.error.STREAM_CLOSED">STREAM_CLOSED (in module httpy.http2.error)</a>
 </li>
       <li><a href="httpy.http2.html#httpy.http2.priority.StreamDependency">StreamDependency (class in httpy.http2.priority)</a>
@@ -1160,8 +1118,6 @@
 </li>
       <li><a href="httpy.http2.html#httpy.http2.stream.StreamToken">StreamToken (class in httpy.http2.stream)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.Response.string">string (httpy.httpy.Response property)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -1170,10 +1126,10 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="httpy.http2.hpack.html#httpy.http2.hpack.table.Table">Table (class in httpy.http2.hpack.table)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.File.tell">tell() (httpy.httpy.File method)</a>
+      <li><a href="httpy.html#httpy.httpy.WebSocketFile.tell">tell() (httpy.httpy.WebSocketFile method)</a>
 
       <ul>
-        <li><a href="httpy.html#httpy.httpy.WebSocketFile.tell">(httpy.httpy.WebSocketFile method)</a>
+        <li><a href="httpy.html#httpy.utils.File.tell">(httpy.utils.File method)</a>
 </li>
       </ul></li>
       <li><a href="httpy.http2.html#httpy.http2.frame_queue.AsyncFrameQueue.throw">throw() (httpy.http2.frame_queue.AsyncFrameQueue method)</a>
@@ -1224,9 +1180,7 @@
         <li><a href="httpy.http2.html#httpy.http2.connection.Connection.update_settings">(httpy.http2.connection.Connection method)</a>
 </li>
       </ul></li>
-      <li><a href="httpy.html#httpy.httpy.Cache.updateCache">updateCache() (httpy.httpy.Cache method)</a>
-</li>
-      <li><a href="httpy.html#httpy.httpy.urlencode">urlencode() (in module httpy.httpy)</a>
+      <li><a href="httpy.html#httpy.utils.urlencode">urlencode() (in module httpy.utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1234,18 +1188,12 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.File.value">value() (httpy.httpy.File method)</a>
-</li>
-      <li><a href="httpy.html#httpy.utils.CaseInsensitiveDict.values">values() (httpy.utils.CaseInsensitiveDict method)</a>
+      <li><a href="httpy.html#httpy.utils.File.value">value() (httpy.utils.File method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="httpy.html#httpy.httpy.HTTP11.version">version (httpy.httpy.HTTP11 attribute)</a>
-
-      <ul>
-        <li><a href="httpy.html#httpy.httpy.HTTP2.version">(httpy.httpy.HTTP2 attribute)</a>
+      <li><a href="httpy.html#httpy.utils.CaseInsensitiveDict.values">values() (httpy.utils.CaseInsensitiveDict method)</a>
 </li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -1272,10 +1220,10 @@
 </li>
       <li><a href="httpy.http2.html#httpy.http2.frame.WindowUpdateFrame">WindowUpdateFrame (class in httpy.http2.frame)</a>
 </li>
-      <li><a href="httpy.html#httpy.httpy.File.write">write() (httpy.httpy.File method)</a>
+      <li><a href="httpy.html#httpy.httpy.WebSocketFile.write">write() (httpy.httpy.WebSocketFile method)</a>
 
       <ul>
-        <li><a href="httpy.html#httpy.httpy.WebSocketFile.write">(httpy.httpy.WebSocketFile method)</a>
+        <li><a href="httpy.html#httpy.utils.File.write">(httpy.utils.File method)</a>
 </li>
       </ul></li>
       <li><a href="httpy.html#httpy.httpy.WWW_Authenticate">WWW_Authenticate (class in httpy.httpy)</a>
