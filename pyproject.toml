@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "httpy"
+version = "2.1.0"
+description = "A lightweight socket-based HTTP(s) and WebSocket client."
+authors = [
+    {name = "Adam Jenca", email = "jenca.a@gjh.sk"}
+]
+readme = "README.rst"
+requires-python = ">=3.6.0"
+license = {text = "GNU General Public License v3 (GPLv3)"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Topic :: Internet :: WWW/HTTP",
+    "Environment :: Web Environment"
+]
+
+
+[project.optional-dependencies]
+chardet = [
+	"chardet"
+]
+[tool.setuptools.packages.find]
+where = ["httpy", "httpy.http2", "httpy.http2.hpack", "httpy.http2.hpack.static", "httpy.http2.hpack.utils"]
+
+[project.urls]
+Homepage = "https://github.com/jenca-adam/httpy"
+Bug_Tracker = "https://github.com/jenca-adam/httpy/issues"
+PyPI = "https://pypi.python.org/project/httpy"
+Download = "https://github.com/jenca-adam/httpy/releases/latest"
+

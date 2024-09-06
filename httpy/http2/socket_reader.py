@@ -4,7 +4,7 @@ class SocketReader:
 
     def read(self, nbytes):
         bytes_read = 0
-        buf = []
+        buf = bytearray()
         while bytes_read < nbytes:
             chunk = self.sock.recv(1)
             if not chunk:

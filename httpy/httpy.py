@@ -39,6 +39,8 @@ import asyncio  # for async requests
 import atexit  # to add exit handlers
 
 from . import http2
+from .common import *
+from .headers import Headers
 from .utils import *
 from .utils import _create_connection_and_handle_errors, is_closed
 from .errors import *
@@ -46,258 +48,22 @@ from .status import *
 from .alpn import alpn_negotiate
 from .patterns import *
 from .debugger import _Debugger
+from .proto import HTTP11, HTTP2, _HTTP2Async
+from .stream import Stream
+from .response import Response
+from .cache import *
+from .ssl_context import generate_ssl_context
 
 try:
     import chardet  # to detect charsets
 except ImportError:
     chardet = None
 
-HTTPY_DIR = pathlib.Path.home() / ".cache" / "httpy"
 os.makedirs(HTTPY_DIR / "dirs", exist_ok=True)
 os.makedirs(HTTPY_DIR / "default" / "sites", exist_ok=True)
-VERSION = "2.0.3"
-
-HTTPY_CACHEABLE_METHODS = ["GET", "HEAD"]
-WEBSOCKET_GUID = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-WEBSOCKET_CONTINUATION_FRAME = 0x0
-WEBSOCKET_TEXT_FRAME = 0x1
-WEBSOCKET_BINARY_FRAME = 0x2
-WEBSOCKET_CONNECTION_CLOSE = 0x8
-WEBSOCKET_PING = 0x9
-WEBSOCKET_PONG = 0xA
-WEBSOCKET_OPCODES = {0x0, 0x1, 0x2, 0x8, 0x9, 0xA}
-WEBSOCKET_CLOSE_CODES = {
-    1000: "Normal closure",
-    1001: "Going away",
-    1002: "Protocol error",
-    1003: "Unsupported Data",
-    1005: "No status received",
-    1006: "Abnormal closure",
-    1007: "Invalid frame payload data",
-    1008: "Policy Violation",
-    1009: "Message Too Big",
-    1010: "Mandatory Ext.",
-    1011: "Internal Error",
-    1012: "Service restart",
-    1014: "Bad Gateway",
-    1015: "TLS handshake",
-}
-
-ALPN_PROTOCOLS = {"1.1": "http/1.1", "2": "h2"}
 default_context = ssl._create_default_https_context()
 default_context.set_alpn_protocols(["http/1.1", "h2"])
 schemes = {"http": 80, "https": 443}
-
-
-def _binappendstr(s):
-    return struct.pack("!H", len(force_bytes(s))) + force_bytes(s)
-
-
-def _binappendfloat(b):
-    b = float(b)
-    ba = struct.pack("f", b)
-    return bytes([len(ba)]) + ba
-
-
-class ETag:
-    """Class for HTTP ETags"""
-
-    def __init__(self, s):
-        self.weak = False
-        if s.startswith("W/") or s.startswith("w/"):
-            self.weak = True
-        self.etag = s.replace('"', "")
-
-    def __eq__(self, e):
-        return self.etag == e.etag
-
-    def __str__(self):
-        if self.weak:
-            return f'W/"{self.etag}"'
-        return f'"{self.etag}"'
-
-    def add_header(self, headers):
-        """Appends this ETag in If-None-Match header."""
-        if "If-None-Match" in headers:
-            headers["If-None-Match"] += ", " + str(self)
-        else:
-            headers["If-None-Match"] = str(self)
-
-
-class CacheControl:
-    """Class for parsing Cache-Control HTTP Headers"""
-
-    def __init__(self, directives):
-        d = [_mk2l(x.split("=")) for x in directives.split(",")]
-        self.directives = CaseInsensitiveDict(d)
-        if "max-age" in self.directives:
-            self.max_age = int(self.directives["max-age"])
-            self.cache = True
-        elif "no-cache" in self.directives:
-            self.cache = False
-            self.max_age = 0
-        else:
-            self.max_age = 0
-            self.cache = True
-
-
-class CacheFile:
-    """HTTPy cache file parser"""
-
-    def __init__(self, f):
-        self.src = f
-        file = gzip.GzipFile(f, "rb")
-        tml = ord(file.read(1))
-        self.time_cached = _unpk_float(file.read(tml))
-        etl = ord(file.read(1))
-        self.time_elapsed = _unpk_float(file.read(etl))
-        srl = _int16unpk(file.read(2))
-        sl = file.read(srl)
-        self.status = Status(sl)
-        if "\x01" in f:
-            self.url = os.path.split(f)[-1].replace("\x01", "://").replace("\x02", "/")
-            warnings.warn(
-                OldCacheFileWarning(
-                    f"cache file {f!r}  is in the old format(file name). \n Please, delete it to avoid further incompatibility problems"
-                )
-            )
-        else:
-            self.url = os.path.split(f)[-1].replace("\xfe", "://").replace("\xff", "/")
-        method_desc = file.read(2)
-        if method_desc != b"\150+":
-            warnings.warn(
-                OldCacheFileWarning(
-                    f"cache file {f!r}  is in the old format(pre 1.5.0). \n Please, delete it to avoid further incompatibility problems"
-                )
-            )
-            file.seek(file.tell() - 2)
-        else:
-            method_l = _int16unpk(file.read(2))
-            self.method = file.read(method_l).decode()
-        cfconfig = ord(file.read(1))
-        self.expires = None
-        if (not cfconfig & 0b1100000) or (cfconfig & 0x80):
-            warnings.warn(
-                OldCacheFileWarning(
-                    f"cache file {f!r}  is in the old format(cache file config static bits don't match). \n Please, delete it to avoid further incompatibility problems"
-                )
-            )
-            if cfconfig == 255:
-                expires_length = ord(file.read(1))
-                self.expires = _unpk_float(file.read(expires_length))
-
-            self.http_version = "1.1"
-            request_headers_present = False
-        else:
-            if cfconfig & 0b1:
-                expires_length = ord(file.read(1))
-                self.expires = _unpk_float(file.read(expires_length))
-            http_version = (cfconfig & 0b11100) >> 2
-            if http_version > 2:
-                warnings.warn(
-                    UserWarning(
-                        f"cache file {f!r} has an unknown http version (ID: {http_version}), please update httpy to the newest version to gain compatibility with the cache file"
-                    )
-                )
-                # fallback
-                http_version = 2
-
-            self.http_version = [None, "1.1", "2"][http_version]
-            request_headers_present = cfconfig & 0b10
-        if self.http_version is None:
-            warnings.warn(
-                OldCacheFileWarning(
-                    f"cache file {f!r}  is in the old format. \n Please, delete it to avoid further incompatibility problems"
-                )
-            )
-            file.seek(file.tell() - 1)
-
-        if request_headers_present:
-            request_headers_n_entries = _int16unpk(file.read(2))
-            request_headers = []
-            for _ in range(request_headers_n_entries):
-                request_headers.append(read_until(file, b"\r"))
-            self.request_headers = Headers(request_headers)
-        self.content = file.read()
-        file.seek(0)
-        file.close()
-        self.headers, self.body = self.content.split(b"\x00", 1)
-        self.headers = Headers(self.headers.split(b"\r"))
-        self.age = 0
-        self.etag = None
-        self.last_modified = None
-        if "ETag" in self.headers:
-            self.etag = ETag(self.headers["ETag"])
-        if "last-modified" in self.headers:
-            self.last_modified = self.headers["Last-Modified"]
-        if "Age" in self.headers:
-            self.age = int(self.headers["Age"])
-        self.time_generated = self.time_cached - self.age
-        if "Cache-Control" in self.headers:
-            self.cache_control = CacheControl(self.headers["Cache-Control"])
-        else:
-            self.cache_control = CacheControl("no-cache")
-
-    @property
-    def expired(self):
-        if self.expires is not None and self.expires < time.time():
-            return True
-        return time.time() - self.time_generated > self.cache_control.max_age
-
-    def __repr__(self):
-        return f"<CacheFile {self.url!r}>"
-
-    def add_header(self, headers):
-        """
-        Adds If-None-Match and If-Modified-Since headers to request.
-
-        :param  headers: Headers to add into
-        """
-        if self.etag:
-            self.etag.add_header(headers)
-        if self.last_modified:
-            headers["if-modified-since"] = self.last_modified
-
-
-class Cache:
-    """
-    Cache Class
-    """
-
-    def __init__(self, d=HTTPY_DIR / "default" / "sites"):
-        if not os.path.exists(d):
-            os.makedirs(d)
-        self.dir = d
-        self.files = []
-        for f in os.listdir(d):
-            try:
-                self.files.append(CacheFile(os.path.join(d, f)))
-            except:
-                pass
-
-    def updateCache(self):
-        """Updates self.files according to /sites directory content and removes expired ones"""
-        for file in self.files:
-            if file.expired:
-                os.remove(
-                    os.path.join(
-                        self.dir, file.url.replace("://", "\xfe").replace("/", "\xff")
-                    )
-                )
-        self.files = [
-            CacheFile(os.path.join(self.dir, i)) for i in os.listdir(self.dir)
-        ]
-
-    def __getitem__(self, t):
-        u, m = t
-        self.updateCache()  # ...
-        for f in self.files:
-            if reslash(f.url) == reslash(u) and f.method == m:
-                return f
-        return None
-
-    def __contains__(self, u):
-        return self[u] is not None
 
 
 class Cookie:
@@ -502,78 +268,6 @@ class CookieJar:
         return data
 
 
-class File(io.IOBase):
-    """Class  used to upload files"""
-
-    def __init__(self, buffer, filename, content_type=None):
-        self.parent = super().__init__()
-        if content_type is None:
-            content_type = force_string(
-                mimetypes.guess_type(os.path.split(filename)[1])[0]
-            )
-        content_type = force_string(content_type)
-
-        self.size = len(buffer)
-        self.buffer = io.BytesIO(buffer)
-
-        self.name = force_string(os.path.split(filename)[1])
-        self.mode = "rb"
-        self.content_type = content_type
-
-    def read(self, size=-1):
-        return self.buffer.read(size)
-
-    def save(self, destination):
-        if os.path.exists(destination):
-            if os.path.isdir(destination):
-                destination = os.path.join(destination, self.name)
-
-        return open(destination, "wb").write(self.buffer.getvalue())
-
-    def seek(self, pos):
-        self.buffer.seek(pos)
-
-    def tell(self):
-        return self.buffer.tell()
-
-    def write(self, anything):
-        raise io.UnsupportedOperation("not writable")
-
-    def value(self):
-        return self.buffer.getvalue()
-
-    @classmethod
-    def open(self, file):
-        reader = open(file, "rb")
-        return File(reader.read(), file)
-
-
-class Headers(CaseInsensitiveDict):
-    """Class for HTTP headers"""
-
-    def __init__(self, h):
-        h = filter(None, h)
-        _headers = mkdict(
-            (
-                force_string(a).split(":", 1)[0].strip().lower(),
-                force_string(a).split(":", 1)[1].strip(),
-            )
-            for a in h
-        )
-        self.headers = {
-            k: v
-            for k, v in filter(lambda h: not h[0].startswith(":"), _headers.items())
-        }
-        self.h2_headers = {
-            k: v for k, v in filter(lambda h: h[0].startswith(":"), _headers.items())
-        }
-
-        super().__init__(self.headers)
-
-    def __setitem__(self, item, value):
-        raise NotImplementedError
-
-
 class Request:
     def __init__(self, url, headers, method, socket, cache, http_version):
         self.url = url
@@ -595,159 +289,7 @@ class Request:
     async def async_perform(self):
         return await async_request(
             self.url, headers=self.headers, method=self.method
-        )  # omit http version setting as we can't send async request on http<2data += b"\x00"
-
-
-class Response:
-    """
-    Class for HTTP Response.
-
-    :param status: Status returned by server
-    :type status: Status
-    :ivar status: Status returned by server
-    :param headers: Headers attached to the document
-    :type headers: Headers
-    :ivar headers: Headers attached to the document
-    :param content: Document content
-    :type content: bytes
-    :ivar content: Document content
-    :param history: Response history
-    :type history: list
-    :ivar history: Response history
-    :param fromcache: Indicates whether or not  was response loaded from cache
-    :type fromcache: bool
-    :ivar fromcache: Indicates whether or not was response loaded from cache
-    :ivar charset: Document charset
-    :ivar speed: Average download speed in bytes per second
-    :type speed: float
-    :param request: The Request object for this response
-    :ivar request: The Request object for this response
-    :type request: Request
-    :type method: str
-    :ivar method: Indicates HTTP method used to request
-    :param original_content: Document content before any Content-Encoding was applied.
-    :type original_content: bytes
-    :param time_elapsed: Total request time
-    :type time_elapsed: float
-    :ivar ok: `self.status==200`
-    """
-
-    def __init__(
-        self,
-        method,
-        status,
-        headers,
-        content,
-        history,
-        url,
-        fromcache,
-        original_content,
-        request,
-        time_elapsed=math.inf,
-        cache=True,
-        base_dir=HTTPY_DIR / "default",
-    ):
-        self.method = method
-        self.status = status
-        self.headers = headers
-        self.content = content
-        self.ok = self.status == 200
-        self.reason = self.status.reason
-        self._original = self.original_content = original_content
-        try:
-            self.speed = len(self._original) / time_elapsed
-        except ZeroDivisionError:  # bug #28 permanent redirects
-            self.speed = float("inf")
-        self.url = reslash(url)
-        self.fromcache = fromcache
-        self._time_elapsed = time_elapsed
-        self.content_type = (
-            headers.get("content-type", "text/html").split(";")[0].strip()
-        )  # remove charset suffix
-        self._charset = determine_charset(headers)
-        self.history = history
-        self.request = request
-        self.history.append(self)
-
-        if (
-            not self.fromcache
-            and (self.content or self.headers or self.status)
-            and cache
-        ):
-            cacheWrite(self, base_dir, expires_override=headers.get("Expires", None))
-
-    @classmethod
-    def cacheload(self, cache_file):
-        """
-        Loads response from CacheFile.
-
-        :param cache_file: CacheFile to load from
-        :type cache_file: CacheFile
-        """
-        return Response(
-            cache_file.method,
-            cache_file.status,
-            cache_file.headers,
-            cache_file.body,
-            [],
-            cache_file.url,
-            True,
-            cache_file.content,
-            Request(
-                cache_file.url,
-                cache_file.request_headers,
-                cache_file.method,
-                None,
-                True,
-                cache_file.http_version,
-            ),
-            cache_file.time_elapsed,
-        )
-
-    @property
-    def string(self):
-        if self.charset is None:
-            return self.content.decode()
-        return self.content.decode(self.charset)
-
-    @classmethod
-    def plain(self):
-        return Response(
-            "",
-            Status(b"000"),
-            Headers({}),
-            b"",
-            [],
-            "",
-            False,
-            b"",
-            Request("", Headers({}), "", None, False, None),
-        )
-
-    @property
-    def charset(self):
-        if self._charset is None and chardet is not None:
-            self._charset = chardet.detect(self.content)["encoding"]
-        return self._charset
-
-    @property
-    def json(self):
-        if self.content_type == (
-            "application/json"
-        ):  # the ONLY acceptable MIME, see RFC 4627
-            ## NOTE: What about the encoding suffix???
-            ##   AJ: fixed! (2.0.0)
-            if self._charset is None:
-                JSON = self.content.decode("UTF-8")  #
-            else:
-                JSON = self.content.decode(self._charset)
-            return json.loads(JSON)
-        raise ContentTypeError(
-            f"Content type is {self.content_type} , not application/json"
-        )
-
-    def __repr__(self):
-        return f"<Response {self.method} [{self.status} {self.reason}] ({self.url})>"
+        )  # omit http version setting as we can't send async request on http<2
 
 
 def _threaded_rr(q, url, **kwargs):
@@ -1046,25 +588,6 @@ class Session:
         self.close()
 
 
-class ProtoVersion:
-    def __init__(self):
-        pass
-
-    def send_request(self, sock, *args):
-        return self.sender(*args).send(sock)
-
-    def recv_response(self, sock, *args):
-        return self.recver(sock, *args)
-
-
-class AsyncProtoVersion:
-    async def send_request(self, sock, *args):
-        return await self.sender(*args).send(sock)
-
-    async def recv_response(self, sock, *args):
-        return await self.recver(sock, *args)
-
-
 class KeepAlive:
     """Class for parsing keep-alive headers"""
 
@@ -1092,228 +615,57 @@ def hashing_function(function_name):
 md5, sha256, sha512, sha1 = (
     hashing_function(i) for i in ("md5", "sha256", "sha512", "sha1")
 )
-ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512}
+ALGORITHMS = {"md5": md5, "sha256": sha256, "sha512": sha512, "sha1": sha1}
 
 
-def cacheWrite(response, base_dir, expires_override=None):
-    """
-    Writes response to cache
-
-    :param response: response to save
-    :type response: Response"""
-    debugger.info("cacheWrite  called")
-    data = b""
-    data += _binappendfloat(time.time())
-    data += _binappendfloat(response._time_elapsed)
-    data += _binappendstr(f"{response.status:03} {response.reason}")
-    data += b"\150+"
-    data += _binappendstr(response.method)
-    if expires_override is not None:
-        expires_tup = email.utils.parsedate(expires_override)
-        if expires_tup is None:
-            debugger.warn("wrong Expires header format!")
-            has_expires = False
-        else:
-            expires = time.mktime(expires_tup)
-            if expires < time.time():
-                debugger.info("Expired Cache. Aborting cacheWrite.")
-                return
-            has_expires = True
-            expires_bin = _binappendfloat(expires)
-            # data += expires_bin
+def create_socket(host, port, cert, verify, check_hostname, alpn_protocols, https):
+    conn = _create_connection_and_handle_errors((host, port))
+    if https:
+        context = generate_ssl_context(
+            check_hostname=check_hostname,
+            verify=verify,
+            cert=cert,
+            alpn_protocols=alpn_protocols,
+        )
+        protocol, conn = alpn_negotiate(conn, context, host)
     else:
-        has_expires = False
-    cfconfig = (
-        0b1100010
-        | has_expires
-        | [None, "1.1", "2"].index(response.request.http_version) << 2
-    )
-    data += struct.pack("B", cfconfig)
-    if has_expires:
-        data += expires_bin
-    data += struct.pack(
-        "!H", sum(1 for h in response.request.headers if not h.startswith(":"))
-    )
-    data += "\r".join(
-        [
-            mk_header(i)
-            for i in filter(
-                lambda x: not x[0].startswith(":"), response.request.headers.items()
-            )
-        ]
-    ).encode()  # remove h2 hf
-    data += b"\r"
-    data += "\r".join([mk_header(i) for i in response.headers.headers.items()]).encode()
-    data += b"\x00"
-    data += response.content
-
-    with open(
-        base_dir / "sites" / (response.url.replace("://", "\xfe").replace("/", "\xff")),
-        "wb",
-    ) as f:
-        f.write(gzip.compress(data))
-
-
-def mkdict(kvp):
-    """Makes dict from key/value pairs"""
-    d = {}
-    kvp = list(kvp)
-    for k, v in kvp:
-        k = k.lower()
-        if k in d:
-            if isinstance(d[k], list):
-                d[k].append(v)
-            else:
-                d[k] = [d[k]] + [v]
-        else:
-            d[k] = v
-    return d
-
-
-def urlencode(data):
-    """Creates urlencoded string from dict data"""
-    return b"&".join(b"=".join(force_bytes(i) for i in x) for x in data.items())
-
-
-def _generate_boundary():
-    return (
-        b"--"
-        + "".join(random.choices(string.ascii_letters + string.digits, k=10)).encode()
-        + b"\r\n"
-    )
-
-
-def get_content_type(data):
-    """Used to automatically get request content type"""
-    if isinstance(data, bytes):
-        return "application/octet-stream"
-    elif isinstance(data, str):
-        return "text/plain"
-    elif isinstance(data, dict):
-        for x in data.values():
-            if isinstance(x, File):
-                return "multipart/form-data"
-        return "application/x-www-form-urlencoded"
-    raise TypeError(
-        "could not get content type(can encode only bytes,str and dict). Please specify raw data and set content_type argument"
-    )
-
-
-def _unpk_float(bs):
-    return struct.unpack("f", bs)[0]
-
-
-def multipart(form, boundary=_generate_boundary()):
-    """Builds multipart/form-data from form"""
-    built = b""
-    for i in form.items():
-        built += boundary
-        disp = b'Content-Disposition: form-data; name="' + force_bytes(i[0]) + b'"'
-        val = i[1]
-        if isinstance(val, File):
-            disp += b'; filename="' + force_bytes(val.name) + b'"'
-            val = val.read()
-        disp += b"\r\n\r\n"
-        val = force_bytes(val)
-        disp += val
-        disp += b"\r\n"
-        built += disp
-    built += boundary.strip() + b"--\r\n"
-    return built, "multipart/form-data; boundary=" + boundary[2:].strip().decode()
-
-
-def _encode_form_data(data, content_type=None):
-    if content_type is None:
-        debugger.info("no content_type specified, getting automatically")
-        content_type = get_content_type(data)
-    if content_type in ("text/plain", "application/octet-stream"):
-        debugger.info("content_type text/plain or application/octet-stream")
-        return force_bytes(data), content_type
-    elif content_type == "application/x-www-form-urlencoded":
-        debugger.info("content_type urlencoded")
-        return urlencode(data), content_type
-    elif content_type == "multipart/form-data":
-        debugger.info("content_type multipart")
-        return multipart(data)
-    elif content_type == "application/json":
-        debugger.info("content_type json")
-        return json.dumps(data).encode(), content_type
-    debugger.warn("unknown content_type")
-    return force_bytes(data), content_type
-
-
-def encode_form_data(data, content_type=None):
-    """Encodes form data according to content type"""
-
-    encoded, content_type = _encode_form_data(data, content_type)
-    return force_bytes(encoded), {
-        "Content-Type": content_type,
-        "Content-Length": len(encoded),
-    }
-
-
-def determine_charset(headers):
-    """Gets charset from headers"""
-    if "Content-Type" in headers:
-        charset = headers["Content-Type"].split(";")[-1].strip()
-        if not charset.startswith("charset"):
-            return None
-        return charset.split("=")[-1].strip()
-    return None
-
-
-def makehost(host, port):
-    """Creates hostname from host and port"""
-    if int(port) in [443, 80]:
-        return host
-    return host + ":" + str(port)
-
-
-def reslash(url):
-    """Adds trailing slash to the end of URL"""
-    url = force_string(url)
-    if url.endswith("/"):
-        return url
-    return url + "/"
-
-
-def deslash(url):
-    """Removes trailing slash from the end of URL"""
-    url = force_string(url)
-    if url.endswith("/"):
-        return url[:-1]
-    return url
-
-
-def generate_cnonce(length=16):
-    return hex(random.randrange(16**length))[2:]
-
-
-def _debugprint(debug, what, *args, **kwargs):
-    if debug:
-        print(force_string(what), *args, **kwargs)
+        protocol = "http/1.1"
+    return protocol, conn
 
 
 def create_connection(
-    host, port, last_response, http_version, scheme, do_keep_alive, session
+    host,
+    port,
+    last_response,
+    http_version,
+    scheme,
+    do_keep_alive,
+    session,
+    cert,
+    verify,
+    check_hostname,
 ):
     """
     Creates a connection to a given host and port
     """
     debugger.info("calling socket.create_connection")
-    conn = _create_connection_and_handle_errors((host, port))
-    if scheme == "http":
-        http_version = "1.1"
+    if http_version is not None and http_version not in ALPN_PROTOCOLS:
+        raise LookupError(f"Unknown HTTP version: {http_version!r}")
+    protocol, conn = create_socket(
+        host,
+        port,
+        cert,
+        verify,
+        check_hostname,
+        ALPN_PROTOCOLS[http_version or "*"],
+        scheme == "https",
+    )
+    http_version = {"http/1.1": "1.1", "h2": "2"}.get(protocol, None)
     if http_version is None:
-        debugger.info("running ALPN")
-        protocol, conn = alpn_negotiate(conn, default_context, host)  # wraps socket too
-        http_version = {"http/1.1": "1.1", "h2": "2"}.get(protocol, None)
-        if http_version is None:
-            raise HTTPyError("server doesn't support http")
-    elif scheme == "https":
-        context = ssl._create_default_https_context()
-        context.set_alpn_protocols([ALPN_PROTOCOLS[http_version]])
-        conn = context.wrap_socket(conn, server_hostname=host)
+        raise HTTPyError(
+            f"server doesn't support http: unknown alpn result: {protocol!r}"
+        )
+
     debugger.info(f"http version: {http_version}")
     is_http2 = http_version == "2"
     is_async = False
@@ -1326,6 +678,9 @@ def create_connection(
             except ConnectionClosedError:
                 debugger.warn("Connection already expired.")
     if is_http2:
+        if conn.selected_alpn_protocol() != "h2":
+            raise ConnectionError("failed to connect: server does not support http2")
+
         debugger.info("instancing http2 connection")
         conn = http2.Connection.from_socket(conn, debugger, host, port)
         conn.start()
@@ -1404,108 +759,6 @@ def find_dir_by_id(sessid, name):
 
 def dir_count():
     return len(os.listdir(HTTPY_DIR / "dirs"))
-
-
-class HTTP11Sender:
-    def __init__(self, method, headers, body, path, debug):
-        self.method = method
-        self.headers = headers
-        self.body = body
-        self.path = path
-        self.debug = debug
-        headers = "\r\n".join([mk_header(i) for i in self.headers.items()])
-        request_data = f"{method} {path} HTTP/1.1" + "\r\n"
-        request_data += headers
-        request_data += "\r\n\r\n"
-        self.request_data = request_data
-
-    def send(self, sock):
-        _debugprint(self.debug, "\nsend:\n" + self.request_data)
-        sock.send(self.request_data.encode())
-        if self.body:
-            sock.send(self.body)
-
-
-class HTTP11Recver:
-    def __call__(self, sock, debug, timeout):
-        file = sock.makefile("b")
-        statusline = file.readline()
-        _debugprint(debug, "\nresponse: ")
-        _debugprint(debug, statusline)
-        if not statusline:
-            debugger.warn("dead connection")
-            raise DeadConnectionError("peer did not send a response")
-
-        status = Status(statusline)
-        headers = []
-        while True:
-            line = file.readline()
-            if line == b"\r\n":
-                break
-            _debugprint(debug, line.decode(), end="")
-            headers.append(line)
-        headers = Headers(headers)
-        body = b""
-        chunked = headers.get("transfer-encoding", "").strip() == "chunked"
-        if not chunked:
-            cl = int(headers.get("content-length", -1))
-            if cl == -1:
-                warnings.warn(
-                    "no content-length nor transfer-encoding, setting socket timeout"
-                )
-                sock.settimeout(0.5)
-                while True:
-                    try:
-                        b = file.read(1)  # recv 1 byte
-                        if not b:
-                            break
-                    except socket.timeout:  # end of response??
-                        break
-                    body += b
-                sock.settimeout(timeout)
-            else:
-                body = file.read(cl)  # recv <content-length> bytes
-        else:  # chunked read
-            while True:
-                chunksize = int(file.readline().strip(), base=16)  # get chunk size
-                if chunksize == 0:  # final byte
-                    break
-                chunk = file.read(chunksize)
-                file.read(2)  # discard CLRF
-                body += chunk
-        content_encoding = headers.get("content-encoding", "identity")
-        decoded_body = decode_content(body, content_encoding)
-        return status, headers, decoded_body, body
-
-
-class HTTP11(ProtoVersion):
-    """
-    A sender/receiver for HTTP/1.1 requests
-    """
-
-    version = "1.1"
-    sender = HTTP11Sender
-    recver = HTTP11Recver()
-
-
-class HTTP2(ProtoVersion):
-    """
-    A sender/receiver for synchronous HTTP/2 requests
-    """
-
-    version = "2"
-    sender = http2.proto.HTTP2Sender
-    recver = http2.proto.HTTP2Recver()
-
-
-class _HTTP2Async(AsyncProtoVersion):
-    """
-    A sender/receiver for asynchronous HTTP/2 requests
-    """
-
-    version = "2"
-    sender = http2.proto.AsyncHTTP2Sender
-    recver = http2.proto.AsyncHTTP2Recver()
 
 
 class Dir:
@@ -1587,6 +840,10 @@ async def _async_raw_request(
     disabled_headers=[],
     force_keep_alive=False,
     enable_cookies=False,
+    stream=False,
+    check_hostname=True,
+    verify=None,
+    cert=None,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -1622,7 +879,7 @@ async def _async_raw_request(
         cf = cache[deslash(url), method]
         if cf and not cf.expired:
             debugger.info("Not expired data in cache, loading from cache")
-            return Response.cacheload(cf)
+            return Response.cacheload(cf, Request)
         else:
             debugger.info("No data in cache.")
     else:
@@ -1637,6 +894,8 @@ async def _async_raw_request(
             "Accept": "*/*",
         }
     )
+    if stream:
+        defhdr["Accept-Encoding"] = "identity"  # bugfx
     if data:
         debugger.info("Adding form data")
         data, cth = encode_form_data(data, content_type)
@@ -1708,14 +967,19 @@ async def _async_raw_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
+                enable_cookies=enable_cookies,
+                stream=stream,
             )
 
         args = (sock, ret_val)
-
+        if stream:
+            q = await proto.stream_response(*args)
+            await q.load_headers()
+            return q
         status, resp_headers, decoded_body, body = await proto.recv_response(*args)
 
         if status == 304:
-            return Response.cacheload(cf)
+            return Response.cacheload(cf, Request)
         if "set-cookie" in resp_headers and enable_cookies:
             cookies = resp_headers["set-cookie"]
             h = makehost(host, port)
@@ -1807,6 +1071,10 @@ def _raw_request(
     disabled_headers=[],
     force_keep_alive=False,
     enable_cookies=False,
+    stream=False,
+    cert=None,
+    verify=True,
+    check_hostname=True,
 ):
     base_dir = pathlib.Path(base_dir)
     method = method.upper()
@@ -1841,12 +1109,14 @@ def _raw_request(
         cf = cache[deslash(url), method]
         if cf and not cf.expired:
             debugger.info("Not expired data in cache, loading from cache")
-            return Response.cacheload(cf)
+            return Response.cacheload(cf, Request)
         else:
             debugger.info("No data in cache.")
     else:
         debugger.info("Cache disabled.")
         cf = None
+
+    ### TODO BUILD_HEADERS FUNCTION TO MAKE THE CODE DRIER
     defhdr = CaseInsensitiveDict(
         {
             "Accept-Encoding": "gzip, deflate, identity",
@@ -1856,6 +1126,8 @@ def _raw_request(
             "Accept": "*/*",
         }
     )
+    if stream:
+        defhdr["Accept-Encoding"] = "identity"
     if data:
         debugger.info("Adding form data")
         data, cth = encode_form_data(data, content_type)
@@ -1894,6 +1166,9 @@ def _raw_request(
         scheme,
         defhdr.get("connection") == "keep-alive",
         session,
+        cert,
+        verify,
+        check_hostname,
     )
     is_http2 = http_version == "2"
     start_time = time.time()
@@ -1932,17 +1207,26 @@ def _raw_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
+                stream=stream,
+                check_hostname=check_hostname,
+                cert=cert,
+                verify=verify,
             )
 
         if is_http2:
             args = (sock, ret_val)
         else:
             args = (sock, dbg, timeout)
-
-        status, resp_headers, decoded_body, body = proto.recv_response(*args)
+        if stream:
+            stream_obj = proto.stream_response(*args)
+            if not isinstance(stream_obj, tuple):
+                return stream_obj
+            status, resp_headers, decoded_body, body = stream_obj
+        else:
+            status, resp_headers, decoded_body, body = proto.recv_response(*args)
 
         if status == 304:
-            return Response.cacheload(cf)
+            return Response.cacheload(cf, Request)
         if "set-cookie" in resp_headers and enable_cookies:
             cookies = resp_headers["set-cookie"]
             h = makehost(host, port)
@@ -1982,6 +1266,10 @@ def _raw_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 force_keep_alive=force_keep_alive,
+                stream=stream,
+                check_hostname=check_hostname,
+                verify=verify,
+                cert=cert,
             )
         raise
     except:
@@ -2053,6 +1341,10 @@ def request(
     blocking=True,
     force_keep_alive=False,
     enable_cookies=False,
+    stream=False,
+    cert=None,
+    verify=None,
+    check_hostname=True,
 ):
     """
 
@@ -2147,6 +1439,10 @@ def request(
             disabled_headers=disabled_headers,
             force_keep_alive=force_keep_alive,
             enable_cookies=enable_cookies,
+            stream=stream,
+            cert=cert,
+            verify=verify,
+            check_hostname=check_hostname,
         )
     else:  # PendingRequest
         return PendingRequest(
@@ -2167,6 +1463,9 @@ def request(
             blocking=False,
             force_keep_alive=force_keep_alive,
             enable_cookies=enable_cookies,
+            cert=cert,
+            verify=verify,
+            check_hostname=check_hostname,
         )
 
     if 300 <= resp.status < 400:
@@ -2199,6 +1498,7 @@ def request(
                 disabled_headers=disabled_headers,
                 blocking=blocking,
                 enable_cookies=enable_cookies,
+                stream=stream,
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -2221,6 +1521,7 @@ def request(
             http_version=http_version,
             blocking=blocking,
             enable_cookies=enable_cookies,
+            stream=stream,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2260,6 +1561,7 @@ async def async_request(
     disabled_headers=[],
     force_keep_alive=False,
     enable_cookies=False,
+    stream=False,
 ):
     """
 
@@ -2350,6 +1652,7 @@ async def async_request(
         disabled_headers=disabled_headers,
         force_keep_alive=force_keep_alive,
         enable_cookies=enable_cookies,
+        stream=stream,
     )
     if 300 <= resp.status < 400:
         debugger.info("Redirect")
@@ -2380,6 +1683,7 @@ async def async_request(
                 http_version=http_version,
                 disabled_headers=disabled_headers,
                 enable_cookies=enable_cookies,
+                stream=stream,
             )
     if resp.status == 401 and auth:
         if last_status == 401:
@@ -2401,6 +1705,7 @@ async def async_request(
             base_dir=base_dir,
             http_version=http_version,
             enable_cookies=enable_cookies,
+            stream=stream,
         )
     if 399 < resp.status < 500:
         debugger.warn(f"Client error : {resp.status} {resp.reason}")
@@ -2826,5 +2131,3 @@ class WebSocket:
 
 
 atexit.register(close_all)
-__version__ = VERSION
-__author__ = "Adam Jenca"

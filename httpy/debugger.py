@@ -2,15 +2,21 @@ import inspect
 import builtins
 import sys
 import os
+from .utils import force_string
 
 
 def get_path():
     return os.path.dirname(os.path.abspath(__file__))
 
 
+def _debugprint(debug, what, *args, **kwargs):
+    if debug:
+        print(force_string(what), *args, **kwargs)
+
+
 class _Debugger:
     """
-    Debugger
+    A debugger
     """
 
     def __init__(self, do_debug=None):

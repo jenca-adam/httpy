@@ -1,6 +1,7 @@
 docs/build
 *.log
 *.ign
+*.orig
 *.template
 *.pickle
 README.md.html

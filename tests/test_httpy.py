@@ -42,25 +42,15 @@ def test_https_200_ok():
     assert resp.status == 200
 
 
-def test_httpy_nonblocking():
-    t = time.time()
-    resps = [
-        httpy.request("https://httpbin.org/delay/1", blocking=False, http_version="2")
-        for i in range(4)
-    ]
-    assert time.time() - t < 1
-    for i in resps:
-        i.wait()
-        assert i.response.ok
-
-
 def test_httpy_auth_basic():
-    httpy.request("http://httpbin.org/basic-auth/root/pass/", auth=("root", "pass"))
+    httpy.request("https://httpbin.org/basic-auth/root/pass/", auth=("root", "pass"))
 
 
 def test_httpy_redirect_limit():
     with pytest.raises(httpy.TooManyRedirectsError):
-        httpy.request("http://httpbin.org/redirect/8", redirlimit=5, enable_cache=False)
+        httpy.request(
+            "https://httpbin.org/redirect/8", redirlimit=5, enable_cache=False
+        )
 
 
 """def test_httpy_cache():

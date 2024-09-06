@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>httpy &mdash; httpy 2.0.3 documentation</title>
+  <title>httpy &mdash; httpy 2.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=8209df7b" />
 
@@ -63,6 +63,10 @@
 <li><a class="reference internal" href="#i-want-cookies">I want cookies!</a></li>
 <li><a class="reference internal" href="#keep-alive-requests">Keep-Alive requests</a></li>
 <li><a class="reference internal" href="#asynchronous-requests">Asynchronous requests</a></li>
+<li><a class="reference internal" href="#streams">Streams</a><ul>
+<li><a class="reference internal" href="#stream-state">Stream state</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#response-class-attributes"><code class="docutils literal notranslate"><span class="pre">Response</span></code> class attributes</a><ul>
 <li><a class="reference internal" href="#response-content"><code class="docutils literal notranslate"><span class="pre">Response.content</span></code></a></li>
 <li><a class="reference internal" href="#response-status"><code class="docutils literal notranslate"><span class="pre">Response.status</span></code></a></li>
@@ -224,13 +228,12 @@ check if the request is already done using <code class="docutils literal notrans
 <p>The <code class="docutils literal notranslate"><span class="pre">Dir</span></code> class allows you to store httpy’s data (cache and cookies)
 on the path of your choice. By default, the data is stored in
 <code class="docutils literal notranslate"><span class="pre">~/.cache/httpy</span></code>. If you want to store the data without using the <code class="docutils literal notranslate"><span class="pre">Dir</span></code> class, use the
-<code class="docutils literal notranslate"><span class="pre">enable_cookies</span></code> or <code class="docutils literal notranslate"><span class="pre">enable_cache</span></code> argument of <code class="docutils literal notranslate"><span class="pre">request</span></code>.
-.. code-block:: python</p>
-<blockquote>
-<div><p>import httpy
-directory = httpy.Dir(“your/path”)
-directory.request(”<a class="reference external" href="https://example.com/">https://example.com/</a>”) # …</p>
-</div></blockquote>
+<code class="docutils literal notranslate"><span class="pre">enable_cookies</span></code> or <code class="docutils literal notranslate"><span class="pre">enable_cache</span></code> argument of <code class="docutils literal notranslate"><span class="pre">request</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">directory</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">Dir</span><span class="p">(</span><span class="s2">&quot;your/path&quot;</span><span class="p">)</span>
+<span class="n">directory</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/&quot;</span><span class="p">)</span> <span class="c1"># ...</span>
+</pre></div>
+</div>
 </section>
 <section id="keep-alive-requests">
 <h4>Keep-Alive requests<a class="headerlink" href="#keep-alive-requests" title="Link to this heading"></a></h4>
@@ -270,6 +273,37 @@ method of <code class="docutils literal notranslate"><span class="pre">Session</
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">Session</span></code> and <code class="docutils literal notranslate"><span class="pre">Dir</span></code> and everything with a <code class="docutils literal notranslate"><span class="pre">request()</span></code> method has
 an <code class="docutils literal notranslate"><span class="pre">async_request()</span></code> equivalent.</p>
+</section>
+<section id="streams">
+<h4>Streams<a class="headerlink" href="#streams" title="Link to this heading"></a></h4>
+<p>If you want to receive the response as a stream, set the <cite>stream</cite> argument of <cite>request</cite> to True.
+A <cite>Stream</cite> or <cite>AsyncStream</cite> is returned.
+They both have the <cite>read()</cite> method.
+It returns the given number of bytes of the response body. If no arguments are given, the entire rest of the body is read and returned.</p>
+<p>You can access the current stream state using <cite>stream.state</cite>. It contains some useful information about the stream. Status and headers are also available directly (<cite>stream.status</cite>, <cite>stream.headers</cite>).
+In order to access these from the <cite>AsyncStream</cite>, you need to call <cite>AsyncStream.load_state()</cite> first.</p>
+<section id="stream-state">
+<h5>Stream state<a class="headerlink" href="#stream-state" title="Link to this heading"></a></h5>
+<p>Attributes:
+* <cite>bytes_read</cite>
+* <cite>body</cite>
+* <cite>connection</cite>
+* <cite>finished</cite></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The <cite>stream.state.bytes_read</cite> attribute represents the amount of bytes received from the server and is not representative of the actual number of bytes read from the stream. For this use <cite>stream.bytes_read</cite> instead.
+The same applies for <cite>stream.state.body</cite></p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">httpy</span>
+<span class="n">stream</span> <span class="o">=</span> <span class="n">httpy</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s2">&quot;https://example.com/big-file&quot;</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># read 1 byte</span>
+<span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="c1"># read 6 bytes</span>
+<span class="n">stream</span><span class="o">.</span><span class="n">bytes_read</span> <span class="c1"># 7</span>
+<span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>  <span class="c1"># read the rest</span>
+<span class="n">stream</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">finished</span> <span class="c1">#True</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="response-class-attributes">
 <h4><code class="docutils literal notranslate"><span class="pre">Response</span></code> class attributes<a class="headerlink" href="#response-class-attributes" title="Link to this heading"></a></h4>
