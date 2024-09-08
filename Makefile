@@ -38,3 +38,6 @@ build:  $(PYPROJECT_TOML)
 	done
 	cp $(DIST)/*.whl $(LATEST) # BADGE FIX
 	rm -rf $(BUILD)
+upload: $(DIST)/*
+	twine upload $(DIST)/*
+
