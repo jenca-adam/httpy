@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "httpy"
-version = "2.1.0"
+version = "2.1.1"
 description = "A lightweight socket-based HTTP(s) and WebSocket client."
 authors = [
     {name = "Adam Jenca", email = "jenca.a@gjh.sk"}
@@ -41,4 +41,9 @@ Homepage = "https://github.com/jenca-adam/httpy"
 Bug_Tracker = "https://github.com/jenca-adam/httpy/issues"
 PyPI = "https://pypi.python.org/project/httpy"
 Download = "https://github.com/jenca-adam/httpy/releases/latest"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+
 

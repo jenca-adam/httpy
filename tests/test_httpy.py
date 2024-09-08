@@ -8,6 +8,7 @@ import time
 import os
 import pytest
 import asyncio
+import random
 
 try:
     import alive_progress
@@ -142,3 +143,24 @@ async def test_httpy_http2_async():
             "https://www.example.org/", http_version="2", enable_cache=False
         )
     ).status == 200
+
+
+def test_httpy_stream_sync():
+    stream = httpy.request("https://www.example.org/", stream=True)
+    assert stream.ok
+    e = random.randint(3, 15)
+    assert len(stream.read(e)) == e
+    stream.read()
+    assert stream.state.finished
+
+
+"""
+@pytest.mark.asyncio
+async def test_httpy_stream_async():
+    stream = await httpy.async_request("https://www.example.org", stream=True)
+    assert stream.ok
+    e=random.randint(3,15)
+    assert len(await stream.read(e))==e
+    await stream.read()
+    assert stream.state.finished
+"""

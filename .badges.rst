@@ -31,7 +31,7 @@
    :target: https://httpy.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://badgen.net/badgesize/normal/jenca-adam/httpy/master/latest_release/latest.whl
+.. image:: https://img.shields.io/github/size/jenca-adam/httpy/latest_release%2Flatest.whl
    :target: https://github.com/jenca-adam/httpy
    :alt: Size
 
