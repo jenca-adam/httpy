@@ -31,7 +31,7 @@
    :target: https://httpy.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://badgen.net/badgesize/normal/jenca-adam/httpy/master/latest_release/latest.whl
+.. image:: https://img.shields.io/github/size/jenca-adam/httpy/latest_release%2Flatest.whl
    :target: https://github.com/jenca-adam/httpy
    :alt: Size
 
@@ -210,7 +210,6 @@ They both have the `read()` method.
 It returns the given number of bytes of the response body. If no arguments are given, the entire rest of the body is read and returned.
 
 You can access the current stream state using `stream.state`. It contains some useful information about the stream. Status and headers are also available directly (`stream.status`, `stream.headers`).
-In order to access these from the `AsyncStream`, you need to call `AsyncStream.load_state()` first.
 
 Stream state
 ^^^^^^^^^^^^

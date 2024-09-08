@@ -974,7 +974,7 @@ async def _async_raw_request(
         args = (sock, ret_val)
         if stream:
             q = await proto.stream_response(*args)
-            await q.load_headers()
+            await q.load_state()
             return q
         status, resp_headers, decoded_body, body = await proto.recv_response(*args)
 

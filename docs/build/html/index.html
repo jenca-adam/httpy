@@ -280,8 +280,7 @@ an <code class="docutils literal notranslate"><span class="pre">async_request()<
 A <cite>Stream</cite> or <cite>AsyncStream</cite> is returned.
 They both have the <cite>read()</cite> method.
 It returns the given number of bytes of the response body. If no arguments are given, the entire rest of the body is read and returned.</p>
-<p>You can access the current stream state using <cite>stream.state</cite>. It contains some useful information about the stream. Status and headers are also available directly (<cite>stream.status</cite>, <cite>stream.headers</cite>).
-In order to access these from the <cite>AsyncStream</cite>, you need to call <cite>AsyncStream.load_state()</cite> first.</p>
+<p>You can access the current stream state using <cite>stream.state</cite>. It contains some useful information about the stream. Status and headers are also available directly (<cite>stream.status</cite>, <cite>stream.headers</cite>).</p>
 <section id="stream-state">
 <h5>Stream state<a class="headerlink" href="#stream-state" title="Link to this heading"></a></h5>
 <p>Attributes:
