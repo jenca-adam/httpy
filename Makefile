@@ -13,11 +13,12 @@ SPHINX_APIDOC=sphinx-apidoc
 BADGES=./\.badges.rst
 DOCS_INDEX=./docs/source/index.rst
 DOCS_FILES=./docs/source/index.rst ./docs/source/modules.rst ./docs/source/httpy.rst
-HTTPY_SOURCE=./httpy
+HTTPY_SOURCE=./src/httpy
 REQUIREMENTS=requirements.txt 
 MAKE_REQS=make_reqs.txt
 ALL_DIST=./all_dist
 PYPROJECT_TOML=pyproject.toml
+SRC=./src
 all: black docs
 black:
 	$(BLACK_CMD)
@@ -38,6 +39,7 @@ build:  $(PYPROJECT_TOML)
 	done
 	cp $(DIST)/*.whl $(LATEST) # BADGE FIX
 	rm -rf $(BUILD)
+	rm -rf $(SRC)/*.egg-info
 upload: $(DIST)/*
 	twine upload $(DIST)/*
 

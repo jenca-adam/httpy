@@ -15,7 +15,7 @@ But here are some thinks you need to know first:
    The most important file here is `docs/index.rst`. It contains the basic information about httpy.
    See [Documentation](#documentation) 
 
-* `httpy/`
+* `src/httpy/`
     
    The actual source code of the package. All the other directories named httpy are symlinks made for convenience.
    See [Code](#code)

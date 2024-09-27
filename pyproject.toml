@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "httpy"
-version = "2.1.1"
+version = "2.1.2"
 description = "A lightweight socket-based HTTP(s) and WebSocket client."
 authors = [
     {name = "Adam Jenca", email = "jenca.a@gjh.sk"}
@@ -34,8 +34,9 @@ chardet = [
 	"chardet"
 ]
 [tool.setuptools.packages.find]
-where = ["httpy", "httpy.http2", "httpy.http2.hpack", "httpy.http2.hpack.static", "httpy.http2.hpack.utils"]
-
+where = ["src"]
+[tool.wheel.packages.find]
+where = ["src"]
 [project.urls]
 Homepage = "https://github.com/jenca-adam/httpy"
 Bug_Tracker = "https://github.com/jenca-adam/httpy/issues"
